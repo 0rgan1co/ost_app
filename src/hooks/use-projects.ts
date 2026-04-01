@@ -76,21 +76,30 @@ export function useProjects(currentUserId: string) {
     fetchProjects()
   }, [currentUserId])
 
-  async function createProject(data: { name: string; description: string }) {
-    const { data: project } = await supabase
+  async function createProject(data: { name: string; description: string }): Promise<boolean> {
+    const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({ name: data.name, description: data.description, created_by: currentUserId })
       .select()
       .single()
 
-    if (project) {
-      await supabase.from('project_members').insert({
-        project_id: project.id,
-        user_id: currentUserId,
-        role: 'admin',
-      })
-      await fetchProjects()
+    if (projectError || !project) {
+      console.error('Error creating project:', projectError)
+      return false
     }
+
+    const { error: memberError } = await supabase.from('project_members').insert({
+      project_id: project.id,
+      user_id: currentUserId,
+      role: 'admin',
+    })
+
+    if (memberError) {
+      console.error('Error adding member:', memberError)
+    }
+
+    await fetchProjects()
+    return true
   }
 
   async function inviteMember(projectId: string, email: string, role: ProjectRole) {

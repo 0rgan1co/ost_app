@@ -70,7 +70,7 @@ export interface ProjectsProps {
   onSelectProject: (projectId: string) => void
 
   /** Create a new project with name and optional description */
-  onCreateProject: (data: { name: string; description: string }) => void
+  onCreateProject: (data: { name: string; description: string }) => Promise<boolean> | void
 
   /** Invite a new member to a project by email and role (admin only) */
   onInviteMember: (projectId: string, email: string, role: ProjectRole) => void

@@ -16,15 +16,20 @@ export function ProjectList({
 }: ProjectsProps) {
   const [activeProject, setActiveProject] = useState<Project | null>(null)
   const [creating, setCreating] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
 
-  const handleSaveNew = () => {
-    if (!newName.trim()) return
-    onCreateProject({ name: newName.trim(), description: newDesc.trim() })
-    setCreating(false)
-    setNewName('')
-    setNewDesc('')
+  const handleSaveNew = async () => {
+    if (!newName.trim() || saving) return
+    setSaving(true)
+    const ok = await onCreateProject({ name: newName.trim(), description: newDesc.trim() })
+    setSaving(false)
+    if (ok !== false) {
+      setCreating(false)
+      setNewName('')
+      setNewDesc('')
+    }
   }
 
   const handleCancelNew = () => {
@@ -115,11 +120,11 @@ export function ProjectList({
                   </button>
                   <button
                     onClick={handleSaveNew}
-                    disabled={!newName.trim()}
+                    disabled={!newName.trim() || saving}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
                   >
                     <Check size={14} />
-                    Guardar
+                    {saving ? 'Guardando...' : 'Guardar'}
                   </button>
                 </div>
               </div>
