@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, GitBranch, X, Check } from 'lucide-react'
-import type { ProjectsProps, Project, ProjectRole } from '../../../types'
+import type { ProjectsProps, Project } from '../../../types'
 import { ProjectCard } from './ProjectCard'
 import { MembersDrawer } from './MembersDrawer'
 

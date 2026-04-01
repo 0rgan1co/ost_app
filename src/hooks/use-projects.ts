@@ -46,7 +46,7 @@ export function useProjects(currentUserId: string) {
       const members = (allMembers ?? [])
         .filter(m => m.project_id === p.id)
         .map(m => {
-          const profile = m.profiles as { id: string; full_name: string | null; avatar_url: string | null; email: string | null } | null
+          const profile = (m.profiles as unknown) as { id: string; full_name: string | null; avatar_url: string | null; email: string | null } | null
           return {
             id: profile?.id ?? m.user_id,
             name: profile?.full_name ?? profile?.email ?? 'Usuario',
