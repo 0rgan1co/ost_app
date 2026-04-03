@@ -53,6 +53,11 @@ export function useBusinessContext(projectId: string) {
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
   const fetchContext = useCallback(async () => {
+    if (!projectId) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
 
     const { data } = await supabase
