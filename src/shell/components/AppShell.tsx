@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Menu, X, GitBranch, FolderOpen } from 'lucide-react'
 import { MainNav } from './MainNav'
 import { UserMenu } from './UserMenu'
+import { SidebarTopExperiments } from './SidebarTopExperiments'
+import type { SidebarExperiment } from '../../hooks/use-top-experiments'
 
 export interface NavigationItem {
   label: string
@@ -13,9 +15,9 @@ interface AppShellProps {
   children: React.ReactNode
   navigationItems: NavigationItem[]
   user?: { name: string; avatarUrl?: string }
+  topExperiments?: SidebarExperiment[]
   onNavigate?: (href: string) => void
   onLogout?: () => void
-  /** Navega a la lista de proyectos desde el logo o el botón */
   onNavigateToProjects?: () => void
 }
 
@@ -23,6 +25,7 @@ export function AppShell({
   children,
   navigationItems,
   user = { name: 'Alex Morgan' },
+  topExperiments = [],
   onNavigate,
   onLogout,
   onNavigateToProjects,
@@ -100,6 +103,20 @@ export function AppShell({
               setMobileOpen(false)
             }}
           />
+
+          {/* Top 3 Experiments */}
+          {topExperiments.length > 0 && (
+            <>
+              <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
+              <SidebarTopExperiments
+                experiments={topExperiments}
+                onNavigateToOpportunity={(oppId) => {
+                  onNavigate?.(`/opportunity/${oppId}`)
+                  setMobileOpen(false)
+                }}
+              />
+            </>
+          )}
         </div>
 
         {/* User menu */}
