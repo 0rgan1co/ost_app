@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useOSTTree } from '../../hooks/use-ost-tree'
+import { useBusinessContext } from '../../hooks/use-business-context'
 import { OSTListView } from './components/OSTListView'
 import { OSTTreeViewCanvas } from './components/OSTTreeView'
 import { OpportunityPanel } from './components/OpportunityPanel'
@@ -125,6 +126,16 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch,
   } = useOSTTree(project.id)
 
+  const { context: bizContext } = useBusinessContext(project.id)
+
+  const businessContextSummary = (bizContext.northStar.value || bizContext.targetSegment.value)
+    ? {
+        northStar: bizContext.northStar.value,
+        targetSegment: bizContext.targetSegment.value,
+        keyConstraints: bizContext.keyConstraints.value,
+      }
+    : null
+
   // ── Local UI state ──────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -152,6 +163,16 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       name: data.name,
       description: data.description || undefined,
     })
+    setIsModalOpen(false)
+  }, [createOpportunity])
+
+  const handleConfirmMultiple = useCallback(async (items: { name: string; description: string }[]) => {
+    for (const item of items) {
+      await createOpportunity({
+        name: item.name,
+        description: item.description || undefined,
+      })
+    }
     setIsModalOpen(false)
   }, [createOpportunity])
 
@@ -243,7 +264,9 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       <CreateOpportunityModal
         isOpen={isModalOpen}
         parentName={null}
+        businessContext={businessContextSummary}
         onConfirm={handleConfirmCreate}
+        onConfirmMultiple={handleConfirmMultiple}
         onClose={() => setIsModalOpen(false)}
       />
     </div>
