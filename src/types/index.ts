@@ -76,8 +76,8 @@ export interface ProjectsProps {
   /** Navigate to the OST Tree of the selected project */
   onSelectProject: (projectId: string) => void
 
-  /** Create a new project with name and optional description */
-  onCreateProject: (data: { name: string; description: string }) => Promise<boolean> | void
+  /** Create a new project with name and optional description. Returns project ID on success. */
+  onCreateProject: (data: { name: string; description: string }) => Promise<string | false> | void
 
   /** Delete a project (admin only) */
   onDeleteProject: (projectId: string) => void

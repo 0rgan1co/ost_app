@@ -131,7 +131,7 @@ export function useProjects(currentUserId: string) {
     fetchAvailableUsers()
   }, [currentUserId])
 
-  async function createProject(data: { name: string; description: string }): Promise<boolean> {
+  async function createProject(data: { name: string; description: string }): Promise<string | false> {
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({ name: data.name, description: data.description, created_by: currentUserId })
@@ -154,7 +154,7 @@ export function useProjects(currentUserId: string) {
     }
 
     await fetchProjects()
-    return true
+    return project.id
   }
 
   async function deleteProject(projectId: string) {
