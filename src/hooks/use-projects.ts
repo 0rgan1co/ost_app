@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { sendProjectInvite } from '../lib/email'
 import type { Project, ProjectRole, InviteState, User } from '../types'
 
 export function useProjects(currentUserId: string) {
@@ -193,6 +194,19 @@ export function useProjects(currentUserId: string) {
       return false
     }
 
+    // Send email invite
+    const project = projects.find(p => p.id === projectId)
+    const { data: inviterProfile } = await supabase.from('profiles').select('full_name').eq('id', currentUserId).single()
+    if (project) {
+      sendProjectInvite({
+        to: email,
+        projectName: project.name,
+        projectId,
+        inviterName: inviterProfile?.full_name ?? 'Un miembro del equipo',
+        role: 'viewer',
+      }).catch(() => {})
+    }
+
     await fetchProjects()
     return true
   }
@@ -207,6 +221,21 @@ export function useProjects(currentUserId: string) {
     if (error) {
       console.error('Error adding member:', error)
       return
+    }
+
+    // Send email invite (fire and forget)
+    const project = projects.find(p => p.id === projectId)
+    const addedUser = availableUsers.find(u => u.id === userId)
+    const { data: inviterProfile } = await supabase.from('profiles').select('full_name').eq('id', currentUserId).single()
+    if (project && addedUser?.email) {
+      sendProjectInvite({
+        to: addedUser.email,
+        toName: addedUser.name,
+        projectName: project.name,
+        projectId,
+        inviterName: inviterProfile?.full_name ?? 'Un miembro del equipo',
+        role,
+      }).catch(() => {})
     }
 
     await fetchProjects()
