@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { supabase } from '../lib/supabase'
 import { anthropic, AI_MODEL } from '../lib/anthropic'
 
 export interface WizardMessage {
@@ -9,75 +10,68 @@ export interface WizardMessage {
 
 export type WizardPhase =
   | 'challenge'
-  | 'context'
+  | 'target'
+  | 'constraints'
   | 'opportunities'
   | 'evidence'
   | 'hypotheses'
-  | 'review'
+  | 'feedback'
   | 'done'
 
 const PHASE_ORDER: WizardPhase[] = [
-  'challenge', 'context', 'opportunities', 'evidence', 'hypotheses', 'review', 'done',
+  'challenge', 'target', 'constraints', 'opportunities', 'evidence', 'hypotheses', 'feedback', 'done',
 ]
 
-const SYSTEM_PROMPT = `Eres un facilitador experto en Product Discovery y Opportunity Solution Tree (Teresa Torres).
-Tu rol es guiar al usuario paso a paso para completar su OST de forma conversacional.
+// ─── Hardcoded questions per phase ────────────────────────────────────────────
 
-REGLAS:
-- Haz UNA pregunta a la vez, nunca más
-- Sé conciso y directo (2-3 oraciones máximo por mensaje)
-- Usa español natural y cercano
-- Cuando el usuario responda, confirma brevemente lo que entendiste y avanza a la siguiente pregunta
-- Si la respuesta es vaga, pide que sea más específica
+const QUESTIONS: Record<WizardPhase, string> = {
+  challenge: '',
+  target: '¿Quién es tu usuario target? Describilo brevemente: qué hace, qué necesita, qué le duele.',
+  constraints: '¿Qué restricciones importantes tienen? (presupuesto, tecnología, tiempo, regulación, equipo...)',
+  opportunities: 'Listá 2-3 oportunidades o problemas del usuario que quieras explorar. Separalas con punto y coma o una por línea.',
+  evidence: '¿Qué evidencia tenés para estas oportunidades? (citas de usuarios, datos, observaciones). Si no tenés aún, escribí "ninguna por ahora".',
+  hypotheses: '¿Qué ideas de solución están considerando para estas oportunidades? Listá las que se te ocurran.',
+  feedback: '',
+  done: '',
+}
 
-FLUJO (sigue este orden exacto):
-1. CHALLENGE: Pregunta cuál es el desafío estratégico que le gustaría encarar
-2. CONTEXT: Pregunta por el contexto: ¿Quién es tu usuario target? ¿Qué restricciones importantes tienen?
-3. OPPORTUNITIES: Pregunta qué problemas u oportunidades del usuario han identificado (pide al menos 2-3)
-4. EVIDENCE: Para cada oportunidad mencionada, pregunta qué evidencia la soporta (citas, datos, observaciones)
-5. HYPOTHESES: Para cada oportunidad, pregunta qué soluciones están considerando
-6. REVIEW: Resume todo el OST armado y da feedback constructivo sobre fortalezas y brechas
+const CONFIRMATIONS: Record<string, (input: string) => string> = {
+  challenge: (input) => `Perfecto, tu desafío estratégico es: **${input.slice(0, 100)}${input.length > 100 ? '...' : ''}**`,
+  target: () => 'Entendido, tengo el perfil de tu usuario.',
+  constraints: () => 'Anotado. Estas restricciones son clave para enfocar las soluciones.',
+  opportunities: (input) => {
+    const count = parseItems(input).length
+    return `Registré ${count} oportunidad${count !== 1 ? 'es' : ''}. Ahora veamos la evidencia.`
+  },
+  evidence: () => 'Evidencia registrada.',
+  hypotheses: () => '¡Genial! Ya tengo todo para armar tu OST. Dame un momento para analizar y darte feedback...',
+}
 
-Responde SOLO con texto conversacional natural en español. NO uses JSON ni formato estructurado.`
+function parseItems(text: string): string[] {
+  return text
+    .split(/[;\n]/)
+    .map(l => l.replace(/^[\d\-\.\)\s•]+/, '').trim())
+    .filter(l => l.length > 3)
+}
 
-export function useOSTWizard(_projectId: string, projectName: string) {
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export function useOSTWizard(projectId: string, projectName: string) {
   const [messages, setMessages] = useState<WizardMessage[]>([])
   const [phase, setPhase] = useState<WizardPhase>('challenge')
   const [sending, setSending] = useState(false)
-  const apiHistoryRef = useRef<{ role: 'user' | 'assistant'; content: string }[]>([])
   const sendingRef = useRef(false)
+  const collectedRef = useRef<Record<string, string>>({})
 
-  const callClaude = useCallback(async (msgs: { role: 'user' | 'assistant'; content: string }[]): Promise<string> => {
-    const response = await anthropic.messages.create({
-      model: AI_MODEL,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: msgs,
-    })
-    return response.content[0].type === 'text' ? response.content[0].text : ''
-  }, [])
+  const msg = (role: 'user' | 'assistant', content: string): WizardMessage => ({
+    id: crypto.randomUUID(), role, content,
+  })
 
-  const startWizard = useCallback(async () => {
-    if (sendingRef.current) return
-    sendingRef.current = true
-    setSending(true)
-
-    const initMsg = `Acabo de crear un proyecto llamado "${projectName}". Quiero completar su OST. Empezá con la primera pregunta sobre el desafío estratégico.`
-    apiHistoryRef.current = [{ role: 'user', content: initMsg }]
-
-    let reply: string
-    try {
-      reply = await callClaude(apiHistoryRef.current)
-    } catch (err) {
-      console.error('Wizard start error:', err)
-      reply = `¡Hola! Vamos a armar tu OST para "${projectName}". Contame: ¿cuál es el desafío estratégico que te gustaría encarar con este proyecto?`
-    }
-
-    apiHistoryRef.current.push({ role: 'assistant', content: reply })
-    setMessages([{ id: crypto.randomUUID(), role: 'assistant', content: reply }])
-    setSending(false)
-    sendingRef.current = false
-  }, [projectName, callClaude])
+  const startWizard = useCallback(() => {
+    const greeting = `¡Hola! Vamos a armar el OST de **"${projectName}"** paso a paso. Contame: ¿cuál es el desafío estratégico que te gustaría encarar?`
+    setMessages([msg('assistant', greeting)])
+    setPhase('challenge')
+  }, [projectName])
 
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || sendingRef.current) return
@@ -85,73 +79,211 @@ export function useOSTWizard(_projectId: string, projectName: string) {
     setSending(true)
 
     const trimmed = userText.trim()
+    const currentPhase = phase
 
-    // Optimistic UI: show user message immediately
-    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'user', content: trimmed }])
+    // Store answer
+    collectedRef.current[currentPhase] = trimmed
 
-    // Add to API history
-    apiHistoryRef.current.push({ role: 'user', content: trimmed })
+    // Show user message
+    const newMsgs: WizardMessage[] = [msg('user', trimmed)]
 
-    let reply: string
-    try {
-      reply = await callClaude(apiHistoryRef.current)
-    } catch (err) {
-      console.error('Wizard send error:', err)
-      // Remove failed user message from history to keep alternation valid
-      apiHistoryRef.current.pop()
-      setMessages(prev => [...prev, {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: 'Hubo un error procesando tu respuesta. ¿Podés intentar de nuevo?',
-      }])
-      setSending(false)
-      sendingRef.current = false
-      return
+    // Confirmation
+    const confirmFn = CONFIRMATIONS[currentPhase]
+    if (confirmFn) {
+      newMsgs.push(msg('assistant', confirmFn(trimmed)))
     }
 
-    apiHistoryRef.current.push({ role: 'assistant', content: reply })
+    // Save data to Supabase
+    await savePhaseData(currentPhase, trimmed, projectId, collectedRef.current)
 
-    // Advance phase based on what Claude is asking about
-    const lower = reply.toLowerCase()
-    if (phase === 'challenge' && (lower.includes('usuario') || lower.includes('target') || lower.includes('restricci') || lower.includes('contexto'))) {
-      setPhase('context')
-    } else if (phase === 'context' && (lower.includes('oportunidad') || lower.includes('problema') || lower.includes('necesidad'))) {
-      setPhase('opportunities')
-    } else if (phase === 'opportunities' && (lower.includes('evidencia') || lower.includes('dato') || lower.includes('cita') || lower.includes('observ'))) {
-      setPhase('evidence')
-    } else if (phase === 'evidence' && (lower.includes('solución') || lower.includes('hipótesis') || lower.includes('solucion') || lower.includes('idea'))) {
-      setPhase('hypotheses')
-    } else if (phase === 'hypotheses' && (lower.includes('resumen') || lower.includes('feedback') || lower.includes('fortaleza') || lower.includes('brecha') || lower.includes('ost completo'))) {
-      setPhase('review')
-    } else if (phase === 'review') {
-      setPhase('done')
+    // Determine next phase
+    const currentIdx = PHASE_ORDER.indexOf(currentPhase)
+    const nextPhase = PHASE_ORDER[currentIdx + 1] as WizardPhase | undefined
+
+    if (nextPhase && nextPhase !== 'feedback' && nextPhase !== 'done') {
+      // Ask next question
+      const question = QUESTIONS[nextPhase]
+      if (question) {
+        newMsgs.push(msg('assistant', question))
+      }
+      setMessages(prev => [...prev, ...newMsgs])
+      setPhase(nextPhase)
+    } else if (nextPhase === 'feedback') {
+      // Generate AI feedback
+      setMessages(prev => [...prev, ...newMsgs])
+      setPhase('feedback')
+
+      // Call Claude for feedback
+      try {
+        const feedbackText = await generateFeedback(collectedRef.current, projectName)
+        setMessages(prev => [...prev, msg('assistant', feedbackText)])
+        setPhase('done')
+      } catch (err) {
+        console.error('Feedback error:', err)
+        setMessages(prev => [...prev, msg('assistant', '¡Tu OST está armado! Podés verlo en la sección OST Tree. Revisá las oportunidades y agregá más evidencia para fortalecer tus hipótesis.')])
+        setPhase('done')
+      }
     }
 
-    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: reply }])
     setSending(false)
     sendingRef.current = false
-  }, [callClaude, phase])
+  }, [phase, projectId, projectName])
 
   const currentPhaseLabel = PHASE_LABELS[phase] ?? ''
   const progress = Math.round((PHASE_ORDER.indexOf(phase) / (PHASE_ORDER.length - 1)) * 100)
 
-  return {
-    messages,
-    phase,
-    currentPhaseLabel,
-    progress,
-    sending,
-    startWizard,
-    sendMessage,
-  }
+  return { messages, phase, currentPhaseLabel, progress, sending, startWizard, sendMessage }
 }
+
+// ─── Phase labels ─────────────────────────────────────────────────────────────
 
 const PHASE_LABELS: Record<WizardPhase, string> = {
   challenge: 'Desafío estratégico',
-  context: 'Contexto',
+  target: 'Usuario target',
+  constraints: 'Restricciones',
   opportunities: 'Oportunidades',
   evidence: 'Evidencia',
   hypotheses: 'Hipótesis de solución',
-  review: 'Revisión y feedback',
+  feedback: 'Generando feedback...',
   done: 'Completado',
+}
+
+// ─── Save data to Supabase ────────────────────────────────────────────────────
+
+async function savePhaseData(
+  phase: string,
+  userText: string,
+  projectId: string,
+  _collected: Record<string, string>,
+) {
+  try {
+    switch (phase) {
+      case 'challenge': {
+        const { data: existing } = await supabase
+          .from('business_context')
+          .select('id')
+          .eq('project_id', projectId)
+          .maybeSingle()
+
+        const content = { northStar: userText, targetSegment: '', keyConstraints: '' }
+        if (existing) {
+          await supabase.from('business_context').update({ content }).eq('id', existing.id)
+        } else {
+          await supabase.from('business_context').insert({ project_id: projectId, content })
+        }
+        break
+      }
+
+      case 'target': {
+        const { data: existing } = await supabase
+          .from('business_context')
+          .select('id, content')
+          .eq('project_id', projectId)
+          .maybeSingle()
+        if (existing) {
+          const prev = (existing.content as any) ?? {}
+          await supabase.from('business_context').update({
+            content: { ...prev, targetSegment: userText },
+          }).eq('id', existing.id)
+        }
+        break
+      }
+
+      case 'constraints': {
+        const { data: existing } = await supabase
+          .from('business_context')
+          .select('id, content')
+          .eq('project_id', projectId)
+          .maybeSingle()
+        if (existing) {
+          const prev = (existing.content as any) ?? {}
+          await supabase.from('business_context').update({
+            content: { ...prev, keyConstraints: userText },
+          }).eq('id', existing.id)
+        }
+        break
+      }
+
+      case 'opportunities': {
+        const items = parseItems(userText)
+        for (const name of items) {
+          await supabase.from('opportunities').insert({
+            project_id: projectId,
+            parent_id: null,
+            name,
+          })
+        }
+        break
+      }
+
+      case 'evidence': {
+        if (userText.toLowerCase().includes('ninguna')) break
+        // Associate evidence with the first opportunity
+        const { data: opps } = await supabase
+          .from('opportunities')
+          .select('id')
+          .eq('project_id', projectId)
+          .limit(1)
+        if (opps?.[0]) {
+          await supabase.from('opportunity_evidence').insert({
+            opportunity_id: opps[0].id,
+            type: 'observacion',
+            content: userText,
+          })
+        }
+        break
+      }
+
+      case 'hypotheses': {
+        const items = parseItems(userText)
+        const { data: opps } = await supabase
+          .from('opportunities')
+          .select('id')
+          .eq('project_id', projectId)
+          .limit(1)
+        if (opps?.[0]) {
+          for (const desc of items) {
+            await supabase.from('hypotheses').insert({
+              opportunity_id: opps[0].id,
+              description: desc,
+              status: 'to do',
+            })
+          }
+        }
+        break
+      }
+    }
+  } catch (err) {
+    console.error('Error saving wizard data:', err)
+  }
+}
+
+// ─── Claude feedback ──────────────────────────────────────────────────────────
+
+async function generateFeedback(collected: Record<string, string>, projectName: string): Promise<string> {
+  const prompt = `Sos un experto en Product Discovery y Opportunity Solution Tree (Teresa Torres).
+
+Acabo de completar el OST inicial del proyecto "${projectName}". Acá está lo que armé:
+
+**Desafío estratégico:** ${collected.challenge || 'No definido'}
+**Usuario target:** ${collected.target || 'No definido'}
+**Restricciones:** ${collected.constraints || 'No definidas'}
+**Oportunidades:** ${collected.opportunities || 'No definidas'}
+**Evidencia:** ${collected.evidence || 'Ninguna aún'}
+**Hipótesis de solución:** ${collected.hypotheses || 'Ninguna aún'}
+
+Dame feedback breve (máximo 5 oraciones) sobre:
+1. Qué está bien armado
+2. Qué le falta o podría mejorar
+3. Un next step concreto que me recomendás
+
+Respondé en español, directo y práctico. No uses JSON.`
+
+  const response = await anthropic.messages.create({
+    model: AI_MODEL,
+    max_tokens: 512,
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  return response.content[0].type === 'text' ? response.content[0].text : 'OST creado exitosamente.'
 }
