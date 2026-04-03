@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# OST App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Herramienta de product discovery basada en el **Opportunity Solution Tree** de Teresa Torres. Permite gestionar oportunidades, evidencia, hipotesis y experimentos en un arbol visual, con evaluacion por IA y colaboracion en tiempo real.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS v4
+- **Backend**: Supabase (PostgreSQL + RLS + Realtime + Auth)
+- **IA**: Claude Sonnet via Anthropic SDK
+- **Auth**: Google OAuth via Supabase Auth
+- **Design System**: Paradigma (dark/light mode)
 
-## React Compiler
+## Secciones
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Seccion | Descripcion |
+|---------|-------------|
+| **Projects** | Lista y gestion de proyectos con roles (admin/usuario/viewer) |
+| **OST Tree** | Arbol visual de oportunidades |
+| **Opportunity Detail** | Evidencia, hipotesis, experimentos, top-3 |
+| **AI Evaluation** | Evaluacion con Claude + conversacion de refinamiento |
+| **Business Context** | Contexto estrategico para alimentar evaluaciones IA |
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Instalar dependencias
+npm install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Configurar variables de entorno
+cp .env.example .env
+# Completar VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_ANTHROPIC_API_KEY
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# Desarrollo
+npm run dev
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Build
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Modelo de dominio
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+Project
+  └── Oportunidad
+        ├── Evidencia (cita | hecho | observacion)
+        ├── Hipotesis (to do → en curso → terminada)
+        │     └── Experimento (type, success_criterion, effort, impact)
+        └── Evaluacion IA (Claude) + Conversacion de refinamiento
+```
+
+## Deploy
+
+La app se despliega en GitHub Pages con base path `/ost_app`.
