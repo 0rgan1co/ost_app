@@ -9,10 +9,6 @@ interface OSTTreeViewProps {
   onRestore: (id: string) => void
 }
 
-const NODE_W_MOBILE = 160
-const NODE_W_DESKTOP = 224
-const H_GAP_MOBILE = 16
-const H_GAP_DESKTOP = 32
 
 export function OSTTreeViewCanvas({
   opportunities,
