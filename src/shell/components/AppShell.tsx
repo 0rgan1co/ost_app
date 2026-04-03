@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Menu, X, GitBranch, FolderOpen } from 'lucide-react'
+import { Menu, X, GitBranch, FolderOpen, Sun, Moon } from 'lucide-react'
 import { MainNav } from './MainNav'
 import { UserMenu } from './UserMenu'
 import { SidebarTopExperiments } from './SidebarTopExperiments'
+import { useTheme } from '../../contexts/ThemeContext'
 import type { SidebarExperiment } from '../../hooks/use-top-experiments'
 
 export interface NavigationItem {
@@ -31,6 +32,9 @@ export function AppShell({
   onNavigateToProjects,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { resolved, setTheme } = useTheme()
+
+  const toggleTheme = () => setTheme(resolved === 'dark' ? 'light' : 'dark')
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans">
@@ -119,8 +123,16 @@ export function AppShell({
           )}
         </div>
 
-        {/* User menu */}
-        <div className="px-3 py-3 border-t border-slate-200 dark:border-slate-800 flex-shrink-0">
+        {/* Theme toggle + User menu */}
+        <div className="px-3 py-3 border-t border-slate-200 dark:border-slate-800 flex-shrink-0 space-y-1">
+          <button
+            onClick={toggleTheme}
+            title={resolved === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold font-sans text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all md:justify-center lg:justify-start"
+          >
+            {resolved === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            <span className="hidden lg:inline">{resolved === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
+          </button>
           <UserMenu user={user} onLogout={onLogout} />
         </div>
       </aside>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProjectProvider, useProject } from './contexts/ProjectContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthGuard } from './components/AuthGuard'
 import { ShellWrapper } from './components/ShellWrapper'
 import { LoginPage } from './pages/LoginPage'
@@ -13,6 +14,7 @@ import { useOpportunityDetail } from './hooks/use-opportunity-detail'
 import { useAIEvaluation } from './hooks/use-ai-evaluation'
 import { useBusinessContext } from './hooks/use-business-context'
 import { ProjectSelector } from './components/ProjectSelector'
+import { SettingsPage } from './pages/SettingsPage'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-8 text-slate-400 font-sans">{label} — coming soon</div>
@@ -112,6 +114,7 @@ function BusinessContextPage() {
 
 export function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <ProjectProvider>
       <BrowserRouter basename="/ost_app">
@@ -162,7 +165,7 @@ export function App() {
             path="/settings"
             element={
               <AuthGuard>
-                <ShellWrapper><Stub label="Settings" /></ShellWrapper>
+                <ShellWrapper><SettingsPage /></ShellWrapper>
               </AuthGuard>
             }
           />
@@ -178,6 +181,7 @@ export function App() {
       </BrowserRouter>
       </ProjectProvider>
     </AuthProvider>
+    </ThemeProvider>
   )
 }
 
