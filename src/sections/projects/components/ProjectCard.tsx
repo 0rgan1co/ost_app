@@ -13,7 +13,7 @@ interface ProjectCardProps {
 const roleConfig: Record<ProjectRole, { label: string; className: string; borderClass: string }> = {
   admin:   { label: 'Admin',   className: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',     borderClass: 'border-red-400 dark:border-red-500' },
   usuario: { label: 'Usuario', className: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300', borderClass: 'border-slate-400 dark:border-slate-500' },
-  viewer:  { label: 'Viewer',  className: 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500',  borderClass: 'border-slate-300 dark:border-slate-700' },
+  viewer:  { label: 'Viewer',  className: 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-400',  borderClass: 'border-slate-300 dark:border-slate-700' },
 }
 
 function formatRelativeTime(isoDate: string): string {
@@ -100,7 +100,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full font-['IBM_Plex_Mono'] ${
               project.isPublic
                 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                : 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                : 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-400'
             }`}>
               {project.isPublic ? <Globe size={10} className="inline mr-1" /> : <Lock size={10} className="inline mr-1" />}
               {project.isPublic ? 'Público' : 'Privado'}
@@ -118,7 +118,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
             {project.description}
           </p>
         ) : (
-          <p className="text-sm text-slate-300 dark:text-slate-600 italic mb-4 font-sans">
+          <p className="text-sm text-slate-300 dark:text-slate-400 italic mb-4 font-sans">
             Sin descripción
           </p>
         )}
@@ -165,7 +165,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
             <button
               onClick={(e) => { e.stopPropagation(); onToggleVisibility(!project.isPublic) }}
               title={project.isPublic ? 'Hacer privado' : 'Hacer público'}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
             >
               {project.isPublic ? <Globe size={13} /> : <Lock size={13} />}
             </button>
@@ -176,7 +176,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
             <button
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(true) }}
               title="Eliminar proyecto"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
             >
               <Trash2 size={13} />
             </button>
@@ -185,7 +185,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
           {/* Navigate arrow */}
           <button
             onClick={onSelect}
-            className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors font-sans"
+            className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors font-sans"
           >
             <span className="hidden sm:inline">Abrir</span>
             <ChevronRight size={14} />

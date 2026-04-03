@@ -33,13 +33,13 @@ export function OSTNode({
     <div className="flex items-center gap-2 font-[IBM_Plex_Mono] text-[11px] text-slate-500">
       {opportunity.evidenceCount > 0 && (
         <span className="flex items-center gap-1">
-          <span className="text-slate-600">ev</span>
+          <span className="text-slate-400">ev</span>
           <span className="text-slate-400">{opportunity.evidenceCount}</span>
         </span>
       )}
       {opportunity.hypothesisCount > 0 && (
         <span className="flex items-center gap-1">
-          <span className="text-slate-600">hip</span>
+          <span className="text-slate-400">hip</span>
           <span className={opportunity.activeHypothesisCount > 0 ? 'text-red-400' : 'text-slate-400'}>
             {opportunity.activeHypothesisCount}/{opportunity.hypothesisCount}
           </span>

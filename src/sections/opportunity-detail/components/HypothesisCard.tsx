@@ -26,7 +26,7 @@ const HYPOTHESIS_STATUS_CONFIG: Record<
 > = {
   'to do': {
     label: 'Pendiente',
-    color: 'text-slate-400 bg-slate-700',
+    color: 'text-slate-300 bg-slate-700',
     icon: <Clock size={11} />,
     next: 'en curso',
   },
@@ -119,7 +119,7 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
           rows={2}
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-            text-sm text-slate-200 placeholder:text-slate-500
+            text-sm text-slate-200 placeholder:text-slate-400
             focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
             resize-none font-sans
           "
@@ -136,7 +136,7 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
           rows={2}
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-            text-sm text-slate-200 placeholder:text-slate-500
+            text-sm text-slate-200 placeholder:text-slate-400
             focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
             resize-none font-sans
           "
@@ -241,7 +241,7 @@ function ResultModal({ onConfirm, onCancel }: ResultModalProps) {
         rows={3}
         className="
           w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2
-          text-sm text-slate-200 placeholder:text-slate-500
+          text-sm text-slate-200 placeholder:text-slate-400
           focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
           resize-none font-sans
         "
@@ -342,7 +342,7 @@ export function HypothesisCard({
               {statusCfg.icon}
               {statusCfg.label}
             </span>
-            <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-600">
+            <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-400">
               {hypothesis.experiments.length} experimento{hypothesis.experiments.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -378,7 +378,7 @@ export function HypothesisCard({
             <button
               onClick={() => onDelete(hypothesis.id)}
               title="Eliminar hipótesis"
-              className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
             >
               <Trash2 size={14} />
             </button>

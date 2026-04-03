@@ -22,7 +22,7 @@ const roleLabels: Record<ProjectRole, string> = {
 const roleBadge: Record<ProjectRole, string> = {
   admin:   'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',
   usuario: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  viewer:  'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
+  viewer:  'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-400',
 }
 
 function MemberAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
@@ -168,7 +168,7 @@ export function MembersDrawer({
               {isAdmin && (
                 <button
                   onClick={() => onRemoveMember(project.id, member.id)}
-                  className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all flex-shrink-0"
+                  className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all flex-shrink-0"
                 >
                   <Trash2 size={13} />
                 </button>
@@ -215,7 +215,7 @@ export function MembersDrawer({
                         {user.email}
                       </p>
                     </div>
-                    <UserPlus size={14} className="text-slate-300 dark:text-slate-600 group-hover/add:text-red-500 dark:group-hover/add:text-red-400 transition-colors flex-shrink-0" />
+                    <UserPlus size={14} className="text-slate-300 dark:text-slate-400 group-hover/add:text-red-500 dark:group-hover/add:text-red-400 transition-colors flex-shrink-0" />
                   </button>
                 ))}
               </div>
@@ -234,7 +234,7 @@ export function MembersDrawer({
               <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-3">
                 Invitar viewer por email
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-600 font-sans mb-2">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans mb-2">
                 No necesita tener cuenta en la app
               </p>
               <div className="flex gap-2">

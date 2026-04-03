@@ -99,7 +99,7 @@ export function CreateOpportunityModal({
                 className="
                   w-full bg-slate-900 border border-slate-800 rounded-xl
                   px-4 py-3 text-slate-100 font-[Nunito_Sans] text-sm
-                  placeholder:text-slate-600
+                  placeholder:text-slate-500
                   focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20
                   transition-colors
                 "
@@ -109,7 +109,7 @@ export function CreateOpportunityModal({
             <div>
               <label className="block font-[Nunito_Sans] font-semibold text-slate-300 text-xs uppercase tracking-widest mb-2">
                 Descripción
-                <span className="text-slate-600 ml-1 normal-case tracking-normal font-normal">(opcional)</span>
+                <span className="text-slate-400 ml-1 normal-case tracking-normal font-normal">(opcional)</span>
               </label>
               <textarea
                 value={description}
@@ -119,7 +119,7 @@ export function CreateOpportunityModal({
                 className="
                   w-full bg-slate-900 border border-slate-800 rounded-xl
                   px-4 py-3 text-slate-100 font-[Nunito_Sans] text-sm
-                  placeholder:text-slate-600 resize-none
+                  placeholder:text-slate-500 resize-none
                   focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20
                   transition-colors
                 "

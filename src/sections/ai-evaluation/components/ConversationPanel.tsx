@@ -129,7 +129,7 @@ export function ConversationPanel({
     return (
       <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
         <div className="flex flex-col items-center justify-center gap-2 text-center py-4">
-          <Bot size={24} className="text-slate-600" />
+          <Bot size={24} className="text-slate-400" />
           <p className="text-sm text-slate-500">
             Ejecuta una evaluación con IA para iniciar la conversación de refinamiento.
           </p>
@@ -145,7 +145,7 @@ export function ConversationPanel({
         <Bot size={15} className="text-red-400" />
         <span className="text-sm font-medium text-slate-300">Conversación con Claude</span>
         {conversation.length > 0 && (
-          <span className="ml-auto font-mono text-xs text-slate-600">
+          <span className="ml-auto font-mono text-xs text-slate-400">
             {conversation.length} mensaje{conversation.length !== 1 ? 's' : ''}
           </span>
         )}
@@ -185,7 +185,7 @@ export function ConversationPanel({
             placeholder="Escribe un mensaje... (Enter para enviar)"
             rows={2}
             disabled={isSendingMessage}
-            className="flex-1 resize-none rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-colors disabled:opacity-50"
+            className="flex-1 resize-none rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-400 outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-colors disabled:opacity-50"
           />
           <button
             type="submit"
@@ -200,7 +200,7 @@ export function ConversationPanel({
             )}
           </button>
         </form>
-        <p className="mt-1.5 text-xs text-slate-600 pl-1">
+        <p className="mt-1.5 text-xs text-slate-400 pl-1">
           Shift+Enter para nueva línea
         </p>
       </div>

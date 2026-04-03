@@ -99,7 +99,7 @@ export function AIEvaluationView({
             Analiza{' '}
             <span className="text-slate-400 font-medium">{opportunity.title}</span>{' '}
             con Claude {/* model name */}
-            <span className="font-mono text-xs text-slate-600">claude-sonnet-4-6</span>
+            <span className="font-mono text-xs text-slate-400">claude-sonnet-4-6</span>
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export function AIEvaluationView({
             <p className="text-sm text-slate-500">
               Aún no hay evaluaciones para esta oportunidad.
             </p>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Haz clic en "Evaluar con IA" para comenzar.
             </p>
           </div>

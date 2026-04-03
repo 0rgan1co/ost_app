@@ -57,7 +57,7 @@ export function SidebarTopExperiments({ experiments, onNavigateToOpportunity }: 
                 <span className="text-[10px] font-['IBM_Plex_Mono'] text-red-400 font-bold">
                   {exp.score.toFixed(1)}
                 </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-600 truncate font-sans">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-sans">
                   · {exp.opportunityName}
                 </span>
               </div>

@@ -74,7 +74,7 @@ export function ProjectSelector({ sectionLabel }: ProjectSelectorProps) {
                 </p>
               )}
             </div>
-            <ChevronRight size={14} className="text-slate-600 group-hover:text-red-400 transition-colors flex-shrink-0" />
+            <ChevronRight size={14} className="text-slate-400 group-hover:text-red-400 transition-colors flex-shrink-0" />
           </button>
         ))}
       </div>

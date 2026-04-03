@@ -52,7 +52,7 @@ function InlineEdit({ value, placeholder = '—', multiline = false, className =
   if (editing) {
     const sharedClass = `
       w-full bg-slate-800 border border-red-500/40 rounded-lg px-2 py-1
-      text-inherit placeholder:text-slate-600 font-inherit
+      text-inherit placeholder:text-slate-400 font-inherit
       focus:outline-none focus:border-red-500/70 focus:ring-1 focus:ring-red-500/20
       resize-none transition-all
       ${className}
@@ -88,7 +88,7 @@ function InlineEdit({ value, placeholder = '—', multiline = false, className =
       title="Click para editar"
       className={`cursor-text hover:bg-slate-800/60 rounded px-1 -mx-1 transition-colors group ${className}`}
     >
-      {value || <span className="text-slate-600 italic">{placeholder}</span>}
+      {value || <span className="text-slate-400 italic">{placeholder}</span>}
     </span>
   )
 }
@@ -123,7 +123,7 @@ function AddHypothesisForm({ onAdd, onCancel }: AddHypothesisFormProps) {
         rows={3}
         className="
           w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-          text-sm text-slate-200 placeholder:text-slate-500
+          text-sm text-slate-200 placeholder:text-slate-400
           focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
           resize-none font-sans
         "
@@ -308,7 +308,7 @@ export function OpportunityDetailView({
           {hypotheses.length === 0 && !showHypothesisForm ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl py-10 text-center">
               <p className="text-slate-500 text-sm font-sans">Sin hipótesis registradas</p>
-              <p className="text-slate-600 text-xs mt-1 font-sans">
+              <p className="text-slate-400 text-xs mt-1 font-sans">
                 Añade hipótesis y define experimentos para validarlas
               </p>
               {onAddHypothesis && (

@@ -90,7 +90,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
         autoFocus
         className="
           w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-          text-sm text-slate-200 placeholder:text-slate-500
+          text-sm text-slate-200 placeholder:text-slate-400
           focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
           resize-none font-sans
         "
@@ -105,7 +105,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
           placeholder="Fuente (entrevista, documento, etc.)"
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-            text-sm text-slate-200 placeholder:text-slate-500
+            text-sm text-slate-200 placeholder:text-slate-400
             focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
             font-sans
           "
@@ -171,7 +171,7 @@ function EvidenceItem({ evidence, onDelete }: EvidenceItemProps) {
               — {evidence.source}
             </span>
           )}
-          <span className="text-[11px] text-slate-600 font-['IBM_Plex_Mono']">
+          <span className="text-[11px] text-slate-400 font-['IBM_Plex_Mono']">
             {formatDate(evidence.createdAt)}
           </span>
         </div>
@@ -182,7 +182,7 @@ function EvidenceItem({ evidence, onDelete }: EvidenceItemProps) {
         <button
           onClick={() => onDelete(evidence.id)}
           className={`
-            flex-shrink-0 p-1 rounded-md text-slate-600 hover:text-red-400 hover:bg-red-500/10
+            flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-red-400 hover:bg-red-500/10
             transition-all duration-150
             ${hovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
           `}
@@ -251,7 +251,7 @@ export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: E
       {evidence.length === 0 && !showForm ? (
         <div className="py-8 text-center">
           <p className="text-slate-500 text-sm font-sans">Sin evidencia registrada</p>
-          <p className="text-slate-600 text-xs mt-1 font-sans">
+          <p className="text-slate-400 text-xs mt-1 font-sans">
             Añade citas, hechos u observaciones para sustentar esta oportunidad
           </p>
         </div>

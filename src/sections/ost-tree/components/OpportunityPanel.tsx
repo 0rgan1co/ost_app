@@ -101,7 +101,7 @@ export function OpportunityPanel({
               {/* Counters grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
-                  <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-600 uppercase tracking-wider mb-1">
+                  <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 uppercase tracking-wider mb-1">
                     Evidencia
                   </p>
                   <p className="font-[IBM_Plex_Mono] text-xl font-bold text-slate-200">
@@ -109,12 +109,12 @@ export function OpportunityPanel({
                   </p>
                 </div>
                 <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
-                  <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-600 uppercase tracking-wider mb-1">
+                  <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 uppercase tracking-wider mb-1">
                     Hipótesis activas
                   </p>
                   <p className={`font-[IBM_Plex_Mono] text-xl font-bold ${opportunity.activeHypothesisCount > 0 ? 'text-red-400' : 'text-slate-200'}`}>
                     {opportunity.activeHypothesisCount}
-                    <span className="text-sm font-normal text-slate-600">/{opportunity.hypothesisCount}</span>
+                    <span className="text-sm font-normal text-slate-400">/{opportunity.hypothesisCount}</span>
                   </p>
                 </div>
               </div>
@@ -142,7 +142,7 @@ export function OpportunityPanel({
                             {ev.content}
                           </p>
                           {ev.source && (
-                            <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-600 mt-1.5 truncate">
+                            <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 mt-1.5 truncate">
                               — {ev.source}
                             </p>
                           )}
@@ -184,7 +184,7 @@ export function OpportunityPanel({
               {/* Empty state for no data */}
               {recentEvidence.length === 0 && hypothesesSummary.length === 0 && (
                 <div className="text-center py-4">
-                  <p className="text-slate-600 font-[Nunito_Sans] text-xs">
+                  <p className="text-slate-400 font-[Nunito_Sans] text-xs">
                     Sin evidencia ni hipótesis aún
                   </p>
                 </div>
