@@ -19,6 +19,7 @@ export function ProjectsPage() {
     deleteProject,
     toggleVisibility,
     addMember,
+    inviteViewer,
     updateMemberRole,
     removeMember,
   } = useProjects(user!.id)
@@ -53,6 +54,7 @@ export function ProjectsPage() {
       onDeleteProject={deleteProject}
       onToggleVisibility={toggleVisibility}
       onAddMember={addMember}
+      onInviteViewer={inviteViewer}
       onChangeMemberRole={updateMemberRole}
       onRemoveMember={removeMember}
     />

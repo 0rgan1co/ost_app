@@ -180,6 +180,23 @@ export function useProjects(currentUserId: string) {
     await fetchProjects()
   }
 
+  async function inviteViewer(projectId: string, email: string): Promise<boolean> {
+    // Email-only viewers don't need a user account
+    const { error } = await supabase.from('project_members').insert({
+      project_id: projectId,
+      email,
+      role: 'viewer',
+    })
+
+    if (error) {
+      console.error('Error inviting viewer:', error)
+      return false
+    }
+
+    await fetchProjects()
+    return true
+  }
+
   async function addMember(projectId: string, userId: string, role: ProjectRole) {
     const { error } = await supabase.from('project_members').insert({
       project_id: projectId,
@@ -253,6 +270,7 @@ export function useProjects(currentUserId: string) {
     deleteProject,
     toggleVisibility,
     addMember,
+    inviteViewer,
     inviteMember,
     updateMemberRole,
     removeMember,

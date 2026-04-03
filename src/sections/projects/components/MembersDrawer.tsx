@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Trash2, ChevronDown, UserPlus } from 'lucide-react'
+import { X, Trash2, ChevronDown, UserPlus, Mail, Loader2, Check } from 'lucide-react'
 import type { Project, ProjectRole, User } from '../../../types'
 
 interface MembersDrawerProps {
@@ -8,6 +8,7 @@ interface MembersDrawerProps {
   roleOptions: ProjectRole[]
   onClose: () => void
   onAddMember: (projectId: string, userId: string, role: ProjectRole) => void
+  onInviteViewer?: (projectId: string, email: string) => Promise<boolean>
   onChangeMemberRole: (projectId: string, memberId: string, role: ProjectRole) => void
   onRemoveMember: (projectId: string, memberId: string) => void
 }
@@ -50,11 +51,15 @@ export function MembersDrawer({
   roleOptions,
   onClose,
   onAddMember,
+  onInviteViewer,
   onChangeMemberRole,
   onRemoveMember,
 }: MembersDrawerProps) {
   const [inviteRole, setInviteRole] = useState<ProjectRole>('usuario')
   const [visible, setVisible] = useState(false)
+  const [viewerEmail, setViewerEmail] = useState('')
+  const [invitingViewer, setInvitingViewer] = useState(false)
+  const [viewerInvited, setViewerInvited] = useState(false)
 
   useEffect(() => {
     if (project) {
@@ -63,6 +68,17 @@ export function MembersDrawer({
       setVisible(false)
     }
   }, [project])
+
+  const handleInviteViewer = async () => {
+    if (!project || !viewerEmail.trim() || !onInviteViewer || invitingViewer) return
+    setInvitingViewer(true)
+    const ok = await onInviteViewer(project.id, viewerEmail.trim())
+    setInvitingViewer(false)
+    if (ok) {
+      setViewerInvited(true)
+      setViewerEmail('')
+    }
+  }
 
   if (!project) return null
 
@@ -210,6 +226,47 @@ export function MembersDrawer({
             <p className="mt-6 text-xs text-slate-400 dark:text-slate-500 italic font-sans">
               Todos los usuarios disponibles ya son miembros.
             </p>
+          )}
+
+          {/* Invite viewer by email (no account needed) */}
+          {isAdmin && onInviteViewer && (
+            <div className="mt-6">
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-3">
+                Invitar viewer por email
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-600 font-sans mb-2">
+                No necesita tener cuenta en la app
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="email"
+                    placeholder="email@ejemplo.com"
+                    value={viewerEmail}
+                    onChange={e => { setViewerEmail(e.target.value); setViewerInvited(false) }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && viewerEmail.trim()) {
+                        handleInviteViewer()
+                      }
+                    }}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                  />
+                </div>
+                <button
+                  onClick={handleInviteViewer}
+                  disabled={!viewerEmail.trim() || invitingViewer}
+                  className="px-3 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  {invitingViewer ? <Loader2 size={14} className="animate-spin" /> : viewerInvited ? <Check size={14} /> : <UserPlus size={14} />}
+                </button>
+              </div>
+              {viewerInvited && (
+                <p className="text-xs text-green-500 dark:text-green-400 mt-1 font-sans">
+                  Viewer agregado correctamente
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>

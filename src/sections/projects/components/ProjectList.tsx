@@ -14,6 +14,7 @@ export function ProjectList({
   onDeleteProject,
   onToggleVisibility,
   onAddMember,
+  onInviteViewer,
   onChangeMemberRole,
   onRemoveMember,
 }: ProjectsProps) {
@@ -158,6 +159,7 @@ export function ProjectList({
         roleOptions={roleOptions}
         onClose={() => setActiveProject(null)}
         onAddMember={onAddMember}
+        onInviteViewer={onInviteViewer}
         onChangeMemberRole={onChangeMemberRole}
         onRemoveMember={onRemoveMember}
       />

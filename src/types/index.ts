@@ -91,6 +91,9 @@ export interface ProjectsProps {
   /** Add a member to a project by userId and role (admin only) */
   onAddMember: (projectId: string, userId: string, role: ProjectRole) => void
 
+  /** Invite a viewer by email — no account needed */
+  onInviteViewer: (projectId: string, email: string) => Promise<boolean>
+
   /** Change the role of an existing member (admin only) */
   onChangeMemberRole: (projectId: string, memberId: string, role: ProjectRole) => void
 
