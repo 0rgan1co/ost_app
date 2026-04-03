@@ -124,7 +124,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
         )}
 
         {/* Stats row */}
-        <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500 font-['IBM_Plex_Mono']">
+        <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-400 font-['IBM_Plex_Mono']">
           <span className="flex items-center gap-1.5">
             <GitBranch size={12} />
             {project.opportunityCount} oportunidades
@@ -150,11 +150,11 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
             ))}
           </div>
           {extraCount > 0 && (
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-['IBM_Plex_Mono']">
+            <span className="text-[11px] text-slate-400 dark:text-slate-400 font-['IBM_Plex_Mono']">
               +{extraCount}
             </span>
           )}
-          <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-1 group-hover/members:text-slate-600 dark:group-hover/members:text-slate-300 transition-colors font-sans">
+          <span className="text-[11px] text-slate-400 dark:text-slate-400 ml-1 group-hover/members:text-slate-600 dark:group-hover/members:text-slate-300 transition-colors font-sans">
             <Users size={12} className="inline" />
           </span>
         </button>

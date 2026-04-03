@@ -41,7 +41,7 @@ function Breadcrumb({ projectName, opportunityTitle, onNavigateBack }: Breadcrum
         <span>{projectName}</span>
       </button>
       <ChevronRight size={13} className="text-slate-700" />
-      <span className="text-slate-500 max-w-[200px] truncate">{opportunityTitle}</span>
+      <span className="text-slate-500 max-w-[120px] sm:max-w-[200px] truncate">{opportunityTitle}</span>
       <ChevronRight size={13} className="text-slate-700" />
       <span className="text-slate-300 font-medium">Evaluación IA</span>
     </nav>
@@ -69,7 +69,7 @@ export function AIEvaluationView({
   const hasEvaluation = evaluations.length > 0
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-6 md:px-8 md:py-8">
+    <div className="min-h-screen bg-slate-950 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       {/* Toast notification */}
       {toast && (
         <div

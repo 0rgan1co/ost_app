@@ -209,7 +209,7 @@ export function MembersDrawer({
                 Invitar por email (viewer, sin cuenta)
               </p>
               <div className="flex gap-2">
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-0">
                   <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="email"
@@ -223,7 +223,7 @@ export function MembersDrawer({
                 <button
                   onClick={handleInviteViewer}
                   disabled={!viewerEmail.trim() || invitingViewer}
-                  className="w-9 h-9 flex items-center justify-center bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0"
+                  className="w-10 h-10 flex items-center justify-center bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0"
                 >
                   {invitingViewer ? <Loader2 size={14} className="animate-spin" /> : viewerInvited ? <Check size={14} /> : <UserPlus size={14} />}
                 </button>

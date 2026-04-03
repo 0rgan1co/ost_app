@@ -17,7 +17,7 @@ import { ProjectSelector } from './components/ProjectSelector'
 import { SettingsPage } from './pages/SettingsPage'
 
 const Stub = ({ label }: { label: string }) => (
-  <div className="p-8 text-slate-400 font-sans">{label} — coming soon</div>
+  <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
 )
 
 function OSTTreePage() {

@@ -24,7 +24,7 @@ export function EvaluationHistory({ pastEvaluations }: EvaluationHistoryProps) {
         <span className="flex items-center gap-2 text-sm font-medium text-slate-400">
           <History size={14} className="text-slate-500" />
           Evaluaciones anteriores
-          <span className="rounded-full bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-500">
+          <span className="rounded-full bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-400">
             {pastEvaluations.length}
           </span>
         </span>

@@ -51,7 +51,7 @@ export function SidebarTopExperiments({ experiments, onNavigateToOpportunity }: 
                 {exp.description}
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-400 dark:text-slate-500">
+                <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-400 dark:text-slate-400">
                   {TYPE_SHORT[exp.type] ?? exp.type}
                 </span>
                 <span className="text-[10px] font-['IBM_Plex_Mono'] text-red-400 font-bold">

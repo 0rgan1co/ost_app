@@ -152,7 +152,7 @@ export function ConversationPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto max-h-[400px] p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto max-h-[300px] sm:max-h-[400px] p-3 sm:p-4 space-y-3 sm:space-y-4">
         {conversation.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-2 text-center py-8">
             <p className="text-sm text-slate-500">
@@ -190,7 +190,7 @@ export function ConversationPanel({
           <button
             type="submit"
             disabled={!inputValue.trim() || isSendingMessage}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Enviar mensaje"
           >
             {isSendingMessage ? (

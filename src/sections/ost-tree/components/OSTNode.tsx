@@ -20,7 +20,7 @@ export function OSTNode({
   const isArchived = opportunity.isArchived
 
   const statusBadge = isArchived ? (
-    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">
+    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
       Descartada
     </span>
   ) : (
@@ -86,7 +86,7 @@ export function OSTNode({
         className={`
           group relative cursor-pointer select-none
           rounded-xl border transition-all duration-200
-          px-4 py-3 w-56
+          px-3 py-2.5 sm:px-4 sm:py-3 w-full
           ${isArchived
             ? 'bg-slate-900/50 border-slate-800/50 opacity-60'
             : isSelected

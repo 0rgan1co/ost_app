@@ -130,7 +130,7 @@ export function ContextFieldCard({
               onKeyDown={handleKeyDown}
               rows={4}
               placeholder={placeholder}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-colors duration-150"
+              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-colors duration-150"
               style={{ fontFamily: 'Nunito Sans, sans-serif' }}
             />
             <p className="mt-1.5 text-xs text-slate-400" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>

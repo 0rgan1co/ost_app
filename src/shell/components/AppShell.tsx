@@ -42,20 +42,20 @@ export function AppShell({
       {/* ── Mobile overlay ── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* ── Sidebar ──
-          mobile:  oculta, aparece como drawer
+          mobile:  oculta, aparece como drawer (w-64, max 80vw)
           tablet:  w-16 — solo iconos, tooltip en hover
           desktop: w-56 — labels completos
       ── */}
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          w-56 md:w-16 lg:w-56
+          w-64 max-w-[80vw] md:w-16 lg:w-56 md:max-w-none
           flex flex-col
           bg-white dark:bg-slate-900
           border-r border-slate-200 dark:border-slate-800

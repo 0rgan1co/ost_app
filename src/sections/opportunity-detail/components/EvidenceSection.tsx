@@ -61,7 +61,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
       className="bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3"
     >
       {/* Type selector */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(['cita', 'hecho', 'observacion'] as EvidenceType[]).map(t => (
           <button
             key={t}
@@ -71,7 +71,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
               flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-['IBM_Plex_Mono'] transition-all
               ${type === t
                 ? EVIDENCE_COLORS[t] + ' ring-1 ring-current'
-                : 'text-slate-500 bg-slate-800 hover:bg-slate-700'
+                : 'text-slate-400 bg-slate-800 hover:bg-slate-700'
               }
             `}
           >
@@ -212,7 +212,7 @@ export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: E
   }
 
   return (
-    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

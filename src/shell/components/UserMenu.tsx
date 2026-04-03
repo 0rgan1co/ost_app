@@ -29,15 +29,15 @@ export function UserMenu({ user, onLogout, collapsed = false }: UserMenuProps) {
   return (
     <div ref={ref} className="relative">
       {open && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-50">
+        <div className="absolute left-0 right-0 z-50 bottom-full mb-2 md:bottom-full md:mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 font-sans">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 font-sans truncate">
               {user.name}
             </p>
           </div>
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-sans"
+            className="w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-sans"
           >
             <LogOut size={15} />
             Cerrar sesión

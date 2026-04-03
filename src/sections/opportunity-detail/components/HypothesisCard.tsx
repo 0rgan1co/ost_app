@@ -144,7 +144,7 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
       </div>
 
       {/* Effort / Impact */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* Effort */}
         <div>
           <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-2">Esfuerzo</label>
@@ -161,7 +161,7 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
                       : o === 'medio'
                       ? 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/40'
                       : 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
-                    : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                 }`}
               >
                 {o}
@@ -185,7 +185,7 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
                       : o === 'medio'
                       ? 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/40'
                       : 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
-                    : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
+                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                 }`}
               >
                 {o}

@@ -9,8 +9,10 @@ interface OSTTreeViewProps {
   onRestore: (id: string) => void
 }
 
-const NODE_W = 224
-const H_GAP = 32
+const NODE_W_MOBILE = 160
+const NODE_W_DESKTOP = 224
+const H_GAP_MOBILE = 16
+const H_GAP_DESKTOP = 32
 
 export function OSTTreeViewCanvas({
   opportunities,
@@ -36,17 +38,11 @@ export function OSTTreeViewCanvas({
   }
 
   // Simple grid layout — all opportunities at the same level
-  const cols = Math.min(opportunities.length, 4)
-  const totalWidth = cols * NODE_W + (cols - 1) * H_GAP
-
   return (
     <div className="overflow-auto w-full">
-      <div
-        className="flex flex-wrap gap-8 justify-center p-4"
-        style={{ minWidth: `${Math.min(totalWidth, 600)}px` }}
-      >
+      <div className="flex flex-wrap gap-3 sm:gap-4 md:gap-6 lg:gap-8 justify-center p-3 sm:p-4">
         {opportunities.map(opp => (
-          <div key={opp.id} style={{ width: `${NODE_W}px` }}>
+          <div key={opp.id} className="w-40 sm:w-48 lg:w-56">
             <OSTNode
               opportunity={opp}
               isSelected={selectedId === opp.id}

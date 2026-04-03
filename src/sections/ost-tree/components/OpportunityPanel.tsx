@@ -62,7 +62,7 @@ export function OpportunityPanel({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {opportunity.isArchived ? (
-                    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">
+                    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
                       Descartada
                     </span>
                   ) : (

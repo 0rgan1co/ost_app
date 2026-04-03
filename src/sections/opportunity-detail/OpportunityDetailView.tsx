@@ -192,7 +192,7 @@ export function OpportunityDetailView({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
       {/* ── Main content ── */}
-      <div className="max-w-3xl mx-auto px-4 py-6 pb-32 space-y-6">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 sm:pb-32 space-y-4 sm:space-y-6">
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-slate-500 font-['IBM_Plex_Mono']">
@@ -204,11 +204,11 @@ export function OpportunityDetailView({
             {project.name}
           </button>
           <ChevronRight size={13} />
-          <span className="text-slate-400 truncate max-w-[200px]">{opportunity.title}</span>
+          <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">{opportunity.title}</span>
         </nav>
 
         {/* ── Header ── */}
-        <header className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+        <header className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
           {/* Title + status */}
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-xl font-bold text-slate-50 leading-snug flex-1">
@@ -343,14 +343,14 @@ export function OpportunityDetailView({
 
       {/* ── Sticky CTA ── */}
       {onNavigateToAIEvaluation && (
-        <div className="fixed bottom-0 inset-x-0 p-4 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none">
-          <div className="max-w-3xl mx-auto pointer-events-auto">
+        <div className="fixed bottom-0 inset-x-0 p-3 sm:p-4 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none">
+          <div className="max-w-3xl mx-auto pointer-events-auto px-1 sm:px-0">
             <button
               onClick={() => onNavigateToAIEvaluation(opportunity.id)}
               className="
                 w-full flex items-center justify-center gap-2.5
                 bg-red-500 hover:bg-red-600 active:bg-red-700
-                text-white font-semibold text-sm py-3.5 rounded-2xl
+                text-white font-semibold text-sm py-3 sm:py-3.5 rounded-2xl
                 shadow-lg shadow-red-500/25 transition-all duration-200
                 font-sans
               "

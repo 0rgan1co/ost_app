@@ -183,13 +183,13 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={handleClose} />
 
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 pointer-events-none">
         <div
-          className="w-full max-w-lg max-h-[85vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col"
+          className="w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-start justify-between gap-3 p-6 border-b border-slate-800 flex-shrink-0">
+          <div className="flex items-start justify-between gap-3 p-4 sm:p-6 border-b border-slate-800 flex-shrink-0">
             <div>
               <h2 className="font-[Nunito_Sans] font-bold text-slate-100 text-base">
                 Nueva oportunidad
@@ -212,7 +212,7 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             {/* Business context card */}
             {hasContext && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
@@ -231,7 +231,7 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
             )}
 
             {/* AI action buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handleGenerateIdeas}
                 disabled={!hasContext || generating}

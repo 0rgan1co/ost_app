@@ -60,7 +60,7 @@ export function SettingsPage() {
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-sans"
+                className="flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-sans"
               >
                 <LogOut size={14} />
                 <span className="hidden sm:inline">Cerrar sesión</span>
@@ -80,7 +80,7 @@ export function SettingsPage() {
                 key={opt.value}
                 onClick={() => setTheme(opt.value)}
                 className={`
-                  w-full flex items-center gap-4 px-5 py-4 text-left transition-colors
+                  w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 text-left transition-colors
                   ${i > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''}
                   ${theme === opt.value
                     ? 'bg-red-50 dark:bg-red-500/10'
