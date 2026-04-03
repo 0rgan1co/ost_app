@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Project, ProjectRole, InviteState } from '../types'
+import type { Project, ProjectRole, InviteState, User } from '../types'
 
 export function useProjects(currentUserId: string) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [availableUsers, setAvailableUsers] = useState<User[]>([])
   const [inviteState, setInviteState] = useState<InviteState>({
     email: '',
     role: 'usuario',
@@ -17,32 +18,55 @@ export function useProjects(currentUserId: string) {
       .select('project_id, role, joined_at')
       .eq('user_id', currentUserId)
 
-    if (!memberships?.length) {
+    // Also fetch public projects the user is NOT a member of
+    const memberProjectIds = (memberships ?? []).map(m => m.project_id)
+
+    // Fetch member projects
+    let memberProjects: any[] = []
+    if (memberProjectIds.length > 0) {
+      const { data } = await supabase
+        .from('projects')
+        .select('*')
+        .in('id', memberProjectIds)
+        .order('updated_at', { ascending: false })
+      memberProjects = data ?? []
+    }
+
+    // Fetch public projects not already in membership
+    let publicQuery = supabase
+      .from('projects')
+      .select('*')
+      .eq('is_public', true)
+      .order('updated_at', { ascending: false })
+
+    if (memberProjectIds.length > 0) {
+      publicQuery = publicQuery.not('id', 'in', `(${memberProjectIds.join(',')})`)
+    }
+
+    const { data: publicProjects } = await publicQuery
+
+    const allProjects = [...memberProjects, ...(publicProjects ?? [])]
+    const allProjectIds = allProjects.map(p => p.id)
+
+    if (allProjectIds.length === 0) {
       setProjects([])
       setLoading(false)
       return
     }
 
-    const projectIds = memberships.map(m => m.project_id)
-
-    const [{ data: projectsData }, { data: allMembers }, { data: oppCounts }] = await Promise.all([
-      supabase
-        .from('projects')
-        .select('*')
-        .in('id', projectIds)
-        .order('updated_at', { ascending: false }),
+    const [{ data: allMembers }, { data: oppCounts }] = await Promise.all([
       supabase
         .from('project_members')
         .select('id, project_id, user_id, role, profiles(id, full_name, avatar_url, email)')
-        .in('project_id', projectIds),
+        .in('project_id', allProjectIds),
       supabase
         .from('opportunities')
         .select('project_id')
-        .in('project_id', projectIds),
+        .in('project_id', allProjectIds),
     ])
 
-    const assembled = (projectsData ?? []).map(p => {
-      const myMembership = memberships.find(m => m.project_id === p.id)
+    const assembled = allProjects.map(p => {
+      const myMembership = (memberships ?? []).find(m => m.project_id === p.id)
       const members = (allMembers ?? [])
         .filter(m => m.project_id === p.id)
         .map(m => {
@@ -61,6 +85,7 @@ export function useProjects(currentUserId: string) {
         id: p.id,
         name: p.name,
         description: p.description ?? '',
+        isPublic: p.is_public ?? false,
         currentUserRole: (myMembership?.role ?? 'viewer') as ProjectRole,
         members,
         opportunityCount,
@@ -72,8 +97,38 @@ export function useProjects(currentUserId: string) {
     setLoading(false)
   }
 
+  async function fetchAvailableUsers() {
+    // Get all profiles that have an email in allowed_users
+    const { data: allowed } = await supabase
+      .from('allowed_users')
+      .select('email')
+
+    if (!allowed?.length) {
+      setAvailableUsers([])
+      return
+    }
+
+    const emails = allowed.map(a => a.email)
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, email')
+      .in('email', emails)
+
+    const users: User[] = (profiles ?? [])
+      .filter(p => p.id !== currentUserId)
+      .map(p => ({
+        id: p.id,
+        name: p.full_name ?? p.email ?? 'Usuario',
+        email: p.email ?? '',
+        avatarUrl: p.avatar_url ?? null,
+      }))
+
+    setAvailableUsers(users)
+  }
+
   useEffect(() => {
     fetchProjects()
+    fetchAvailableUsers()
   }, [currentUserId])
 
   async function createProject(data: { name: string; description: string }): Promise<boolean> {
@@ -100,6 +155,44 @@ export function useProjects(currentUserId: string) {
 
     await fetchProjects()
     return true
+  }
+
+  async function deleteProject(projectId: string) {
+    // Delete members first, then project
+    await supabase.from('project_members').delete().eq('project_id', projectId)
+    const { error } = await supabase.from('projects').delete().eq('id', projectId)
+    if (error) {
+      console.error('Error deleting project:', error)
+      return
+    }
+    await fetchProjects()
+  }
+
+  async function toggleVisibility(projectId: string, isPublic: boolean) {
+    const { error } = await supabase
+      .from('projects')
+      .update({ is_public: isPublic })
+      .eq('id', projectId)
+    if (error) {
+      console.error('Error updating visibility:', error)
+      return
+    }
+    await fetchProjects()
+  }
+
+  async function addMember(projectId: string, userId: string, role: ProjectRole) {
+    const { error } = await supabase.from('project_members').insert({
+      project_id: projectId,
+      user_id: userId,
+      role,
+    })
+
+    if (error) {
+      console.error('Error adding member:', error)
+      return
+    }
+
+    await fetchProjects()
   }
 
   async function inviteMember(projectId: string, email: string, role: ProjectRole) {
@@ -129,7 +222,6 @@ export function useProjects(currentUserId: string) {
   }
 
   async function updateMemberRole(projectId: string, memberId: string, role: ProjectRole) {
-    // memberId here is the user id within the project — find the project_member row
     const { data: member } = await supabase
       .from('project_members')
       .select('id')
@@ -155,8 +247,12 @@ export function useProjects(currentUserId: string) {
   return {
     projects,
     loading,
+    availableUsers,
     inviteState,
     createProject,
+    deleteProject,
+    toggleVisibility,
+    addMember,
     inviteMember,
     updateMemberRole,
     removeMember,

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { X, Trash2, Mail, ChevronDown, Check, Loader2 } from 'lucide-react'
-import type { Project, ProjectRole, InviteState } from '../../../types'
+import { X, Trash2, ChevronDown, UserPlus } from 'lucide-react'
+import type { Project, ProjectRole, User } from '../../../types'
 
 interface MembersDrawerProps {
   project: Project | null
-  inviteState: InviteState
+  availableUsers: User[]
   roleOptions: ProjectRole[]
   onClose: () => void
-  onInviteMember: (projectId: string, email: string, role: ProjectRole) => void
+  onAddMember: (projectId: string, userId: string, role: ProjectRole) => void
   onChangeMemberRole: (projectId: string, memberId: string, role: ProjectRole) => void
   onRemoveMember: (projectId: string, memberId: string) => void
 }
@@ -24,7 +24,16 @@ const roleBadge: Record<ProjectRole, string> = {
   viewer:  'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
 }
 
-function MemberAvatar({ name }: { name: string }) {
+function MemberAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
+      />
+    )
+  }
   const initials = name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
   const colors = ['bg-red-500', 'bg-slate-500', 'bg-rose-500', 'bg-slate-600', 'bg-red-600']
   const colorIdx = name.charCodeAt(0) % colors.length
@@ -37,21 +46,19 @@ function MemberAvatar({ name }: { name: string }) {
 
 export function MembersDrawer({
   project,
-  inviteState,
+  availableUsers,
   roleOptions,
   onClose,
-  onInviteMember,
+  onAddMember,
   onChangeMemberRole,
   onRemoveMember,
 }: MembersDrawerProps) {
-  const [email, setEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<ProjectRole>('usuario')
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     if (project) {
       setVisible(true)
-      setEmail('')
     } else {
       setVisible(false)
     }
@@ -60,12 +67,8 @@ export function MembersDrawer({
   if (!project) return null
 
   const isAdmin = project.currentUserRole === 'admin'
-
-  const handleInvite = () => {
-    if (!email.trim()) return
-    onInviteMember(project.id, email.trim(), inviteRole)
-    setEmail('')
-  }
+  const memberIds = new Set(project.members.map(m => m.id))
+  const usersToAdd = availableUsers.filter(u => !memberIds.has(u.id))
 
   return (
     <>
@@ -103,14 +106,17 @@ export function MembersDrawer({
           </button>
         </div>
 
-        {/* Member list */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+        {/* Current members */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
+          <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-3">
+            Equipo ({project.members.length})
+          </p>
           {project.members.map(member => (
             <div
               key={member.id}
               className="flex items-center gap-3 py-2 group"
             >
-              <MemberAvatar name={member.name} />
+              <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 font-sans truncate">
                   {member.name}
@@ -120,7 +126,6 @@ export function MembersDrawer({
                 </p>
               </div>
 
-              {/* Role selector (admin only) or badge (others) */}
               {isAdmin ? (
                 <div className="relative flex-shrink-0">
                   <select
@@ -144,7 +149,6 @@ export function MembersDrawer({
                 </span>
               )}
 
-              {/* Remove button (admin only) */}
               {isAdmin && (
                 <button
                   onClick={() => onRemoveMember(project.id, member.id)}
@@ -155,67 +159,59 @@ export function MembersDrawer({
               )}
             </div>
           ))}
-        </div>
 
-        {/* Invite section (admin only) */}
-        {isAdmin && (
-          <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-3">
-              Invitar miembro
-            </p>
-            <div className="flex flex-col gap-2">
-              <div className="relative">
-                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="email"
-                  placeholder="email@empresa.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleInvite()}
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent font-sans"
-                />
-              </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
+          {/* Picklist: available users to add */}
+          {isAdmin && usersToAdd.length > 0 && (
+            <div className="mt-6">
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-3">
+                Agregar miembro
+              </p>
+
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans">Rol:</span>
+                <div className="relative">
                   <select
                     value={inviteRole}
                     onChange={e => setInviteRole(e.target.value as ProjectRole)}
-                    className="w-full appearance-none py-2 pl-3 pr-7 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-red-400 font-sans"
+                    className="appearance-none py-1 pl-2.5 pr-6 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-red-400 font-['IBM_Plex_Mono']"
                   >
                     {roleOptions.map(r => (
                       <option key={r} value={r}>{roleLabels[r]}</option>
                     ))}
                   </select>
-                  <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                  <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                 </div>
-                <button
-                  onClick={handleInvite}
-                  disabled={!email.trim() || inviteState.status === 'loading'}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors font-sans"
-                >
-                  {inviteState.status === 'loading' ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : inviteState.status === 'success' ? (
-                    <Check size={14} />
-                  ) : (
-                    'Invitar'
-                  )}
-                </button>
               </div>
 
-              {inviteState.status === 'success' && (
-                <p className="text-xs text-green-600 dark:text-green-400 font-sans">
-                  Invitación enviada correctamente.
-                </p>
-              )}
-              {inviteState.status === 'error' && (
-                <p className="text-xs text-red-500 font-sans">
-                  No se pudo encontrar ese usuario. Debe tener cuenta en la app.
-                </p>
-              )}
+              <div className="space-y-1">
+                {usersToAdd.map(user => (
+                  <button
+                    key={user.id}
+                    onClick={() => onAddMember(project.id, user.id, inviteRole)}
+                    className="w-full flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/add"
+                  >
+                    <MemberAvatar name={user.name} avatarUrl={user.avatarUrl} />
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 font-sans truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-['IBM_Plex_Mono'] truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                    <UserPlus size={14} className="text-slate-300 dark:text-slate-600 group-hover/add:text-red-500 dark:group-hover/add:text-red-400 transition-colors flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {isAdmin && usersToAdd.length === 0 && project.members.length > 0 && (
+            <p className="mt-6 text-xs text-slate-400 dark:text-slate-500 italic font-sans">
+              Todos los usuarios disponibles ya son miembros.
+            </p>
+          )}
+        </div>
       </div>
     </>
   )

@@ -50,7 +50,7 @@ function ViewToggle({
       </button>
       <button
         onClick={() => onChange('tree')}
-        title="Vista árbol"
+        title="Vista tarjetas"
         className={`
           flex items-center gap-1.5 px-3 py-1.5 rounded-lg
           font-[Nunito_Sans] text-xs font-semibold transition-all duration-150
@@ -61,14 +61,12 @@ function ViewToggle({
         `}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="5" r="2" />
-          <circle cx="5" cy="19" r="2" />
-          <circle cx="19" cy="19" r="2" />
-          <line x1="12" y1="7" x2="12" y2="13" />
-          <line x1="12" y1="13" x2="5" y2="17" />
-          <line x1="12" y1="13" x2="19" y2="17" />
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
         </svg>
-        Árbol
+        Tarjetas
       </button>
     </div>
   )
@@ -98,7 +96,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <p className="text-slate-300 font-[Nunito_Sans] text-sm font-semibold mb-1">Error al cargar el árbol</p>
+      <p className="text-slate-300 font-[Nunito_Sans] text-sm font-semibold mb-1">Error al cargar oportunidades</p>
       <p className="text-slate-500 font-[Nunito_Sans] text-xs mb-4">{message}</p>
       <button
         onClick={onRetry}
@@ -116,14 +114,11 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const navigate = useNavigate()
 
   const {
-    nodes,
-    flatOpportunities,
+    opportunities,
     recentEvidence,
     hypothesesSummary,
     loading,
     error,
-    expandedIds,
-    toggleExpand,
     createOpportunity,
     archiveOpportunity,
     restoreOpportunity,
@@ -134,18 +129,11 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
-
-  // Create modal state: stores the parentId to pre-fill ("" = root)
-  const [createParentId, setCreateParentId] = useState<string | null | undefined>(undefined)
-  const isModalOpen = createParentId !== undefined
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const selectedOpportunity = selectedId
-    ? (flatOpportunities.find(o => o.id === selectedId) ?? null)
-    : null
-
-  const parentOpportunity = isModalOpen && createParentId
-    ? flatOpportunities.find(o => o.id === createParentId)
+    ? (opportunities.find(o => o.id === selectedId) ?? null)
     : null
 
   // ── Handlers ────────────────────────────────────────────────────────────────
@@ -156,45 +144,30 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   const handleClosePanel = useCallback(() => {
     setIsPanelOpen(false)
-    // Keep selectedId so it stays highlighted; clear after animation
     setTimeout(() => setSelectedId(null), 300)
-  }, [])
-
-  const handleOpenCreateRoot = useCallback(() => {
-    setCreateParentId(null)
-  }, [])
-
-  const handleOpenCreateChild = useCallback((parentId: string) => {
-    setCreateParentId(parentId)
-  }, [])
-
-  const handleCloseModal = useCallback(() => {
-    setCreateParentId(undefined)
   }, [])
 
   const handleConfirmCreate = useCallback(async (data: { name: string; description: string }) => {
     await createOpportunity({
       name: data.name,
       description: data.description || undefined,
-      parentId: createParentId ?? null,
     })
-    setCreateParentId(undefined)
-  }, [createOpportunity, createParentId])
+    setIsModalOpen(false)
+  }, [createOpportunity])
 
   const handleNavigateToDetail = useCallback((id: string) => {
     navigate(`/opportunity/${id}`)
   }, [navigate])
 
-  // ── Shared event props (passed to both views) ───────────────────────────────
+  // ── Shared view props ───────────────────────────────────────────────────────
   const sharedViewProps = {
-    expandedIds,
     selectedId,
-    onToggleExpand: toggleExpand,
     onSelect: handleSelect,
     onArchive: archiveOpportunity,
     onRestore: restoreOpportunity,
-    onCreateChild: handleOpenCreateChild,
   }
+
+  const activeCount = opportunities.filter(o => !o.isArchived).length
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -208,7 +181,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
           </h1>
           {!loading && (
             <span className="font-[IBM_Plex_Mono] text-[11px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-500 flex-shrink-0">
-              {flatOpportunities.filter(o => !o.isArchived).length} activas
+              {activeCount} {activeCount === 1 ? 'oportunidad' : 'oportunidades'}
             </span>
           )}
         </div>
@@ -216,7 +189,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         <div className="flex items-center gap-3 flex-shrink-0">
           <ViewToggle mode={viewMode} onChange={setViewMode} />
           <button
-            onClick={handleOpenCreateRoot}
+            onClick={() => setIsModalOpen(true)}
             className="
               flex items-center gap-2 px-4 py-2 rounded-xl
               bg-red-600 hover:bg-red-500 text-white
@@ -245,11 +218,11 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
           </div>
         ) : viewMode === 'list' ? (
           <div className="px-6 py-4">
-            <OSTListView nodes={nodes} {...sharedViewProps} />
+            <OSTListView opportunities={opportunities} {...sharedViewProps} />
           </div>
         ) : (
           <div className="w-full h-full overflow-auto p-6">
-            <OSTTreeViewCanvas nodes={nodes} {...sharedViewProps} />
+            <OSTTreeViewCanvas opportunities={opportunities} {...sharedViewProps} />
           </div>
         )}
       </div>
@@ -264,15 +237,14 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         onNavigateToDetail={handleNavigateToDetail}
         onArchive={archiveOpportunity}
         onRestore={restoreOpportunity}
-        onCreateChild={handleOpenCreateChild}
       />
 
       {/* ── Create modal ────────────────────────────────────────────────────── */}
       <CreateOpportunityModal
         isOpen={isModalOpen}
-        parentName={parentOpportunity?.title ?? null}
+        parentName={null}
         onConfirm={handleConfirmCreate}
-        onClose={handleCloseModal}
+        onClose={() => setIsModalOpen(false)}
       />
     </div>
   )

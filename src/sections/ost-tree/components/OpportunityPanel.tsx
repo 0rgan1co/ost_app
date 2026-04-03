@@ -9,7 +9,6 @@ interface OpportunityPanelProps {
   onNavigateToDetail: (id: string) => void
   onArchive: (id: string) => void
   onRestore: (id: string) => void
-  onCreateChild: (parentId: string) => void
 }
 
 const EVIDENCE_TYPE_CONFIG = {
@@ -33,7 +32,6 @@ export function OpportunityPanel({
   onNavigateToDetail,
   onArchive,
   onRestore,
-  onCreateChild,
 }: OpportunityPanelProps) {
   return (
     <>
@@ -204,14 +202,14 @@ export function OpportunityPanel({
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => onCreateChild(opportunity.id)}
+                  onClick={() => onNavigateToDetail(opportunity.id)}
                   className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 font-[Nunito_Sans] text-sm transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  Sub-oportunidad
+                  Agregar evidencia
                 </button>
 
                 {opportunity.isArchived ? (

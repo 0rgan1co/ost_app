@@ -14,9 +14,11 @@ export function ProjectsPage() {
   const {
     projects,
     loading,
-    inviteState,
+    availableUsers,
     createProject,
-    inviteMember,
+    deleteProject,
+    toggleVisibility,
+    addMember,
     updateMemberRole,
     removeMember,
   } = useProjects(user!.id)
@@ -41,14 +43,16 @@ export function ProjectsPage() {
       currentUser={currentUser}
       projects={projects}
       roleOptions={[...ROLE_OPTIONS]}
-      inviteState={inviteState}
+      availableUsers={availableUsers}
       onSelectProject={(id) => {
         const project = projects.find(p => p.id === id)
         if (project) setCurrentProject(project)
         navigate(`/ost-tree?projectId=${id}`)
       }}
       onCreateProject={createProject}
-      onInviteMember={inviteMember}
+      onDeleteProject={deleteProject}
+      onToggleVisibility={toggleVisibility}
+      onAddMember={addMember}
       onChangeMemberRole={updateMemberRole}
       onRemoveMember={removeMember}
     />

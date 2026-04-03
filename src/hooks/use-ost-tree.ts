@@ -7,7 +7,6 @@ import type { Opportunity, OSTTreeEvidence, HypothesisSummary } from '../types'
 interface DBOpportunity {
   id: string
   project_id: string
-  parent_id: string | null
   name: string
   description: string | null
   outcome: string | null
@@ -35,24 +34,15 @@ interface DBHypothesis {
   updated_at: string
 }
 
-// ─── Tree node ────────────────────────────────────────────────────────────────
-
-export interface OSTTreeNode extends Opportunity {
-  children: OSTTreeNode[]
-}
-
 // ─── Hook return ─────────────────────────────────────────────────────────────
 
 export interface UseOSTTreeReturn {
-  nodes: OSTTreeNode[]
-  flatOpportunities: Opportunity[]
+  opportunities: Opportunity[]
   recentEvidence: Record<string, OSTTreeEvidence[]>
   hypothesesSummary: Record<string, HypothesisSummary[]>
   loading: boolean
   error: string | null
-  expandedIds: Set<string>
-  toggleExpand: (id: string) => void
-  createOpportunity: (data: { name: string; description?: string; parentId?: string | null }) => Promise<void>
+  createOpportunity: (data: { name: string; description?: string }) => Promise<void>
   archiveOpportunity: (id: string) => Promise<void>
   restoreOpportunity: (id: string) => Promise<void>
   refetch: () => Promise<void>
@@ -63,14 +53,13 @@ export interface UseOSTTreeReturn {
 function mapDBToOpportunity(row: DBOpportunity, evidenceCount: number, activeHypothesisCount: number): Opportunity {
   return {
     id: row.id,
-    parentId: row.parent_id,
     title: row.name,
     description: row.description ?? '',
     status: row.archived ? 'descartada' : 'activa',
     isArchived: row.archived,
     isExpanded: true,
     evidenceCount,
-    hypothesisCount: 0, // filled below
+    hypothesisCount: 0,
     activeHypothesisCount,
     experimentCount: 0,
     activeExperimentCount: 0,
@@ -78,34 +67,14 @@ function mapDBToOpportunity(row: DBOpportunity, evidenceCount: number, activeHyp
   }
 }
 
-function buildTree(opportunities: Opportunity[]): OSTTreeNode[] {
-  const map = new Map<string, OSTTreeNode>()
-  const roots: OSTTreeNode[] = []
-
-  opportunities.forEach(opp => {
-    map.set(opp.id, { ...opp, children: [] })
-  })
-
-  map.forEach(node => {
-    if (node.parentId && map.has(node.parentId)) {
-      map.get(node.parentId)!.children.push(node)
-    } else {
-      roots.push(node)
-    }
-  })
-
-  return roots
-}
-
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useOSTTree(projectId: string): UseOSTTreeReturn {
-  const [flatOpportunities, setFlatOpportunities] = useState<Opportunity[]>([])
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [recentEvidence, setRecentEvidence] = useState<Record<string, OSTTreeEvidence[]>>({})
   const [hypothesesSummary, setHypothesesSummary] = useState<Record<string, HypothesisSummary[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const fetchData = useCallback(async () => {
     if (!projectId) return
@@ -113,7 +82,6 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     setError(null)
 
     try {
-      // Fetch opportunities
       const { data: oppRows, error: oppError } = await supabase
         .from('opportunities')
         .select('*')
@@ -125,14 +93,13 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
       const oppIds = rows.map(r => r.id)
 
       if (oppIds.length === 0) {
-        setFlatOpportunities([])
+        setOpportunities([])
         setRecentEvidence({})
         setHypothesesSummary({})
         setLoading(false)
         return
       }
 
-      // Fetch evidence and hypotheses in parallel
       const [{ data: evidenceRows }, { data: hypothesisRows }] = await Promise.all([
         supabase
           .from('opportunity_evidence')
@@ -184,8 +151,7 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
         })
       })
 
-      // Map DB rows to Opportunity type
-      const opportunities: Opportunity[] = rows.map(row => {
+      const mapped: Opportunity[] = rows.map(row => {
         const opp = mapDBToOpportunity(
           row,
           evidenceCountMap[row.id] ?? 0,
@@ -195,13 +161,11 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
         return opp
       })
 
-      // Initialize all as expanded
-      setExpandedIds(new Set(opportunities.map(o => o.id)))
-      setFlatOpportunities(opportunities)
+      setOpportunities(mapped)
       setRecentEvidence(recentEvidenceMap)
       setHypothesesSummary(hypothesesSummaryMap)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando el árbol')
+      setError(err instanceof Error ? err.message : 'Error cargando oportunidades')
     } finally {
       setLoading(false)
     }
@@ -211,23 +175,13 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     fetchData()
   }, [fetchData])
 
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
-
   const createOpportunity = useCallback(async (data: {
     name: string
     description?: string
-    parentId?: string | null
   }) => {
     const { error } = await supabase.from('opportunities').insert({
       project_id: projectId,
-      parent_id: data.parentId ?? null,
+      parent_id: null,
       name: data.name,
       description: data.description ?? null,
     })
@@ -253,17 +207,12 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     await fetchData()
   }, [fetchData])
 
-  const nodes = buildTree(flatOpportunities)
-
   return {
-    nodes,
-    flatOpportunities,
+    opportunities,
     recentEvidence,
     hypothesesSummary,
     loading,
     error,
-    expandedIds,
-    toggleExpand,
     createOpportunity,
     archiveOpportunity,
     restoreOpportunity,

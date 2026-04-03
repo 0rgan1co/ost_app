@@ -61,7 +61,7 @@ export function CreateOpportunityModal({
               </h2>
               {parentName && (
                 <p className="font-[Nunito_Sans] text-slate-500 text-xs mt-0.5">
-                  Sub-oportunidad de:{' '}
+                  Dentro de:{' '}
                   <span className="text-slate-400 font-medium">{parentName}</span>
                 </p>
               )}

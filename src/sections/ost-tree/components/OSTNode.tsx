@@ -2,35 +2,19 @@ import type { Opportunity } from '../../../types'
 
 interface OSTNodeProps {
   opportunity: Opportunity
-  isExpanded: boolean
   isSelected: boolean
-  hasChildren: boolean
-  onToggleExpand: (id: string) => void
   onSelect: (id: string) => void
   onArchive: (id: string) => void
   onRestore: (id: string) => void
-  onCreateChild: (parentId: string) => void
-  depth?: number
   viewMode?: 'list' | 'tree'
-}
-
-const EVIDENCE_TYPE_LABELS: Record<string, string> = {
-  cita: 'Cita',
-  hecho: 'Hecho',
-  observacion: 'Obs.',
 }
 
 export function OSTNode({
   opportunity,
-  isExpanded,
   isSelected,
-  hasChildren,
-  onToggleExpand,
   onSelect,
   onArchive,
   onRestore,
-  onCreateChild,
-  depth = 0,
   viewMode = 'list',
 }: OSTNodeProps) {
   const isArchived = opportunity.isArchived
@@ -69,16 +53,6 @@ export function OSTNode({
       className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
       onClick={e => e.stopPropagation()}
     >
-      <button
-        onClick={() => onCreateChild(opportunity.id)}
-        title="Agregar oportunidad hija"
-        className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
       {isArchived ? (
         <button
           onClick={() => onRestore(opportunity.id)}
@@ -139,25 +113,6 @@ export function OSTNode({
           {statusBadge}
           {counters}
         </div>
-
-        {hasChildren && (
-          <button
-            onClick={e => { e.stopPropagation(); onToggleExpand(opportunity.id) }}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-all z-10"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        )}
       </div>
     )
   }
@@ -175,32 +130,9 @@ export function OSTNode({
         }
       `}
       onClick={() => onSelect(opportunity.id)}
-      style={{ paddingLeft: `${12 + depth * 24}px` }}
     >
-      {/* Expand toggle */}
-      <button
-        onClick={e => { e.stopPropagation(); if (hasChildren) onToggleExpand(opportunity.id) }}
-        className={`
-          mt-0.5 w-4 h-4 flex items-center justify-center text-slate-600 flex-shrink-0
-          ${hasChildren ? 'hover:text-slate-400 transition-colors' : 'cursor-default'}
-        `}
-      >
-        {hasChildren ? (
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        ) : (
-          <span className="w-1 h-1 rounded-full bg-slate-700" />
-        )}
-      </button>
+      {/* Bullet */}
+      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500/60 flex-shrink-0" />
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -222,6 +154,3 @@ export function OSTNode({
     </div>
   )
 }
-
-// Re-export for usage in evidence labels
-export { EVIDENCE_TYPE_LABELS }

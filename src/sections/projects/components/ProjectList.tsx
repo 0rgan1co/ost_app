@@ -7,10 +7,12 @@ import { MembersDrawer } from './MembersDrawer'
 export function ProjectList({
   projects,
   roleOptions,
-  inviteState,
+  availableUsers,
   onSelectProject,
   onCreateProject,
-  onInviteMember,
+  onDeleteProject,
+  onToggleVisibility,
+  onAddMember,
   onChangeMemberRole,
   onRemoveMember,
 }: ProjectsProps) {
@@ -137,6 +139,8 @@ export function ProjectList({
                 project={project}
                 onSelect={() => onSelectProject(project.id)}
                 onOpenMembers={() => setActiveProject(project)}
+                onDelete={() => onDeleteProject(project.id)}
+                onToggleVisibility={(isPublic) => onToggleVisibility(project.id, isPublic)}
               />
             ))}
           </div>
@@ -146,10 +150,10 @@ export function ProjectList({
       {/* Members drawer */}
       <MembersDrawer
         project={activeProject}
-        inviteState={inviteState}
+        availableUsers={availableUsers}
         roleOptions={roleOptions}
         onClose={() => setActiveProject(null)}
-        onInviteMember={onInviteMember}
+        onAddMember={onAddMember}
         onChangeMemberRole={onChangeMemberRole}
         onRemoveMember={onRemoveMember}
       />

@@ -48,6 +48,7 @@ export interface Project {
   id: string
   name: string
   description: string
+  isPublic: boolean
   currentUserRole: ProjectRole
   opportunityCount: number
   lastActivityAt: string // ISO date string
@@ -60,11 +61,17 @@ export interface InviteState {
   status: InviteStatus
 }
 
+export interface AvailableUser {
+  id: string
+  fullName: string | null
+  email: string
+  avatarUrl: string | null
+}
+
 export interface ProjectsProps {
   currentUser: User
   projects: Project[]
   roleOptions: ProjectRole[]
-  inviteState: InviteState
 
   /** Navigate to the OST Tree of the selected project */
   onSelectProject: (projectId: string) => void
@@ -72,8 +79,17 @@ export interface ProjectsProps {
   /** Create a new project with name and optional description */
   onCreateProject: (data: { name: string; description: string }) => Promise<boolean> | void
 
-  /** Invite a new member to a project by email and role (admin only) */
-  onInviteMember: (projectId: string, email: string, role: ProjectRole) => void
+  /** Delete a project (admin only) */
+  onDeleteProject: (projectId: string) => void
+
+  /** Toggle project visibility between public and private */
+  onToggleVisibility: (projectId: string, isPublic: boolean) => void
+
+  /** Available users that can be added to projects */
+  availableUsers: User[]
+
+  /** Add a member to a project by userId and role (admin only) */
+  onAddMember: (projectId: string, userId: string, role: ProjectRole) => void
 
   /** Change the role of an existing member (admin only) */
   onChangeMemberRole: (projectId: string, memberId: string, role: ProjectRole) => void
@@ -91,7 +107,6 @@ export interface OSTTreeProject {
 
 export interface Opportunity {
   id: string
-  parentId: string | null
   title: string
   description: string
   status: OpportunityStatus
@@ -124,9 +139,8 @@ export interface OSTTreeProps {
   recentEvidence: Record<string, OSTTreeEvidence[]>
   hypothesesSummary: Record<string, HypothesisSummary[]>
   onViewModeChange?: (mode: 'list' | 'tree') => void
-  onToggleExpand?: (opportunityId: string) => void
   onSelectOpportunity?: (opportunityId: string) => void
-  onCreateOpportunity?: (parentId: string | null) => void
+  onCreateOpportunity?: () => void
   onChangeStatus?: (opportunityId: string, status: OpportunityStatus) => void
   onArchiveOpportunity?: (opportunityId: string) => void
   onNavigateToDetail?: (opportunityId: string) => void
