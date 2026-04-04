@@ -434,6 +434,16 @@ export function OSTTreeViewCanvas({
                       <span>{EXP_TYPE[e.type] ?? e.type}</span>
                       <span className={e.status === 'terminada' ? 'text-green-400' : ''}>{e.status}</span>
                     </div>
+                    {/* Ver más tab */}
+                    {onOpenExperiment && (
+                      <button
+                        onClick={(ev) => { ev.stopPropagation(); onOpenExperiment(e.id) }}
+                        className="w-full mt-2 -mb-2 -mx-3 px-3 py-1.5 bg-amber-500/5 border-t border-amber-500/10 rounded-b-lg text-[9px] font-['IBM_Plex_Mono'] text-amber-400 hover:bg-amber-500/15 hover:text-amber-300 transition-colors text-center"
+                        style={{ width: 'calc(100% + 24px)' }}
+                      >
+                        Ver más →
+                      </button>
+                    )}
                   </div>
                 )
               })}
