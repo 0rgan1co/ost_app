@@ -7,6 +7,7 @@ import { OSTTreeViewCanvas } from './components/OSTTreeView'
 import { OpportunityPanel } from './components/OpportunityPanel'
 import { CreateOpportunityModal } from './components/CreateOpportunityModal'
 import { WorkflowGuide } from './components/WorkflowGuide'
+import { AgentGuide } from './components/AgentGuide'
 import type { Project } from '../../types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -300,6 +301,16 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         onConfirm={handleConfirmCreate}
         onConfirmMultiple={handleConfirmMultiple}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Agent Guide — floating chat for incomplete projects */}
+      <AgentGuide
+        projectId={project.id}
+        projectName={project.name}
+        hasOutcome={!!bizContext.northStar.value}
+        opportunityCount={activeCount}
+        hypothesisCount={totalHypotheses}
+        experimentCount={totalExperiments}
       />
     </div>
   )
