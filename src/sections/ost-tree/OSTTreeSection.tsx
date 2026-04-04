@@ -148,6 +148,19 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('ost-starred') ?? '[]')) } catch { return new Set() }
+  })
+
+  const toggleStar = useCallback((id: string) => {
+    setStarredIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem('ost-starred', JSON.stringify([...next]))
+      return next
+    })
+  }, [])
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const selectedOpportunity = selectedId
@@ -344,6 +357,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onRenameHypothesis={handleRenameHypothesis}
               onRenameExperiment={handleRenameExperiment}
               onEditOutcome={handleEditOutcome}
+              starredIds={starredIds}
+              onToggleStar={toggleStar}
             />
           </div>
         )}

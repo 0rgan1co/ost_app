@@ -1,5 +1,5 @@
-import { useState, useRef, useLayoutEffect, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Check, Plus } from 'lucide-react'
+import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react'
+import { ChevronDown, ChevronRight, Pencil, Check, Plus, Star } from 'lucide-react'
 import type { Opportunity, HypothesisSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
 
@@ -19,6 +19,8 @@ interface OSTTreeViewProps {
   onRenameHypothesis?: (id: string, text: string) => void
   onRenameExperiment?: (id: string, text: string) => void
   onEditOutcome?: (text: string) => void
+  starredIds?: Set<string>
+  onToggleStar?: (id: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -43,7 +45,7 @@ interface Line { x1: number; y1: number; x2: number; y2: number }
 export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
-  onRenameHypothesis, onRenameExperiment, onEditOutcome,
+  onRenameHypothesis, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -61,6 +63,29 @@ export function OSTTreeViewCanvas({
   const [renderKey, setRenderKey] = useState(0)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
+
+  // Pan/drag for canvas navigation
+  const [isPanning, setIsPanning] = useState(false)
+  const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 })
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button, input, textarea, select')) return
+    const el = wrapperRef.current
+    if (!el) return
+    setIsPanning(true)
+    panStart.current = { x: e.clientX, y: e.clientY, scrollLeft: el.scrollLeft, scrollTop: el.scrollTop }
+  }, [])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning) return
+    const el = wrapperRef.current
+    if (!el) return
+    el.scrollLeft = panStart.current.scrollLeft - (e.clientX - panStart.current.x)
+    el.scrollTop = panStart.current.scrollTop - (e.clientY - panStart.current.y)
+  }, [isPanning])
+
+  const handleMouseUp = useCallback(() => setIsPanning(false), [])
 
   const toggleOpp = (id: string) => {
     setExpandedOpps(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -125,7 +150,13 @@ export function OSTTreeViewCanvas({
   }
 
   return (
-    <div ref={containerRef} className="relative overflow-auto w-full h-full p-6" style={{ minHeight: '400px' }}>
+    <div ref={(el) => { (containerRef as any).current = el; (wrapperRef as any).current = el }}
+      className={`relative overflow-auto w-full h-full p-6 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+      style={{ minHeight: '400px' }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}>
       {/* SVG connectors */}
       <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%', zIndex: 0 }}>
         {lines.map((l, i) => {
@@ -187,12 +218,20 @@ export function OSTTreeViewCanvas({
                 }`}>
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[9px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider">Oportunidad</p>
-                  {hyps.length > 0 && (
-                    <button onClick={e => { e.stopPropagation(); toggleOpp(opp.id) }}
-                      className="text-slate-500 hover:text-slate-300">
-                      {isExp ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {onToggleStar && (
+                      <button onClick={e => { e.stopPropagation(); onToggleStar(opp.id) }}
+                        className={`flex-shrink-0 transition-colors ${starredIds?.has(opp.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
+                        <Star size={12} fill={starredIds?.has(opp.id) ? 'currentColor' : 'none'} />
+                      </button>
+                    )}
+                    {hyps.length > 0 && (
+                      <button onClick={e => { e.stopPropagation(); toggleOpp(opp.id) }}
+                        className="text-slate-500 hover:text-slate-300">
+                        {isExp ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {editingId === opp.id ? (
                   <div className="flex items-start gap-1">
@@ -257,11 +296,19 @@ export function OSTTreeViewCanvas({
                         <span className={`w-2 h-2 rounded-full ${dot}`} />
                         <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Solución</p>
                       </div>
-                      {exps.length > 0 && (
-                        <button onClick={() => toggleHyp(h.id)} className="text-slate-500 hover:text-slate-300">
-                          {isExp ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {onToggleStar && (
+                          <button onClick={() => onToggleStar(h.id)}
+                            className={`flex-shrink-0 transition-colors ${starredIds?.has(h.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
+                            <Star size={10} fill={starredIds?.has(h.id) ? 'currentColor' : 'none'} />
+                          </button>
+                        )}
+                        {exps.length > 0 && (
+                          <button onClick={() => toggleHyp(h.id)} className="text-slate-500 hover:text-slate-300">
+                            {isExp ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {editingId === h.id ? (
                       <div className="flex items-start gap-1">
