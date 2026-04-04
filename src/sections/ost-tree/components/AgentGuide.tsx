@@ -22,12 +22,12 @@ REGLAS:
 - UNA pregunta a la vez
 - Confirmá brevemente y avanzá
 - Español natural y cercano
+- El usuario puede escribir como quiera, vos extraés la info
 
 FLUJO (según lo que falte):
 1. OUTCOME: "¿Qué resultado medible querés lograr?"
-2. OPORTUNIDADES: "Listá 2-3 problemas o necesidades de tu usuario, separados por punto y coma."
-   IMPORTANTE: Pedí explícitamente que los separe con punto y coma (;) para poder guardarlos como oportunidades individuales.
-3. EVIDENCIA: "Para cada oportunidad, ¿qué evidencia tenés? Citas de usuarios, datos, observaciones."
+2. OPORTUNIDADES: "¿Qué problemas o necesidades del usuario identificaste? Contame todos los que se te ocurran."
+3. EVIDENCIA: "Para cada oportunidad, ¿qué evidencia tenés?"
 4. HIPÓTESIS: "¿Qué soluciones podrían resolver cada oportunidad?"
 5. EXPERIMENTOS: "¿Cómo validarías cada hipótesis con una prueba de bajo esfuerzo?"
 
@@ -188,11 +188,31 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
   )
 }
 
+// Use Claude to extract structured items from free-form text
+async function extractItems(userText: string, type: string): Promise<string[]> {
+  try {
+    const prompt = `Del siguiente texto, extraé cada ${type} individual como un item separado. Devolvé SOLO un JSON array de strings, sin texto adicional.
+
+Texto: "${userText}"
+
+Ejemplo de respuesta: ["item 1", "item 2", "item 3"]`
+
+    const r = await anthropic.messages.create({
+      model: AI_MODEL, max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    })
+    const text = r.content[0].type === 'text' ? r.content[0].text : '[]'
+    const match = text.match(/\[[\s\S]*\]/)
+    if (match) return JSON.parse(match[0])
+  } catch {}
+  // Fallback: simple split
+  return userText.split(/[;\n]/).map(l => l.replace(/^[\d\-\.\)\s•]+/, '').trim()).filter(l => l.length > 3)
+}
+
 // Save data from chat responses when possible
 async function trySaveFromChat(userText: string, projectId: string, hasOutcome: boolean, oppCount: number) {
   try {
     if (!hasOutcome) {
-      // Save as north star — simple upsert without parsing legacy data
       const { data: existing } = await supabase.from('business_context').select('id').eq('project_id', projectId).maybeSingle()
       const now = new Date().toISOString()
       const content = JSON.stringify({
@@ -207,17 +227,10 @@ async function trySaveFromChat(userText: string, projectId: string, hasOutcome: 
         await supabase.from('business_context').insert({ project_id: projectId, content })
       }
     } else if (oppCount === 0) {
-      // Parse opportunities — split by semicolons, newlines, or numbered items
-      const lines = userText
-        .split(/[;\n]/)
-        .map(l => l.replace(/^[\d\-\.\)\s•]+/, '').trim())
-        .filter(l => l.length > 5)
-
-      if (lines.length === 0) {
-        // If no clear separators, treat the whole text as one opportunity
-        await supabase.from('opportunities').insert({ project_id: projectId, parent_id: null, name: userText.trim() })
-      } else {
-        for (const name of lines) {
+      // Use AI to extract individual opportunities from free text
+      const items = await extractItems(userText, 'oportunidad o problema del usuario')
+      for (const name of items) {
+        if (name.length > 3) {
           await supabase.from('opportunities').insert({ project_id: projectId, parent_id: null, name })
         }
       }
