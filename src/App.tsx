@@ -17,6 +17,7 @@ import { ProjectSelector } from './components/ProjectSelector'
 import { SettingsPage } from './pages/SettingsPage'
 import { ExperimentsPage } from './pages/ExperimentsPage'
 import { ReviewsPage } from './pages/ReviewsPage'
+import { AIEvaluationSelectPage } from './pages/AIEvaluationSelectPage'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
@@ -178,6 +179,14 @@ export function App() {
             element={
               <AuthGuard>
                 <ShellWrapper><ReviewsPage /></ShellWrapper>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/ai-evaluation"
+            element={
+              <AuthGuard>
+                <ShellWrapper><AIEvaluationSelectPage /></ShellWrapper>
               </AuthGuard>
             }
           />

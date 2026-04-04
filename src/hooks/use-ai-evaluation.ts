@@ -461,14 +461,76 @@ export function useAIEvaluation(
 
   // ── Apply suggestion (placeholder) ────────────────────────────────────────
 
-  const applySuggestion = useCallback((_messageId: string) => {
-    // Placeholder: show a transient notification.
-    // Full implementation would parse the suggestion and apply it to the OST.
-    const event = new CustomEvent('ost:toast', {
-      detail: { message: 'Sugerencia aplicada al OST', type: 'success' },
-    })
-    window.dispatchEvent(event)
-  }, [])
+  const applySuggestion = useCallback(async (messageId: string) => {
+    const msg = conversation.find(m => m.id === messageId)
+    if (!msg) return
+
+    try {
+      // Ask Claude to extract actionable items from the suggestion
+      const extractPrompt = `Del siguiente mensaje de evaluación, extraé las acciones concretas que se pueden aplicar al OST.
+
+Mensaje: "${msg.content}"
+
+Respondé SOLO con un JSON array. Cada item tiene: type ("add_opportunity" | "add_hypothesis" | "add_evidence") y data con los campos necesarios.
+Ejemplo: [{"type":"add_opportunity","data":{"name":"..."}}, {"type":"add_hypothesis","data":{"opportunityIndex":0,"description":"..."}}]
+Si no hay acciones claras, respondé []`
+
+      const response = await anthropic.messages.create({
+        model: AI_MODEL,
+        max_tokens: 512,
+        messages: [{ role: 'user', content: extractPrompt }],
+      })
+
+      const text = response.content[0].type === 'text' ? response.content[0].text : '[]'
+      const match = text.match(/\[[\s\S]*\]/)
+      if (!match) throw new Error('No actions found')
+
+      const actions = JSON.parse(match[0])
+      let applied = 0
+
+      // Get existing opportunities for context
+      const { data: opps } = await supabase
+        .from('opportunities')
+        .select('id, name')
+        .eq('project_id', projectId)
+        .eq('archived', false)
+
+      for (const action of actions) {
+        if (action.type === 'add_opportunity' && action.data?.name) {
+          await supabase.from('opportunities').insert({
+            project_id: projectId, parent_id: null, name: action.data.name,
+            description: action.data.description ?? null,
+          })
+          applied++
+        } else if (action.type === 'add_hypothesis' && action.data?.description && opps?.length) {
+          const targetOpp = opps[action.data.opportunityIndex ?? 0] ?? opps[0]
+          await supabase.from('hypotheses').insert({
+            opportunity_id: targetOpp.id, description: action.data.description, status: 'to do',
+          })
+          applied++
+        } else if (action.type === 'add_evidence' && action.data?.content && opps?.length) {
+          const targetOpp = opps[action.data.opportunityIndex ?? 0] ?? opps[0]
+          await supabase.from('opportunity_evidence').insert({
+            opportunity_id: targetOpp.id, type: action.data.type ?? 'observacion',
+            content: action.data.content, source: action.data.source ?? null,
+          })
+          applied++
+        }
+      }
+
+      window.dispatchEvent(new CustomEvent('ost:toast', {
+        detail: {
+          message: applied > 0 ? `${applied} sugerencia${applied > 1 ? 's' : ''} aplicada${applied > 1 ? 's' : ''} al OST` : 'No se encontraron acciones aplicables',
+          type: applied > 0 ? 'success' : 'error',
+        },
+      }))
+    } catch (err) {
+      console.error('Apply suggestion error:', err)
+      window.dispatchEvent(new CustomEvent('ost:toast', {
+        detail: { message: 'Error al aplicar sugerencia', type: 'error' },
+      }))
+    }
+  }, [conversation, projectId])
 
   return {
     evaluations,
