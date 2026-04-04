@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Pencil, Check, Plus } from 'lucide-react'
 import type { Opportunity, HypothesisSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
@@ -48,14 +48,16 @@ export function OSTTreeViewCanvas({
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
   const [expandedOpps, setExpandedOpps] = useState<Set<string>>(() => new Set(opportunities.filter(o => !o.isArchived).map(o => o.id)))
-  const [expandedHyps, setExpandedHyps] = useState<Set<string>>(() => {
-    // Auto-expand hypotheses that have experiments
+  const [expandedHyps, setExpandedHyps] = useState<Set<string>>(new Set())
+
+  // Auto-expand hypotheses that have experiments whenever data changes
+  useEffect(() => {
     const ids = new Set<string>()
     Object.entries(experimentsSummary).forEach(([hypId, exps]) => {
       if (exps.length > 0) ids.add(hypId)
     })
-    return ids
-  })
+    if (ids.size > 0) setExpandedHyps(prev => new Set([...prev, ...ids]))
+  }, [experimentsSummary])
   const [renderKey, setRenderKey] = useState(0)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
