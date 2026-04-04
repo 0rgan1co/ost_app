@@ -74,6 +74,11 @@ function AIEvaluationPage() {
     evaluate, sendMessage, applySuggestion,
   } = useAIEvaluation(opportunityId ?? '', currentProject?.id ?? '')
 
+  // Load opportunity data for the left column
+  const {
+    opportunity, evidence, hypotheses, topExperiments,
+  } = useOpportunityDetail(opportunityId ?? '')
+
   if (!currentProject || !opportunityId) {
     return <div className="min-h-screen bg-slate-950" />
   }
@@ -81,7 +86,7 @@ function AIEvaluationPage() {
   return (
     <AIEvaluationView
       project={{ id: currentProject.id, name: currentProject.name }}
-      opportunity={{ id: opportunityId, title: '', status: 'activa' }}
+      opportunity={{ id: opportunityId, title: opportunity?.title ?? '', status: opportunity?.status ?? 'activa' }}
       evaluations={evaluations}
       conversation={conversation}
       isEvaluating={isEvaluating}
@@ -90,6 +95,19 @@ function AIEvaluationPage() {
       onSendMessage={sendMessage}
       onApplySuggestion={applySuggestion}
       onNavigateBack={() => navigate(`/opportunity/${opportunityId}`)}
+      ostSummary={{
+        evidenceCount: evidence.length,
+        hypotheses: hypotheses.map(h => ({
+          description: h.description,
+          status: h.status,
+          experimentCount: h.experiments.length,
+        })),
+        topExperiments: topExperiments.map(t => ({
+          description: t.experiment.description,
+          type: t.experiment.type,
+          score: t.priorityScore,
+        })),
+      }}
     />
   )
 }
