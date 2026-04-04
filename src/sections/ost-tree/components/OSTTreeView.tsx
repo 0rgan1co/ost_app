@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Check, Plus, Star } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Check, Plus, Star, Trash2 } from 'lucide-react'
 import type { Opportunity, HypothesisSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
 
@@ -21,6 +21,9 @@ interface OSTTreeViewProps {
   onEditOutcome?: (text: string) => void
   starredIds?: Set<string>
   onToggleStar?: (id: string) => void
+  onDeleteOpportunity?: (id: string) => void
+  onDeleteHypothesis?: (id: string) => void
+  onDeleteExperiment?: (id: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -46,6 +49,7 @@ export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
   onRenameHypothesis, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
+  onDeleteOpportunity, onDeleteHypothesis, onDeleteExperiment,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -63,6 +67,7 @@ export function OSTTreeViewCanvas({
   const [renderKey, setRenderKey] = useState(0)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   // Pan/drag for canvas navigation
   const [isPanning, setIsPanning] = useState(false)
@@ -211,11 +216,21 @@ export function OSTTreeViewCanvas({
             return (
               <div key={opp.id} data-n="opp" data-id={opp.id}
                 onClick={() => onSelect(opp.id)}
-                className={`cursor-pointer rounded-xl border px-4 py-3 w-52 transition-all hover:shadow-md ${
+                className={`relative cursor-pointer rounded-xl border px-4 py-3 w-52 transition-all hover:shadow-md ${
                   selectedId === opp.id
                     ? 'bg-slate-800 border-orange-500/50 shadow-orange-500/10'
                     : 'bg-slate-900 border-slate-800 hover:border-slate-700'
                 }`}>
+                {/* Delete confirmation overlay */}
+                {confirmDeleteId === opp.id && (
+                  <div className="absolute inset-0 bg-slate-950/95 rounded-xl z-10 flex flex-col items-center justify-center gap-2 p-3" onClick={e => e.stopPropagation()}>
+                    <p className="text-xs text-slate-300 font-[Nunito_Sans] text-center">¿Eliminar esta oportunidad?</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1 text-[10px] text-slate-400 hover:text-slate-200 rounded-lg">Cancelar</button>
+                      <button onClick={() => { onDeleteOpportunity?.(opp.id); setConfirmDeleteId(null) }} className="px-3 py-1 text-[10px] bg-red-600 hover:bg-red-500 text-white rounded-lg font-semibold">Eliminar</button>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[9px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider">Oportunidad</p>
                   <div className="flex items-center gap-1">
@@ -223,6 +238,12 @@ export function OSTTreeViewCanvas({
                       <button onClick={e => { e.stopPropagation(); onToggleStar(opp.id) }}
                         className={`flex-shrink-0 transition-colors ${starredIds?.has(opp.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
                         <Star size={12} fill={starredIds?.has(opp.id) ? 'currentColor' : 'none'} />
+                      </button>
+                    )}
+                    {onDeleteOpportunity && (
+                      <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(opp.id) }}
+                        className="text-slate-600 hover:text-red-400 flex-shrink-0 transition-colors">
+                        <Trash2 size={11} />
                       </button>
                     )}
                     {hyps.length > 0 && (
@@ -290,7 +311,16 @@ export function OSTTreeViewCanvas({
                 const dot = HYP_DOT[h.status] ?? HYP_DOT['to do']
                 return (
                   <div key={h.id} data-n="hyp" data-id={h.id} data-parent={h.oppId}
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 w-48 hover:border-indigo-500/30 transition-all">
+                    className="relative bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 w-48 hover:border-indigo-500/30 transition-all">
+                    {confirmDeleteId === h.id && (
+                      <div className="absolute inset-0 bg-slate-950/95 rounded-xl z-10 flex flex-col items-center justify-center gap-2 p-3">
+                        <p className="text-[10px] text-slate-300 font-[Nunito_Sans] text-center">¿Eliminar esta solución?</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-1 text-[10px] text-slate-400 rounded-lg">Cancelar</button>
+                          <button onClick={() => { onDeleteHypothesis?.(h.id); setConfirmDeleteId(null) }} className="px-2 py-1 text-[10px] bg-red-600 text-white rounded-lg font-semibold">Eliminar</button>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full ${dot}`} />
@@ -302,6 +332,9 @@ export function OSTTreeViewCanvas({
                             className={`flex-shrink-0 transition-colors ${starredIds?.has(h.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
                             <Star size={10} fill={starredIds?.has(h.id) ? 'currentColor' : 'none'} />
                           </button>
+                        )}
+                        {onDeleteHypothesis && (
+                          <button onClick={() => setConfirmDeleteId(h.id)} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>
                         )}
                         {exps.length > 0 && (
                           <button onClick={() => toggleHyp(h.id)} className="text-slate-500 hover:text-slate-300">
@@ -359,10 +392,24 @@ export function OSTTreeViewCanvas({
                 const dot = EXP_DOT[e.status] ?? EXP_DOT['to do']
                 return (
                   <div key={e.id} data-n="exp" data-id={e.id} data-parent={e.hypId}
-                    className="bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-2 w-40 hover:border-amber-500/30 transition-all">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-                      <p className="text-[8px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider">Experimento</p>
+                    className="relative bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-2 w-40 hover:border-amber-500/30 transition-all">
+                    {confirmDeleteId === e.id && (
+                      <div className="absolute inset-0 bg-slate-950/95 rounded-lg z-10 flex flex-col items-center justify-center gap-2 p-2">
+                        <p className="text-[9px] text-slate-300 font-[Nunito_Sans] text-center">¿Eliminar?</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-0.5 text-[9px] text-slate-400 rounded">No</button>
+                          <button onClick={() => { onDeleteExperiment?.(e.id); setConfirmDeleteId(null) }} className="px-2 py-0.5 text-[9px] bg-red-600 text-white rounded font-semibold">Sí</button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                        <p className="text-[8px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider">Experimento</p>
+                      </div>
+                      {onDeleteExperiment && (
+                        <button onClick={() => setConfirmDeleteId(e.id)} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={9} /></button>
+                      )}
                     </div>
                     {editingId === e.id ? (
                       <div className="flex items-start gap-1">

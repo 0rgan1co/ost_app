@@ -231,6 +231,19 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch()
   }, [refetch])
 
+  // Delete hypothesis
+  const handleDeleteHypothesis = useCallback(async (id: string) => {
+    await supabase.from('experiments').delete().eq('hypothesis_id', id)
+    await supabase.from('hypotheses').delete().eq('id', id)
+    refetch()
+  }, [refetch])
+
+  // Delete experiment
+  const handleDeleteExperiment = useCallback(async (id: string) => {
+    await supabase.from('experiments').delete().eq('id', id)
+    refetch()
+  }, [refetch])
+
   // Quick-add hypothesis from tree
   const handleQuickAddHypothesis = useCallback(async (opportunityId: string) => {
     const name = prompt('Nombre de la solución (hipótesis):')
@@ -359,6 +372,9 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onEditOutcome={handleEditOutcome}
               starredIds={starredIds}
               onToggleStar={toggleStar}
+              onDeleteOpportunity={archiveOpportunity}
+              onDeleteHypothesis={handleDeleteHypothesis}
+              onDeleteExperiment={handleDeleteExperiment}
             />
           </div>
         )}
