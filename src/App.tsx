@@ -15,6 +15,7 @@ import { useAIEvaluation } from './hooks/use-ai-evaluation'
 import { useBusinessContext } from './hooks/use-business-context'
 import { ProjectSelector } from './components/ProjectSelector'
 import { SettingsPage } from './pages/SettingsPage'
+import { ExperimentsPage } from './pages/ExperimentsPage'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
@@ -168,6 +169,14 @@ export function App() {
             element={
               <AuthGuard>
                 <ShellWrapper><AIEvaluationPage /></ShellWrapper>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/experiments"
+            element={
+              <AuthGuard>
+                <ShellWrapper><ExperimentsPage /></ShellWrapper>
               </AuthGuard>
             }
           />

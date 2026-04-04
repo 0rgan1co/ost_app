@@ -1,4 +1,4 @@
-import { GitBranch, Layers, Sparkles, BookOpen, Settings, HelpCircle } from 'lucide-react'
+import { GitBranch, Layers, Sparkles, BookOpen, Settings, HelpCircle, FlaskConical } from 'lucide-react'
 
 export interface NavItem {
   label: string
@@ -13,6 +13,7 @@ interface MainNavProps {
 
 const iconMap: Record<string, React.ReactNode> = {
   '/ost-tree':          <GitBranch size={18} />,
+  '/experiments':       <FlaskConical size={18} />,
   '/opportunity':       <Layers size={18} />,
   '/ai-evaluation':     <Sparkles size={18} />,
   '/business-context':  <BookOpen size={18} />,
