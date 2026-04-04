@@ -251,7 +251,8 @@ export interface AIEvaluationProps {
   isSendingMessage?: boolean
   onEvaluate?: (opportunityId: string) => void
   onSendMessage?: (message: string) => void
-  onApplySuggestion?: (messageId: string) => void
+  onApplySuggestion?: (messageId: string) => import('../lib/parse-suggestion').SuggestionAction[]
+  onExecuteActions?: (actions: import('../lib/parse-suggestion').SuggestionAction[]) => Promise<number>
   onNavigateBack?: () => void
 }
 

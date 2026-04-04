@@ -17,6 +17,7 @@ import type {
   EffortImpact,
 } from '../../../types'
 import { ExperimentCard } from './ExperimentCard'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -293,6 +294,7 @@ export function HypothesisCard({
   const [expanded, setExpanded] = useState(false)
   const [showExperimentForm, setShowExperimentForm] = useState(false)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const statusCfg = HYPOTHESIS_STATUS_CONFIG[hypothesis.status]
 
@@ -376,7 +378,7 @@ export function HypothesisCard({
           {/* Delete */}
           {onDelete && (
             <button
-              onClick={() => onDelete(hypothesis.id)}
+              onClick={() => setShowDeleteConfirm(true)}
               title="Eliminar hipótesis"
               className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
             >
@@ -444,6 +446,20 @@ export function HypothesisCard({
           )}
         </div>
       )}
+
+      {/* Confirm delete dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Eliminar hipótesis"
+        message="Se eliminarán también todos los experimentos asociados. ¿Continuar?"
+        variant="danger"
+        confirmLabel="Eliminar"
+        onConfirm={() => {
+          onDelete?.(hypothesis.id)
+          setShowDeleteConfirm(false)
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }

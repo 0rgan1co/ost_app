@@ -5,6 +5,7 @@ import { OSTListView } from './components/OSTListView'
 import { OSTTreeViewCanvas } from './components/OSTTreeView'
 import { OpportunityPanel } from './components/OpportunityPanel'
 import { CreateOpportunityModal } from './components/CreateOpportunityModal'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { Project } from '../../types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -134,6 +135,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null)
 
   // Create modal state: stores the parentId to pre-fill ("" = root)
   const [createParentId, setCreateParentId] = useState<string | null | undefined>(undefined)
@@ -181,6 +183,21 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     setCreateParentId(undefined)
   }, [createOpportunity, createParentId])
 
+  const handleArchiveRequest = useCallback((id: string) => {
+    setArchiveTarget(id)
+  }, [])
+
+  const handleConfirmArchive = useCallback(() => {
+    if (archiveTarget) {
+      archiveOpportunity(archiveTarget)
+      setArchiveTarget(null)
+    }
+  }, [archiveTarget, archiveOpportunity])
+
+  const handleCancelArchive = useCallback(() => {
+    setArchiveTarget(null)
+  }, [])
+
   const handleNavigateToDetail = useCallback((id: string) => {
     navigate(`/projects/${project.id}/opportunity/${id}`)
   }, [navigate, project.id])
@@ -191,7 +208,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     selectedId,
     onToggleExpand: toggleExpand,
     onSelect: handleSelect,
-    onArchive: archiveOpportunity,
+    onArchive: handleArchiveRequest,
     onRestore: restoreOpportunity,
     onCreateChild: handleOpenCreateChild,
   }
@@ -262,7 +279,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         onNavigateToDetail={handleNavigateToDetail}
-        onArchive={archiveOpportunity}
+        onArchive={handleArchiveRequest}
         onRestore={restoreOpportunity}
         onCreateChild={handleOpenCreateChild}
       />
@@ -273,6 +290,17 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         parentName={parentOpportunity?.title ?? null}
         onConfirm={handleConfirmCreate}
         onClose={handleCloseModal}
+      />
+
+      {/* ── Archive confirmation ────────────────────────────────────────────── */}
+      <ConfirmDialog
+        isOpen={archiveTarget !== null}
+        title="Archivar oportunidad"
+        message="La oportunidad será archivada. Podrás restaurarla después."
+        variant="warning"
+        confirmLabel="Archivar"
+        onConfirm={handleConfirmArchive}
+        onCancel={handleCancelArchive}
       />
     </div>
   )

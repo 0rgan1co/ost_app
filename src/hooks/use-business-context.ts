@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { BusinessContext, ContextField } from '../types'
 
@@ -81,6 +81,22 @@ export function useBusinessContext(projectId: string) {
     fetchContext()
   }, [fetchContext])
 
+  // ── Realtime subscription for business_context ────────────────────────────
+
+  useEffect(() => {
+    if (!projectId) return
+
+    const channel = supabase
+      .channel(`biz-ctx-${projectId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'business_context', filter: `project_id=eq.${projectId}` },
+        () => fetchContext()
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [projectId, fetchContext])
+
   // ── Save a single field ────────────────────────────────────────────────────
 
   const saveField = useCallback(
@@ -125,6 +141,23 @@ export function useBusinessContext(projectId: string) {
     },
     [context, projectId, rowId]
   )
+
+  // ── Realtime subscription ────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!projectId) return
+
+    const channel = supabase
+      .channel(`biz-ctx-${projectId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'business_context', filter: `project_id=eq.${projectId}` },
+        () => fetchContext()
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [projectId, fetchContext])
 
   return {
     context,

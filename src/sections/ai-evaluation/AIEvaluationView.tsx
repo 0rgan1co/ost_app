@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { ChevronRight, Sparkles, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
-import { EvaluationPanel, EvaluatingState, EvaluationHistory, ConversationPanel } from './components'
+import { EvaluationPanel, EvaluatingState, EvaluationHistory, ConversationPanel, SuggestionConfirmDialog } from './components'
+import type { SuggestionAction } from '../../lib/parse-suggestion'
 import type { AIEvaluationProps } from '../../types'
 
 // ─── Toast notification (listens to custom event from applySuggestion) ────────
@@ -60,9 +61,42 @@ export function AIEvaluationView({
   onEvaluate,
   onSendMessage,
   onApplySuggestion,
+  onExecuteActions,
   onNavigateBack,
 }: AIEvaluationProps) {
   const toast = useToast()
+
+  // ── Suggestion dialog state ──────────────────────────────────────────────
+  const [suggestionActions, setSuggestionActions] = useState<SuggestionAction[]>([])
+  const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false)
+
+  const handleApplySuggestion = useCallback(
+    (messageId: string) => {
+      if (!onApplySuggestion) return
+      const actions = onApplySuggestion(messageId)
+      if (actions && actions.length > 0) {
+        setSuggestionActions(actions)
+        setIsSuggestionDialogOpen(true)
+      }
+    },
+    [onApplySuggestion]
+  )
+
+  const handleConfirmSuggestions = useCallback(
+    async (selected: SuggestionAction[]) => {
+      setIsSuggestionDialogOpen(false)
+      setSuggestionActions([])
+      if (onExecuteActions && selected.length > 0) {
+        await onExecuteActions(selected)
+      }
+    },
+    [onExecuteActions]
+  )
+
+  const handleCancelSuggestions = useCallback(() => {
+    setIsSuggestionDialogOpen(false)
+    setSuggestionActions([])
+  }, [])
 
   const latestEvaluation = evaluations[0] ?? null
   const pastEvaluations = evaluations.slice(1)
@@ -163,7 +197,7 @@ export function AIEvaluationView({
             isSendingMessage={isSendingMessage}
             hasEvaluation={hasEvaluation}
             onSendMessage={onSendMessage}
-            onApplySuggestion={onApplySuggestion}
+            onApplySuggestion={handleApplySuggestion}
           />
         </div>
 
@@ -171,6 +205,14 @@ export function AIEvaluationView({
         {/* Note: error is shown via the hook; if consumer passes no error prop,
             this block won't render. Wire error display at the page level if needed. */}
       </div>
+
+      {/* Suggestion confirmation dialog */}
+      <SuggestionConfirmDialog
+        isOpen={isSuggestionDialogOpen}
+        actions={suggestionActions}
+        onConfirm={handleConfirmSuggestions}
+        onCancel={handleCancelSuggestions}
+      />
     </div>
   )
 }
@@ -200,6 +242,7 @@ export function ConnectedAIEvaluationView({
     evaluate,
     sendMessage,
     applySuggestion,
+    executeActions,
   } = useAIEvaluation(opportunity.id, project.id)
 
   return (
@@ -220,6 +263,7 @@ export function ConnectedAIEvaluationView({
         onEvaluate={evaluate}
         onSendMessage={sendMessage}
         onApplySuggestion={applySuggestion}
+        onExecuteActions={executeActions}
         onNavigateBack={onNavigateBack}
       />
     </>

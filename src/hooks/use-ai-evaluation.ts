@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { parseSuggestion, type SuggestionAction } from '../lib/parse-suggestion'
 import type { AIEvaluation, ConversationMessage, EvaluationSection } from '../types'
 
 // Model constant kept for UI display purposes
@@ -33,7 +34,8 @@ export interface UseAIEvaluationReturn {
   error: string | null
   evaluate: () => Promise<void>
   sendMessage: (content: string) => Promise<void>
-  applySuggestion: (messageId: string) => void
+  applySuggestion: (messageId: string) => SuggestionAction[]
+  executeActions: (actions: SuggestionAction[]) => Promise<number>
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -232,16 +234,115 @@ export function useAIEvaluation(
     [activeEvaluationId, opportunityId, projectId]
   )
 
-  // ── Apply suggestion (placeholder) ────────────────────────────────────────
+  // ── Apply suggestion ───────────────────────────────────────────────────────
+  // Returns parsed actions so the calling view can open the confirmation dialog.
 
-  const applySuggestion = useCallback((_messageId: string) => {
-    // Placeholder: show a transient notification.
-    // Full implementation would parse the suggestion and apply it to the OST.
-    const event = new CustomEvent('ost:toast', {
-      detail: { message: 'Sugerencia aplicada al OST', type: 'success' },
-    })
-    window.dispatchEvent(event)
-  }, [])
+  const applySuggestion = useCallback(
+    (messageId: string): SuggestionAction[] => {
+      const message = conversation.find((m) => m.id === messageId)
+      if (!message) return [{ type: 'manual', description: 'Mensaje no encontrado', data: {} }]
+      return parseSuggestion(message.content)
+    },
+    [conversation]
+  )
+
+  // ── Execute confirmed actions against Supabase ────────────────────────────
+
+  const executeActions = useCallback(
+    async (actions: SuggestionAction[]): Promise<number> => {
+      let applied = 0
+
+      for (const action of actions) {
+        try {
+          switch (action.type) {
+            case 'add_hypothesis': {
+              const desc =
+                (action.data.description as string) ?? action.description
+              const { error: insertErr } = await supabase
+                .from('hypotheses')
+                .insert({
+                  opportunity_id: opportunityId,
+                  description: desc,
+                  status: 'to do',
+                })
+              if (!insertErr) applied++
+              break
+            }
+
+            case 'add_evidence': {
+              const content =
+                (action.data.content as string) ?? action.description
+              const evidenceType =
+                (action.data.type as string) ?? 'observacion'
+              const { error: insertErr } = await supabase
+                .from('opportunity_evidence')
+                .insert({
+                  opportunity_id: opportunityId,
+                  type: evidenceType,
+                  content,
+                })
+              if (!insertErr) applied++
+              break
+            }
+
+            case 'update_description': {
+              const desc =
+                (action.data.description as string) ?? action.description
+              const { error: updateErr } = await supabase
+                .from('opportunities')
+                .update({ description: desc })
+                .eq('id', opportunityId)
+              if (!updateErr) applied++
+              break
+            }
+
+            case 'suggest_experiment': {
+              // Don't auto-create an experiment; just note it as a hypothesis
+              // so the user can design the experiment details themselves.
+              const desc =
+                (action.data.description as string) ?? action.description
+              const { error: insertErr } = await supabase
+                .from('hypotheses')
+                .insert({
+                  opportunity_id: opportunityId,
+                  description: `[Experimento sugerido] ${desc}`,
+                  status: 'to do',
+                })
+              if (!insertErr) applied++
+              break
+            }
+
+            case 'manual':
+              // No-op — already shown to the user
+              break
+          }
+        } catch {
+          // Individual action failure doesn't block the rest
+        }
+      }
+
+      // Notify via toast
+      if (applied > 0) {
+        window.dispatchEvent(
+          new CustomEvent('ost:toast', {
+            detail: {
+              message: `${applied} cambio${applied !== 1 ? 's' : ''} aplicado${applied !== 1 ? 's' : ''} al OST`,
+              type: 'success',
+            },
+          })
+        )
+      } else {
+        window.dispatchEvent(
+          new CustomEvent('ost:toast', {
+            detail: { message: 'No se pudieron aplicar los cambios', type: 'error' },
+          })
+        )
+      }
+
+      return applied
+    },
+    [opportunityId]
+  )
 
   return {
     evaluations,
@@ -252,5 +353,6 @@ export function useAIEvaluation(
     evaluate,
     sendMessage,
     applySuggestion,
+    executeActions,
   }
 }

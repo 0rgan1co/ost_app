@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useRealtimeProject } from './use-realtime-project'
 import type { Opportunity, OSTTreeEvidence, HypothesisSummary } from '../types'
 
 // ─── Raw DB rows ──────────────────────────────────────────────────────────────
@@ -211,6 +212,11 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     fetchData()
   }, [fetchData])
 
+  useRealtimeProject({
+    projectId,
+    onEvent: fetchData,
+  })
+
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds(prev => {
       const next = new Set(prev)
@@ -252,6 +258,8 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     if (error) throw error
     await fetchData()
   }, [fetchData])
+
+  useRealtimeProject({ projectId, onEvent: fetchData })
 
   const nodes = buildTree(flatOpportunities)
 

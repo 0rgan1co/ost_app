@@ -15,6 +15,8 @@ import type {
 import { EvidenceSection } from './components/EvidenceSection'
 import { HypothesisCard } from './components/HypothesisCard'
 import { TopExperimentsCard } from './components/TopExperimentsCard'
+import { UndoToast } from '../../components/UndoToast'
+import { supabase } from '../../lib/supabase'
 
 // ─── Inline editable field ────────────────────────────────────────────────────
 
@@ -171,6 +173,54 @@ export function OpportunityDetailView({
   onNavigateBack,
 }: OpportunityDetailProps) {
   const [showHypothesisForm, setShowHypothesisForm] = useState(false)
+  const [undoData, setUndoData] = useState<{ type: string; row: Hypothesis } | null>(null)
+
+  const handleDeleteHypothesisWithUndo = useCallback(
+    (id: string) => {
+      // Save the full hypothesis data before deleting
+      const targetHypothesis = hypotheses.find(h => h.id === id)
+      if (targetHypothesis) {
+        setUndoData({ type: 'hypothesis', row: targetHypothesis })
+      }
+      onDeleteHypothesis?.(id)
+    },
+    [hypotheses, onDeleteHypothesis]
+  )
+
+  const handleUndoHypothesis = useCallback(async () => {
+    if (!undoData) return
+    const { row } = undoData
+    // Re-insert the hypothesis
+    await supabase.from('hypotheses').insert({
+      id: row.id,
+      description: row.description,
+      status: row.status,
+      result: row.result,
+      created_at: row.createdAt,
+    })
+    // Re-insert experiments if any
+    if (row.experiments.length > 0) {
+      await supabase.from('experiments').insert(
+        row.experiments.map(exp => ({
+          id: exp.id,
+          hypothesis_id: exp.hypothesisId,
+          type: exp.type,
+          description: exp.description,
+          success_criterion: exp.successCriterion,
+          effort: exp.effort,
+          impact: exp.impact,
+          status: exp.status,
+          result: exp.result,
+          priority_score: exp.priorityScore,
+        }))
+      )
+    }
+    setUndoData(null)
+  }, [undoData])
+
+  const handleUndoDismiss = useCallback(() => {
+    setUndoData(null)
+  }, [])
 
   const handleUpdateField = useCallback(
     (field: keyof OpportunityDetail) => (value: string) => {
@@ -328,7 +378,7 @@ export function OpportunityDetailView({
                   key={h.id}
                   hypothesis={h}
                   onChangeStatus={onChangeHypothesisStatus}
-                  onDelete={onDeleteHypothesis}
+                  onDelete={onDeleteHypothesis ? handleDeleteHypothesisWithUndo : undefined}
                   onAddExperiment={onAddExperiment}
                   onChangeExperimentStatus={onChangeExperimentStatus}
                 />
@@ -360,6 +410,15 @@ export function OpportunityDetailView({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Undo toast for hypothesis deletion */}
+      {undoData && (
+        <UndoToast
+          message="Hipótesis eliminada"
+          onUndo={handleUndoHypothesis}
+          onDismiss={handleUndoDismiss}
+        />
       )}
     </div>
   )

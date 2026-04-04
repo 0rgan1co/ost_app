@@ -67,7 +67,7 @@ function AIEvaluationPage() {
   const [oppTitle, setOppTitle] = useState('')
   const {
     evaluations, conversation, isEvaluating, isSendingMessage,
-    evaluate, sendMessage, applySuggestion,
+    evaluate, sendMessage, applySuggestion, executeActions,
   } = useAIEvaluation(opportunityId ?? '', project.id)
 
   useEffect(() => {
@@ -95,6 +95,7 @@ function AIEvaluationPage() {
       onEvaluate={evaluate}
       onSendMessage={sendMessage}
       onApplySuggestion={applySuggestion}
+      onExecuteActions={executeActions}
       onNavigateBack={() => navigate(`/projects/${project.id}/opportunity/${opportunityId}`)}
     />
   )
