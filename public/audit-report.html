@@ -167,6 +167,255 @@
   <span class="gap-effort">ESFUERZO: BAJO</span>
 </div>
 
+<h2 id="anexo">Anexo: Spec Original (TECHNICAL_SPEC_OST_APP v2.0)</h2>
+
+<div class="spec-section">
+<h3>0. Modelo de Dominio OST</h3>
+<pre style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;font-size:12px;color:#94a3b8;overflow-x:auto;font-family:'IBM Plex Mono',monospace;">
+Project (contexto organizacional — multi-OST)
+  └── Oportunidad (problema / necesidad del usuario)
+        ├── Evidencia             → citas, hechos u observaciones que la sustentan
+        ├── Hipótesis             → supuesto falseable sobre cómo resolverla
+        │     └── Experimento     → prueba diseñada (type, success_criterion, effort, impact)
+        └── Evaluación IA         → análisis Claude + conversación de refinamiento
+              └── Priorización    → top-3 experimentos (menor esfuerzo, mayor impacto)
+</pre>
+
+<table>
+<tr><th>Entidad</th><th>Padre</th><th>Semántica</th></tr>
+<tr><td>opportunities</td><td>projects</td><td>Una oportunidad pertenece a un proyecto</td></tr>
+<tr><td>opportunity_evidence</td><td>opportunities</td><td>Justifica la oportunidad con datos reales</td></tr>
+<tr><td>hypotheses</td><td>opportunities</td><td>Supuesto falseable sobre cómo resolver la oportunidad</td></tr>
+<tr><td>experiments</td><td>hypotheses</td><td>Prueba diseñada con criterio de éxito, esfuerzo e impacto</td></tr>
+<tr><td>ai_evaluations</td><td>opportunities</td><td>Evaluación Claude — audit trail inmutable</td></tr>
+<tr><td>ai_conversation_messages</td><td>ai_evaluations</td><td>Hilo de refinamiento post-evaluación con Claude</td></tr>
+<tr><td>project_members</td><td>projects + auth.users</td><td>Rol del usuario en el proyecto</td></tr>
+</table>
+</div>
+
+<div class="spec-section">
+<h3>1. Schema de Persistencia (SQL)</h3>
+<pre style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;font-size:11px;color:#94a3b8;overflow-x:auto;font-family:'IBM Plex Mono',monospace;">
+CREATE TABLE projects (
+  id UUID PK, name TEXT NOT NULL, description TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE project_members (
+  project_id UUID FK, user_id UUID FK,
+  role TEXT CHECK (role IN ('admin', 'usuario', 'viewer')),
+  invited_at TIMESTAMPTZ DEFAULT now(), PRIMARY KEY (project_id, user_id)
+);
+
+CREATE TABLE business_context (
+  id UUID PK, project_id UUID FK, content TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE opportunities (
+  id UUID PK, project_id UUID FK, name TEXT NOT NULL,
+  description TEXT, outcome TEXT, archived BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE opportunity_evidence (
+  id UUID PK, opportunity_id UUID FK,
+  type TEXT CHECK (type IN ('cita','hecho','observacion')),
+  content TEXT NOT NULL, source TEXT, -- obligatorio si type='cita'
+  created_at TIMESTAMPTZ
+);
+
+CREATE TABLE hypotheses (
+  id UUID PK, opportunity_id UUID FK, description TEXT NOT NULL,
+  status TEXT CHECK (status IN ('to do','en curso','terminada')),
+  result TEXT, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE experiments (
+  id UUID PK, hypothesis_id UUID FK,
+  type TEXT CHECK (type IN ('entrevista','prototipo','smoke_test','prueba_usabilidad','otro')),
+  description TEXT NOT NULL, success_criterion TEXT NOT NULL,
+  effort TEXT CHECK (effort IN ('bajo','medio','alto')),
+  impact TEXT CHECK (impact IN ('bajo','medio','alto')),
+  status TEXT CHECK (status IN ('to do','en curso','terminada')),
+  result TEXT, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE ai_evaluations (
+  id UUID PK, opportunity_id UUID FK,
+  prompt_snapshot TEXT NOT NULL, evaluation_text TEXT NOT NULL,
+  created_at TIMESTAMPTZ
+);
+
+CREATE TABLE ai_conversation_messages (
+  id UUID PK, evaluation_id UUID FK,
+  role TEXT CHECK (role IN ('user','assistant')),
+  content TEXT NOT NULL, created_at TIMESTAMPTZ
+);
+
+-- RLS: todas las tablas con ROW LEVEL SECURITY habilitado
+-- Helper: user_role_in_project(p_id) → retorna el rol del usuario
+-- Policy: members can read, editors (admin/usuario) can write
+</pre>
+</div>
+
+<div class="spec-section">
+<h3>2. Requerimientos EARS</h3>
+
+<h4>A. Gestión de Proyectos y Roles</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-001</td><td>Ubiquitous</td><td>Cada Oportunidad asociada a exactamente un Proyecto, sin oportunidades huérfanas.</td></tr>
+<tr><td>REQ-002</td><td>Ubiquitous</td><td>Cada miembro con exactamente un rol: admin, usuario o viewer.</td></tr>
+<tr><td>REQ-003</td><td>State-driven</td><td>MIENTRAS rol=viewer → deshabilitar todos los controles de escritura (solo lectura).</td></tr>
+<tr><td>REQ-004</td><td>State-driven</td><td>MIENTRAS rol=admin → habilitar gestión de miembros (invitar, cambiar rol, remover).</td></tr>
+<tr><td>REQ-005</td><td>Unwanted</td><td>SI viewer intenta escribir → rechazar con 403, no modificar datos.</td></tr>
+<tr><td>REQ-006</td><td>Event-driven</td><td>CUANDO admin invite miembro → insertar en project_members y notificar.</td></tr>
+</table>
+
+<h4>B. Persistencia e Inicialización</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-007</td><td>Event-driven</td><td>CUANDO inicialice → establecer cliente Supabase autenticado.</td></tr>
+<tr><td>REQ-008</td><td>Unwanted</td><td>SI no puede conectar (timeout >5s) → bloqueo de pantalla con reintento.</td></tr>
+<tr><td>REQ-009</td><td>Event-driven</td><td>CUANDO inicialice → cargar proyectos con su árbol completo.</td></tr>
+<tr><td>REQ-010</td><td>Event-driven</td><td>CUANDO modifique campo → UPDATE en Supabase dentro de 500ms (debounce).</td></tr>
+<tr><td>REQ-011</td><td>Event-driven</td><td>CUANDO Realtime activo → suscribirse a postgres_changes en 4 tablas.</td></tr>
+</table>
+
+<h4>C. Evidencia de Oportunidad</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-012</td><td>Ubiquitous</td><td>Permitir múltiples registros de evidencia por oportunidad (cita, hecho, observacion).</td></tr>
+<tr><td>REQ-013</td><td>Event-driven</td><td>CUANDO tipo=cita → requerir campo source obligatorio.</td></tr>
+<tr><td>REQ-014</td><td>Event-driven</td><td>CUANDO elimine evidencia → eliminar solo ese registro.</td></tr>
+</table>
+
+<h4>D. Hipótesis</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-015</td><td>Ubiquitous</td><td>Inicializar con status="to do".</td></tr>
+<tr><td>REQ-016</td><td>Ubiquitous</td><td>Transiciones solo entre: to do, en curso, terminada.</td></tr>
+<tr><td>REQ-017</td><td>State-driven</td><td>MIENTRAS terminada → mostrar campo result.</td></tr>
+<tr><td>REQ-018</td><td>State-driven</td><td>MIENTRAS NO terminada → ocultar campo result.</td></tr>
+</table>
+
+<h4>E. Experimentos</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-019</td><td>Ubiquitous</td><td>Requerir: description, type, success_criterion, effort, impact.</td></tr>
+<tr><td>REQ-020</td><td>Ubiquitous</td><td>Inicializar: status="to do", effort="medio", impact="medio".</td></tr>
+<tr><td>REQ-021</td><td>Ubiquitous</td><td>Transiciones solo entre: to do, en curso, terminada.</td></tr>
+<tr><td>REQ-022</td><td>Ubiquitous</td><td>Cada experimento asociado a exactamente una hipótesis.</td></tr>
+<tr><td>REQ-023</td><td>State-driven</td><td>MIENTRAS terminada → mostrar result junto a success_criterion.</td></tr>
+<tr><td>REQ-024</td><td>State-driven</td><td>MIENTRAS NO terminada → ocultar result.</td></tr>
+<tr><td>REQ-025</td><td>Event-driven</td><td>CUANDO elimine hipótesis → cascada: eliminar sus experimentos.</td></tr>
+</table>
+
+<h4>F. Priorización de Experimentos</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-026</td><td>Ubiquitous</td><td>Renderizar "Top Experimentos" en detalle de cada oportunidad (top 3 por score).</td></tr>
+<tr><td>REQ-027</td><td>Ubiquitous</td><td>Score = impact(alto=3,medio=2,bajo=1) / effort(alto=3,medio=2,bajo=1).</td></tr>
+<tr><td>REQ-028</td><td>State-driven</td><td>Sin experimentos bajo/alto → mostrar los 3 de mayor score disponibles.</td></tr>
+<tr><td>REQ-029</td><td>Event-driven</td><td>CUANDO actualice effort/impact → recalcular ranking en tiempo real.</td></tr>
+</table>
+
+<h4>G. Evaluación IA y Conversación</h4>
+<table>
+<tr><th>ID</th><th>Tipo</th><th>Sentencia</th></tr>
+<tr><td>REQ-030</td><td>Ubiquitous</td><td>Renderizar botones "Evaluar" y "Archivar" en detalle de oportunidad.</td></tr>
+<tr><td>REQ-031</td><td>Event-driven</td><td>CUANDO "Evaluar" → ensamblar prompt con: business_context + oportunidad + evidencia + hipótesis + experimentos.</td></tr>
+<tr><td>REQ-032</td><td>Event-driven</td><td>CUANDO prompt ensamblado → invocar Claude Sonnet (claude-sonnet-4-6).</td></tr>
+<tr><td>REQ-033</td><td>Event-driven</td><td>CUANDO respuesta exitosa → insertar en ai_evaluations y renderizar.</td></tr>
+<tr><td>REQ-034</td><td>Unwanted</td><td>SI Claude falla → mostrar alerta sin modificar datos.</td></tr>
+<tr><td>REQ-035</td><td>Event-driven</td><td>CUANDO "Seguir conversación" → abrir chat con evaluación como primer mensaje.</td></tr>
+<tr><td>REQ-036</td><td>Event-driven</td><td>CUANDO envíe mensaje → invocar Claude con historial completo y persistir ambos.</td></tr>
+<tr><td>REQ-037</td><td>Unwanted</td><td>SI Claude falla en chat → error inline sin borrar historial.</td></tr>
+<tr><td>REQ-038</td><td>Ubiquitous</td><td>Botón "Aplicar sugerencia al OST" → aplicar cambio propuesto por Claude.</td></tr>
+</table>
+</div>
+
+<div class="spec-section">
+<h3>3. Blueprint de Arquitectura</h3>
+<pre style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;font-size:11px;color:#94a3b8;overflow-x:auto;font-family:'IBM Plex Mono',monospace;">
+src/
+├── domain/
+│   ├── entities/          # Project, Opportunity, Evidence, Hypothesis, Experiment, AIEvaluation
+│   └── ports/             # IProjectRepository, IOpportunityRepository, IAIEvaluator
+├── application/
+│   ├── projects/          # createProject, inviteMember, enforceRolePolicy
+│   ├── opportunities/     # createOpportunity, deleteOpportunity, addEvidence
+│   ├── hypotheses/        # updateHypothesisStatus
+│   ├── experiments/       # createExperiment, updateStatus, getTopExperiments
+│   └── ai/                # evaluateOpportunity, sendConversationMessage
+├── infrastructure/
+│   ├── supabase/          # client, repositories, realtime adapter
+│   └── ai/                # ClaudeAdapter
+└── ui/                    # React components
+</pre>
+</div>
+
+<div class="spec-section">
+<h3>4. Contratos TypeScript + Zod</h3>
+<pre style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;font-size:11px;color:#94a3b8;overflow-x:auto;font-family:'IBM Plex Mono',monospace;">
+// Roles
+ProjectRoleSchema = z.enum(['admin', 'usuario', 'viewer'])
+
+// Evidencia — source obligatorio para cita
+OpportunityEvidenceSchema = z.object({
+  type: z.enum(['cita', 'hecho', 'observacion']),
+  content: z.string().min(1),
+  source: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === 'cita' && !data.source)
+    ctx.addIssue({ path: ['source'], message: 'source obligatorio para citas' })
+})
+
+// Experiment
+ExperimentSchema = z.object({
+  type: z.enum(['entrevista','prototipo','smoke_test','prueba_usabilidad','otro']),
+  description: z.string().min(1),
+  success_criterion: z.string().min(1),
+  effort: z.enum(['bajo','medio','alto']),
+  impact: z.enum(['bajo','medio','alto']),
+  status: z.enum(['to do','en curso','terminada']),
+  result: z.string().optional(),
+})
+
+// Priority Score
+SCORE = { bajo: 1, medio: 2, alto: 3 }
+priorityScore(exp) = SCORE[impact] / SCORE[effort]
+
+// Top 3: filtrar status≠terminada, sort by score desc, slice(0,3)
+</pre>
+</div>
+
+<div class="spec-section">
+<h3>5. Matriz de Testing</h3>
+<table>
+<tr><th>REQ</th><th>Caso de Prueba</th><th>Herramienta</th></tr>
+<tr><td>REQ-003</td><td>Renderizar con role=viewer → botones disabled</td><td>React Testing Library</td></tr>
+<tr><td>REQ-005</td><td>Viewer intenta escribir → error 403</td><td>MSW + Vitest</td></tr>
+<tr><td>REQ-008</td><td>Conexión falla → bloqueo pantalla + reintento</td><td>MSW + Vitest</td></tr>
+<tr><td>REQ-013</td><td>Cita sin source → ZodError</td><td>Vitest</td></tr>
+<tr><td>REQ-019</td><td>Experiment sin success_criterion → ZodError</td><td>Vitest</td></tr>
+<tr><td>REQ-023</td><td>Experiment terminada → result visible junto a criterio</td><td>RTL</td></tr>
+<tr><td>REQ-027</td><td>priorityScore(bajo, alto) = 3</td><td>Vitest</td></tr>
+<tr><td>REQ-026</td><td>getTopExperiments(5 mixed) → retorna 3 mejores</td><td>Vitest</td></tr>
+<tr><td>REQ-034</td><td>Claude falla → alerta sin insertar evaluación</td><td>MSW + Vitest</td></tr>
+<tr><td>REQ-036</td><td>Conversación → historial completo enviado</td><td>Vitest</td></tr>
+<tr><td>REQ-037</td><td>Claude falla en chat → error inline sin borrar historial</td><td>RTL</td></tr>
+</table>
+</div>
+
+<style>
+  .spec-section { margin-bottom: 32px; }
+  .spec-section h3 { font-size: 15px; color: #f8fafc; margin: 24px 0 12px; }
+  .spec-section h4 { font-size: 13px; color: #cbd5e1; margin: 16px 0 8px; }
+</style>
+
 <div class="footer">
   OST App Audit Report — Generated 2026-04-04<br>
   Spec: TECHNICAL_SPEC_OST_APP_v2.0.md
