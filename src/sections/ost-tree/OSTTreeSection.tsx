@@ -182,8 +182,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   }, [createOpportunity, createParentId])
 
   const handleNavigateToDetail = useCallback((id: string) => {
-    navigate(`/opportunity/${id}`)
-  }, [navigate])
+    navigate(`/projects/${project.id}/opportunity/${id}`)
+  }, [navigate, project.id])
 
   // ── Shared event props (passed to both views) ───────────────────────────────
   const sharedViewProps = {

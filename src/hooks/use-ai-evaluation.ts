@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { anthropic, AI_MODEL } from '../lib/anthropic'
 import type { AIEvaluation, ConversationMessage, EvaluationSection } from '../types'
+
+// Model constant kept for UI display purposes
+const AI_MODEL = 'claude-sonnet-4-6'
 
 // ─── Raw DB shapes ─────────────────────────────────────────────────────────────
 
@@ -19,49 +21,6 @@ interface DBMessage {
   role: 'user' | 'assistant'
   content: string
   created_at: string
-}
-
-interface DBOpportunity {
-  id: string
-  name: string
-  description: string | null
-  outcome: string | null
-}
-
-interface DBEvidence {
-  id: string
-  type: string
-  content: string
-  source: string | null
-}
-
-interface DBHypothesis {
-  id: string
-  description: string
-  status: string
-  result: string | null
-}
-
-interface DBExperiment {
-  id: string
-  hypothesis_id: string
-  type: string
-  description: string
-  success_criterion: string
-  effort: string
-  impact: string
-  status: string
-  result: string | null
-}
-
-interface DBBusinessContext {
-  content: string // JSON string: { northStar, targetSegment, keyConstraints }
-}
-
-interface ParsedBusinessContext {
-  northStar: string
-  targetSegment: string
-  keyConstraints: string
 }
 
 // ─── Hook return ──────────────────────────────────────────────────────────────
@@ -120,145 +79,6 @@ function mapDBMessageToConversation(msg: DBMessage): ConversationMessage {
     suggestionSummary: hasSuggestion ? 'Aplicar esta sugerencia al OST' : undefined,
     createdAt: msg.created_at,
   }
-}
-
-// ─── Prompt builder ──────────────────────────────────────────────────────────
-
-async function buildEvaluationPrompt(
-  opportunityId: string,
-  projectId: string
-): Promise<string> {
-  // Fetch all required data in parallel
-  const [
-    { data: oppData },
-    { data: evidenceData },
-    { data: hypothesesData },
-    { data: contextData },
-  ] = await Promise.all([
-    supabase
-      .from('opportunities')
-      .select('id, name, description, outcome')
-      .eq('id', opportunityId)
-      .single<DBOpportunity>(),
-    supabase
-      .from('opportunity_evidence')
-      .select('id, type, content, source')
-      .eq('opportunity_id', opportunityId)
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('hypotheses')
-      .select('id, description, status, result')
-      .eq('opportunity_id', opportunityId)
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('business_context')
-      .select('content')
-      .eq('project_id', projectId)
-      .single<DBBusinessContext>(),
-  ])
-
-  const opp = oppData as DBOpportunity | null
-  const evidence = (evidenceData ?? []) as DBEvidence[]
-  const hypotheses = (hypothesesData ?? []) as DBHypothesis[]
-
-  // Parse business context
-  let bizContext: ParsedBusinessContext = {
-    northStar: 'No definido',
-    targetSegment: 'No definido',
-    keyConstraints: 'No definido',
-  }
-  if (contextData?.content) {
-    try {
-      bizContext = JSON.parse(contextData.content) as ParsedBusinessContext
-    } catch {
-      // Use defaults if parse fails
-    }
-  }
-
-  // Fetch experiments for each hypothesis
-  const hypothesisIds = hypotheses.map(h => h.id)
-  let experiments: DBExperiment[] = []
-  if (hypothesisIds.length > 0) {
-    const { data: expData } = await supabase
-      .from('experiments')
-      .select('id, hypothesis_id, type, description, success_criterion, effort, impact, status, result')
-      .in('hypothesis_id', hypothesisIds)
-      .order('created_at', { ascending: true })
-    experiments = (expData ?? []) as DBExperiment[]
-  }
-
-  // Map experiments by hypothesis
-  const expByHypothesis = new Map<string, DBExperiment[]>()
-  experiments.forEach(exp => {
-    const list = expByHypothesis.get(exp.hypothesis_id) ?? []
-    list.push(exp)
-    expByHypothesis.set(exp.hypothesis_id, list)
-  })
-
-  // Build prompt sections
-  const evidenceText =
-    evidence.length === 0
-      ? '  (sin evidencia registrada)'
-      : evidence
-          .map(e => `  - [${e.type}] ${e.content}${e.source ? ` (fuente: ${e.source})` : ''}`)
-          .join('\n')
-
-  const hypothesesText =
-    hypotheses.length === 0
-      ? '  (sin hipótesis registradas)'
-      : hypotheses
-          .map(h => {
-            const exps = expByHypothesis.get(h.id) ?? []
-            const expsText =
-              exps.length === 0
-                ? '    (sin experimentos)'
-                : exps
-                    .map(
-                      e =>
-                        `    - [${e.type}] ${e.description} | criterio: ${e.success_criterion} | esfuerzo: ${e.effort} | impacto: ${e.impact} | estado: ${e.status}${e.result ? ` | resultado: ${e.result}` : ''}`
-                    )
-                    .join('\n')
-            return `  - Hipótesis: ${h.description} (${h.status})${h.result ? ` → resultado: ${h.result}` : ''}\n${expsText}`
-          })
-          .join('\n')
-
-  return `Eres un experto en product discovery usando el Opportunity Solution Tree (OST) de Teresa Torres.
-
-Analiza la siguiente oportunidad y proporciona una evaluación estructurada.
-
-## Contexto de negocio del proyecto
-
-- North Star: ${bizContext.northStar}
-- Segmento objetivo: ${bizContext.targetSegment}
-- Restricciones clave: ${bizContext.keyConstraints}
-
-## Oportunidad a evaluar
-
-- Nombre: ${opp?.name ?? 'Sin nombre'}
-- Descripción: ${opp?.description ?? 'Sin descripción'}
-- Outcome esperado: ${opp?.outcome ?? 'No especificado'}
-
-## Evidencia recopilada
-
-${evidenceText}
-
-## Hipótesis y experimentos
-
-${hypothesesText}
-
-## Instrucciones de respuesta
-
-Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin texto adicional) con esta estructura exacta:
-{
-  "sections": [
-    { "title": "Fortalezas", "content": "..." },
-    { "title": "Brechas", "content": "..." },
-    { "title": "Recomendaciones", "content": "..." },
-    { "title": "Experimentos sugeridos", "content": "..." }
-  ]
-}
-
-Cada sección debe ser concisa (3-5 puntos) y accionable para el equipo de producto.`
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -328,32 +148,18 @@ export function useAIEvaluation(
     setError(null)
 
     try {
-      const prompt = await buildEvaluationPrompt(opportunityId, projectId)
-
-      const response = await anthropic.messages.create({
-        model: AI_MODEL,
-        max_tokens: 2048,
-        messages: [{ role: 'user', content: prompt }],
+      const { data: result, error: fnError } = await supabase.functions.invoke('ai-proxy', {
+        body: { action: 'evaluate', opportunityId, projectId },
       })
 
-      const rawText =
-        response.content[0].type === 'text' ? response.content[0].text : ''
+      if (fnError) throw new Error(fnError.message ?? 'Edge Function error')
 
-      // Persist to Supabase
-      const { data: savedEval, error: saveError } = await supabase
-        .from('ai_evaluations')
-        .insert({
-          opportunity_id: opportunityId,
-          prompt_snapshot: prompt,
-          evaluation_text: rawText,
-        })
-        .select()
-        .single<DBEvaluation>()
-
-      if (saveError) throw saveError
+      // The Edge Function returns { success, data } where data is the saved evaluation row
+      const payload = result?.data ?? result
+      const savedEval = payload as DBEvaluation
 
       const newEval = parseEvaluationText(
-        rawText,
+        savedEval.evaluation_text,
         savedEval.id,
         savedEval.opportunity_id,
         savedEval.created_at
@@ -389,60 +195,27 @@ export function useAIEvaluation(
       setConversation(prev => [...prev, tempUserMsg])
 
       try {
-        // Persist user message
-        const { data: savedUserMsg, error: userMsgError } = await supabase
-          .from('ai_conversation_messages')
-          .insert({
-            evaluation_id: activeEvaluationId,
-            role: 'user',
-            content,
-          })
-          .select()
-          .single<DBMessage>()
-
-        if (userMsgError) throw userMsgError
-
-        // Build message history for the API call
-        const historyForAPI = conversation
-          .filter(m => m.id !== tempUserMsg.id) // exclude the optimistic one
-          .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-
-        // Add the current user message
-        historyForAPI.push({ role: 'user', content })
-
-        // Get the evaluation context for the system message
-        const latestEval = evaluations[0]
-        const systemContext = latestEval
-          ? `Eres un experto en product discovery (OST de Teresa Torres). Estás en una conversación de refinamiento sobre una evaluación previa. La evaluación inicial fue:\n\n${latestEval.rawText}`
-          : 'Eres un experto en product discovery usando el Opportunity Solution Tree (OST) de Teresa Torres.'
-
-        const response = await anthropic.messages.create({
-          model: AI_MODEL,
-          max_tokens: 1024,
-          system: systemContext,
-          messages: historyForAPI,
+        const { data: result, error: fnError } = await supabase.functions.invoke('ai-proxy', {
+          body: {
+            action: 'send-message',
+            opportunityId,
+            projectId,
+            message: content,
+            evaluationId: activeEvaluationId,
+          },
         })
 
-        const assistantText =
-          response.content[0].type === 'text' ? response.content[0].text : ''
+        if (fnError) throw new Error(fnError.message ?? 'Edge Function error')
 
-        // Persist assistant message
-        const { data: savedAssistantMsg, error: assistantMsgError } = await supabase
-          .from('ai_conversation_messages')
-          .insert({
-            evaluation_id: activeEvaluationId,
-            role: 'assistant',
-            content: assistantText,
-          })
-          .select()
-          .single<DBMessage>()
+        // The Edge Function returns { success, data: { userMessage, assistantMessage } }
+        const payload = result?.data ?? result
+        const savedUserMsg = payload.userMessage as DBMessage
+        const savedAssistantMsg = payload.assistantMessage as DBMessage
 
-        if (assistantMsgError) throw assistantMsgError
-
+        const persistedUserMsg = mapDBMessageToConversation(savedUserMsg)
         const assistantConvMsg = mapDBMessageToConversation(savedAssistantMsg)
 
         // Replace optimistic user msg with persisted one and add assistant msg
-        const persistedUserMsg = mapDBMessageToConversation(savedUserMsg)
         setConversation(prev => [
           ...prev.filter(m => m.id !== tempUserMsg.id),
           persistedUserMsg,
@@ -456,7 +229,7 @@ export function useAIEvaluation(
         setIsSendingMessage(false)
       }
     },
-    [activeEvaluationId, conversation, evaluations]
+    [activeEvaluationId, opportunityId, projectId]
   )
 
   // ── Apply suggestion (placeholder) ────────────────────────────────────────

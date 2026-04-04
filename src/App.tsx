@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { ProjectProvider, useProject } from './contexts/ProjectContext'
 import { AuthGuard } from './components/AuthGuard'
 import { ShellWrapper } from './components/ShellWrapper'
 import { LoginPage } from './pages/LoginPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { ProjectLayout, useProjectFromRoute } from './layouts/ProjectLayout'
 import { OSTTreeSection } from './sections/ost-tree/OSTTreeSection'
 import { OpportunityDetailView } from './sections/opportunity-detail/OpportunityDetailView'
 import { AIEvaluationView } from './sections/ai-evaluation/AIEvaluationView'
@@ -12,53 +13,35 @@ import { BusinessContextView } from './sections/business-context/BusinessContext
 import { useOpportunityDetail } from './hooks/use-opportunity-detail'
 import { useAIEvaluation } from './hooks/use-ai-evaluation'
 import { useBusinessContext } from './hooks/use-business-context'
+import { supabase } from './lib/supabase'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-8 text-slate-400 font-sans">{label} — coming soon</div>
 )
 
 function OSTTreePage() {
-  const { currentProject } = useProject()
-
-  if (!currentProject) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full py-16 text-center px-6">
-        <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-slate-500">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        </div>
-        <p className="text-slate-300 font-[Nunito_Sans] font-semibold text-sm mb-1">
-          Ningún proyecto seleccionado
-        </p>
-        <p className="text-slate-500 font-[Nunito_Sans] text-xs">
-          Selecciona un proyecto desde la sección Proyectos para ver su árbol OST.
-        </p>
-      </div>
-    )
-  }
-
-  return <OSTTreeSection project={currentProject} />
+  const { project } = useProjectFromRoute()
+  return <OSTTreeSection project={project} />
 }
 
 function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { project } = useProjectFromRoute()
   const navigate = useNavigate()
   const {
-    project, opportunity, evidence, hypotheses, topExperiments,
+    opportunity, evidence, hypotheses, topExperiments,
     updateOpportunity, addEvidence, deleteEvidence,
     addHypothesis, changeHypothesisStatus, deleteHypothesis,
     addExperiment, changeExperimentStatus,
   } = useOpportunityDetail(id ?? '')
 
-  if (!opportunity || !project) {
+  if (!opportunity) {
     return <div className="min-h-screen bg-slate-950" />
   }
 
   return (
     <OpportunityDetailView
-      project={project}
+      project={{ id: project.id, name: project.name }}
       opportunity={opportunity}
       evidence={evidence}
       hypotheses={hypotheses}
@@ -71,29 +54,40 @@ function OpportunityDetailPage() {
       onDeleteHypothesis={deleteHypothesis}
       onAddExperiment={addExperiment}
       onChangeExperimentStatus={changeExperimentStatus}
-      onNavigateToAIEvaluation={(oppId) => navigate(`/ai-evaluation/${oppId}`)}
-      onNavigateBack={() => navigate('/ost-tree')}
+      onNavigateToAIEvaluation={(oppId) => navigate(`/projects/${project.id}/ai-evaluation/${oppId}`)}
+      onNavigateBack={() => navigate(`/projects/${project.id}/ost-tree`)}
     />
   )
 }
 
 function AIEvaluationPage() {
   const { opportunityId } = useParams<{ opportunityId: string }>()
+  const { project } = useProjectFromRoute()
   const navigate = useNavigate()
-  const { currentProject } = useProject()
+  const [oppTitle, setOppTitle] = useState('')
   const {
     evaluations, conversation, isEvaluating, isSendingMessage,
     evaluate, sendMessage, applySuggestion,
-  } = useAIEvaluation(opportunityId ?? '', currentProject?.id ?? '')
+  } = useAIEvaluation(opportunityId ?? '', project.id)
 
-  if (!currentProject || !opportunityId) {
+  useEffect(() => {
+    if (!opportunityId) return
+    supabase
+      .from('opportunities')
+      .select('name')
+      .eq('id', opportunityId)
+      .single()
+      .then(({ data }) => { if (data) setOppTitle(data.name) })
+  }, [opportunityId])
+
+  if (!opportunityId) {
     return <div className="min-h-screen bg-slate-950" />
   }
 
   return (
     <AIEvaluationView
-      project={{ id: currentProject.id, name: currentProject.name }}
-      opportunity={{ id: opportunityId, title: '', status: 'activa' }}
+      project={{ id: project.id, name: project.name }}
+      opportunity={{ id: opportunityId, title: oppTitle, status: 'activa' }}
       evaluations={evaluations}
       conversation={conversation}
       isEvaluating={isEvaluating}
@@ -101,31 +95,18 @@ function AIEvaluationPage() {
       onEvaluate={evaluate}
       onSendMessage={sendMessage}
       onApplySuggestion={applySuggestion}
-      onNavigateBack={() => navigate(`/opportunity/${opportunityId}`)}
+      onNavigateBack={() => navigate(`/projects/${project.id}/opportunity/${opportunityId}`)}
     />
   )
 }
 
 function BusinessContextPage() {
-  const { currentProject } = useProject()
-  const { context, isSaving, saveField } = useBusinessContext(currentProject?.id ?? '')
-
-  if (!currentProject) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full py-16 text-center px-6">
-        <p className="text-slate-300 font-[Nunito_Sans] font-semibold text-sm mb-1">
-          Ningún proyecto seleccionado
-        </p>
-        <p className="text-slate-500 font-[Nunito_Sans] text-xs">
-          Selecciona un proyecto desde la sección Proyectos.
-        </p>
-      </div>
-    )
-  }
+  const { project } = useProjectFromRoute()
+  const { context, isSaving, saveField } = useBusinessContext(project.id)
 
   return (
     <BusinessContextView
-      project={{ id: currentProject.id, name: currentProject.name }}
+      project={{ id: project.id, name: project.name }}
       context={context}
       isSaving={isSaving}
       onSaveField={saveField}
@@ -133,14 +114,20 @@ function BusinessContextPage() {
   )
 }
 
+function ProjectIndexRedirect() {
+  const { projectId } = useParams<{ projectId: string }>()
+  return <Navigate to={`/projects/${projectId}/ost-tree`} replace />
+}
+
 export function App() {
   return (
     <AuthProvider>
-      <ProjectProvider>
       <BrowserRouter basename="/ost_app">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Navigate to="/projects" replace />} />
+
+          {/* Projects list */}
           <Route
             path="/projects"
             element={
@@ -149,46 +136,27 @@ export function App() {
               </AuthGuard>
             }
           />
+
+          {/* Project-scoped routes */}
           <Route
-            path="/ost-tree"
+            path="/projects/:projectId"
             element={
               <AuthGuard>
-                <ShellWrapper><OSTTreePage /></ShellWrapper>
+                <ShellWrapper>
+                  <ProjectLayout />
+                </ShellWrapper>
               </AuthGuard>
             }
-          />
-          <Route
-            path="/opportunity/:id"
-            element={
-              <AuthGuard>
-                <ShellWrapper><OpportunityDetailPage /></ShellWrapper>
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/ai-evaluation/:opportunityId"
-            element={
-              <AuthGuard>
-                <ShellWrapper><AIEvaluationPage /></ShellWrapper>
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/business-context"
-            element={
-              <AuthGuard>
-                <ShellWrapper><BusinessContextPage /></ShellWrapper>
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <AuthGuard>
-                <ShellWrapper><Stub label="Settings" /></ShellWrapper>
-              </AuthGuard>
-            }
-          />
+          >
+            <Route index element={<ProjectIndexRedirect />} />
+            <Route path="ost-tree" element={<OSTTreePage />} />
+            <Route path="opportunity/:id" element={<OpportunityDetailPage />} />
+            <Route path="ai-evaluation/:opportunityId" element={<AIEvaluationPage />} />
+            <Route path="business-context" element={<BusinessContextPage />} />
+            <Route path="settings" element={<Stub label="Settings" />} />
+          </Route>
+
+          {/* Top-level non-project routes */}
           <Route
             path="/help"
             element={
@@ -197,9 +165,11 @@ export function App() {
               </AuthGuard>
             }
           />
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/projects" replace />} />
         </Routes>
       </BrowserRouter>
-      </ProjectProvider>
     </AuthProvider>
   )
 }

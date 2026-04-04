@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useProject } from '../contexts/ProjectContext'
 import { useProjects } from '../hooks/use-projects'
 import { ProjectList } from '../sections/projects/components'
 
@@ -8,7 +7,6 @@ const ROLE_OPTIONS = ['admin', 'usuario', 'viewer'] as const
 
 export function ProjectsPage() {
   const { user } = useAuth()
-  const { setCurrentProject } = useProject()
   const navigate = useNavigate()
 
   const {
@@ -43,9 +41,7 @@ export function ProjectsPage() {
       roleOptions={[...ROLE_OPTIONS]}
       inviteState={inviteState}
       onSelectProject={(id) => {
-        const project = projects.find(p => p.id === id)
-        if (project) setCurrentProject(project)
-        navigate(`/ost-tree?projectId=${id}`)
+        navigate(`/projects/${id}/ost-tree`)
       }}
       onCreateProject={createProject}
       onInviteMember={inviteMember}
