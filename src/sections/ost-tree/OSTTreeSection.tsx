@@ -141,7 +141,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     : null
 
   // ── Local UI state ──────────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [viewMode, setViewMode] = useState<ViewMode>('tree')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
