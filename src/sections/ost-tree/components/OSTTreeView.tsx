@@ -16,6 +16,8 @@ interface OSTTreeViewProps {
   onAddOpportunity?: () => void
   onAddHypothesis?: (opportunityId: string) => void
   onAddExperiment?: (hypothesisId: string) => void
+  onRenameHypothesis?: (id: string, text: string) => void
+  onRenameExperiment?: (id: string, text: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -40,6 +42,7 @@ interface Line { x1: number; y1: number; x2: number; y2: number }
 export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
+  onRenameHypothesis, onRenameExperiment,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -230,7 +233,23 @@ export function OSTTreeViewCanvas({
                         </button>
                       )}
                     </div>
-                    <p className="font-[Nunito_Sans] text-xs text-slate-200 line-clamp-2 leading-snug">{h.title}</p>
+                    {editingId === h.id ? (
+                      <div className="flex items-start gap-1">
+                        <textarea autoFocus value={editText} onChange={e => setEditText(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRenameHypothesis?.(h.id, editText); setEditingId(null) }; if (e.key === 'Escape') setEditingId(null) }}
+                          rows={2} className="w-full bg-slate-800 border border-indigo-500/50 rounded px-2 py-1 text-xs text-slate-100 font-[Nunito_Sans] focus:outline-none resize-y min-h-[1.5rem]" />
+                        <button onClick={() => { onRenameHypothesis?.(h.id, editText); setEditingId(null) }}
+                          className="text-green-400 hover:text-green-300 flex-shrink-0 mt-0.5"><Check size={12} /></button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-1 group/htitle">
+                        <p className="font-[Nunito_Sans] text-xs text-slate-200 line-clamp-2 leading-snug flex-1">{h.title}</p>
+                        {onRenameHypothesis && (
+                          <button onClick={() => { setEditingId(h.id); setEditText(h.title) }}
+                            className="opacity-0 group-hover/htitle:opacity-100 text-slate-500 hover:text-indigo-400 flex-shrink-0 mt-0.5"><Pencil size={9} /></button>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 mt-1.5 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
                       <span>{h.status}</span>
                       {exps.length > 0 && <span>{exps.length} exp</span>}
@@ -268,7 +287,23 @@ export function OSTTreeViewCanvas({
                       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
                       <p className="text-[8px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider">Experimento</p>
                     </div>
-                    <p className="font-[Nunito_Sans] text-[11px] text-slate-300 line-clamp-2 leading-snug">{e.description}</p>
+                    {editingId === e.id ? (
+                      <div className="flex items-start gap-1">
+                        <textarea autoFocus value={editText} onChange={ev => setEditText(ev.target.value)}
+                          onKeyDown={ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); onRenameExperiment?.(e.id, editText); setEditingId(null) }; if (ev.key === 'Escape') setEditingId(null) }}
+                          rows={2} className="w-full bg-slate-800 border border-amber-500/50 rounded px-2 py-1 text-[11px] text-slate-100 font-[Nunito_Sans] focus:outline-none resize-y min-h-[1.5rem]" />
+                        <button onClick={() => { onRenameExperiment?.(e.id, editText); setEditingId(null) }}
+                          className="text-green-400 hover:text-green-300 flex-shrink-0 mt-0.5"><Check size={10} /></button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-1 group/etitle">
+                        <p className="font-[Nunito_Sans] text-[11px] text-slate-300 line-clamp-2 leading-snug flex-1">{e.description}</p>
+                        {onRenameExperiment && (
+                          <button onClick={() => { setEditingId(e.id); setEditText(e.description) }}
+                            className="opacity-0 group-hover/etitle:opacity-100 text-slate-500 hover:text-amber-400 flex-shrink-0 mt-0.5"><Pencil size={8} /></button>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5 mt-1 text-[8px] font-['IBM_Plex_Mono'] text-slate-500">
                       <span>{EXP_TYPE[e.type] ?? e.type}</span>
                       <span className={e.status === 'terminada' ? 'text-green-400' : ''}>{e.status}</span>

@@ -187,6 +187,20 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     navigate(`/opportunity/${id}`)
   }, [navigate])
 
+  // Rename hypothesis
+  const handleRenameHypothesis = useCallback(async (id: string, text: string) => {
+    if (!text.trim()) return
+    await supabase.from('hypotheses').update({ description: text.trim() }).eq('id', id)
+    refetch()
+  }, [refetch])
+
+  // Rename experiment
+  const handleRenameExperiment = useCallback(async (id: string, text: string) => {
+    if (!text.trim()) return
+    await supabase.from('experiments').update({ description: text.trim() }).eq('id', id)
+    refetch()
+  }, [refetch])
+
   // Quick-add hypothesis from tree
   const handleQuickAddHypothesis = useCallback(async (opportunityId: string) => {
     const name = prompt('Nombre de la solución (hipótesis):')
@@ -310,6 +324,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onAddOpportunity={() => setIsModalOpen(true)}
               onAddHypothesis={handleQuickAddHypothesis}
               onAddExperiment={handleQuickAddExperiment}
+              onRenameHypothesis={handleRenameHypothesis}
+              onRenameExperiment={handleRenameExperiment}
             />
           </div>
         )}
