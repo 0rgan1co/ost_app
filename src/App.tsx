@@ -16,6 +16,7 @@ import { useBusinessContext } from './hooks/use-business-context'
 import { ProjectSelector } from './components/ProjectSelector'
 import { SettingsPage } from './pages/SettingsPage'
 import { ExperimentsPage } from './pages/ExperimentsPage'
+import { ReviewsPage } from './pages/ReviewsPage'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
@@ -169,6 +170,14 @@ export function App() {
             element={
               <AuthGuard>
                 <ShellWrapper><AIEvaluationPage /></ShellWrapper>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/reviews"
+            element={
+              <AuthGuard>
+                <ShellWrapper><ReviewsPage /></ShellWrapper>
               </AuthGuard>
             }
           />
