@@ -25,6 +25,9 @@ interface OSTTreeViewProps {
   onDeleteHypothesis?: (id: string) => void
   onDeleteExperiment?: (id: string) => void
   onOpenExperiment?: (experimentId: string) => void
+  members?: { id: string; name: string; avatarUrl: string | null }[]
+  assignedMap?: Record<string, string | null>
+  onAssign?: (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -46,11 +49,67 @@ const EXP_TYPE: Record<string, string> = {
 
 interface Line { x1: number; y1: number; x2: number; y2: number }
 
+function AssignAvatar({ itemId, type, members, assignedMap, onAssign }: {
+  itemId: string; type: 'opportunity' | 'hypothesis' | 'experiment'
+  members?: { id: string; name: string; avatarUrl: string | null }[]
+  assignedMap?: Record<string, string | null>
+  onAssign?: (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  if (!members || !onAssign) return null
+  const assignedId = assignedMap?.[itemId]
+  const assigned = assignedId ? members.find(m => m.id === assignedId) : null
+
+  return (
+    <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+      <button onClick={() => setOpen(!open)} title={assigned ? assigned.name : 'Asignar'}>
+        {assigned ? (
+          assigned.avatarUrl ? (
+            <img src={assigned.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-slate-700" />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-slate-700">
+              {assigned.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+            </div>
+          )
+        ) : (
+          <div className="w-5 h-5 rounded-full border border-dashed border-slate-600 flex items-center justify-center text-slate-600 hover:border-slate-400 hover:text-slate-400 transition-colors">
+            <Plus size={8} />
+          </div>
+        )}
+      </button>
+      {open && (
+        <div className="absolute top-7 right-0 z-20 bg-slate-900 border border-slate-700 rounded-lg shadow-xl py-1 min-w-[140px]">
+          {assigned && (
+            <button onClick={() => { onAssign(type, itemId, null); setOpen(false) }}
+              className="w-full text-left px-3 py-1.5 text-[10px] text-slate-400 hover:bg-slate-800 font-[Nunito_Sans]">
+              Desasignar
+            </button>
+          )}
+          {members.map(m => (
+            <button key={m.id} onClick={() => { onAssign(type, itemId, m.id); setOpen(false) }}
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-slate-800 ${m.id === assignedId ? 'bg-slate-800' : ''}`}>
+              {m.avatarUrl ? (
+                <img src={m.avatarUrl} alt="" className="w-4 h-4 rounded-full object-cover" />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-slate-600 flex items-center justify-center text-white text-[7px] font-bold">
+                  {m.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="text-[10px] text-slate-300 font-[Nunito_Sans] truncate">{m.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
   onRenameHypothesis, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
   onDeleteOpportunity, onDeleteHypothesis, onDeleteExperiment, onOpenExperiment,
+  members, assignedMap, onAssign,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -199,15 +258,15 @@ export function OSTTreeViewCanvas({
               )}
             </div>
           )}
+          {/* + Oportunidad inside outcome card */}
+          {onAddOpportunity && (
+            <button onClick={onAddOpportunity}
+              className="w-full mt-3 -mb-4 -mx-6 px-6 py-2 bg-red-700/50 border-t border-red-500/30 rounded-b-2xl text-[10px] font-[Nunito_Sans] font-semibold text-red-200 hover:bg-red-700/80 hover:text-white transition-colors flex items-center justify-center gap-1"
+              style={{ width: 'calc(100% + 48px)' }}>
+              <Plus size={11} /> Agregar oportunidad
+            </button>
+          )}
         </div>
-
-        {/* + Add Opportunity button under Outcome */}
-        {onAddOpportunity && (
-          <button onClick={onAddOpportunity}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-orange-500/30 text-orange-400 hover:bg-orange-500/10 text-xs font-[Nunito_Sans] font-semibold transition-colors">
-            <Plus size={12} /> Oportunidad
-          </button>
-        )}
 
         {/* Level 1: Opportunities */}
         <div className="flex gap-5 flex-wrap justify-center">
@@ -235,6 +294,7 @@ export function OSTTreeViewCanvas({
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[9px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider">Oportunidad</p>
                   <div className="flex items-center gap-1">
+                    <AssignAvatar itemId={opp.id} type="opportunity" members={members} assignedMap={assignedMap} onAssign={onAssign} />
                     {onToggleStar && (
                       <button onClick={e => { e.stopPropagation(); onToggleStar(opp.id) }}
                         className={`flex-shrink-0 transition-colors ${starredIds?.has(opp.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>

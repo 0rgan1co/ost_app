@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useOSTTree } from '../../hooks/use-ost-tree'
@@ -151,6 +151,34 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [openExpId, setOpenExpId] = useState<string | null>(null)
   const [openExpData, setOpenExpData] = useState<any>(null)
+  const [assignedMap, setAssignedMap] = useState<Record<string, string | null>>({})
+
+  // Load assigned_to for all items
+  useEffect(() => {
+    async function loadAssigned() {
+      const [{ data: opps }, { data: hyps }, { data: exps }] = await Promise.all([
+        supabase.from('opportunities').select('id, assigned_to').eq('project_id', project.id),
+        supabase.from('hypotheses').select('id, assigned_to').in('opportunity_id', opportunities.map(o => o.id)),
+        supabase.from('experiments').select('id, assigned_to').in('hypothesis_id',
+          Object.values(hypothesesSummary).flat().map(h => h.id)
+        ),
+      ])
+      const map: Record<string, string | null> = {}
+      for (const o of opps ?? []) if (o.assigned_to) map[o.id] = o.assigned_to
+      for (const h of hyps ?? []) if (h.assigned_to) map[h.id] = h.assigned_to
+      for (const e of exps ?? []) if (e.assigned_to) map[e.id] = e.assigned_to
+      setAssignedMap(map)
+    }
+    if (opportunities.length > 0) loadAssigned()
+  }, [project.id, opportunities, hypothesesSummary])
+
+  const handleAssign = useCallback(async (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => {
+    const table = type === 'opportunity' ? 'opportunities' : type === 'hypothesis' ? 'hypotheses' : 'experiments'
+    await supabase.from(table).update({ assigned_to: userId }).eq('id', id)
+    setAssignedMap(prev => ({ ...prev, [id]: userId }))
+  }, [])
+
+  const treeMembers = project.members.map(m => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl }))
 
   const handleOpenExperiment = useCallback(async (expId: string) => {
     const { data: exp } = await supabase.from('experiments').select('*').eq('id', expId).single()
@@ -397,6 +425,9 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onDeleteHypothesis={handleDeleteHypothesis}
               onDeleteExperiment={handleDeleteExperiment}
               onOpenExperiment={handleOpenExperiment}
+              members={treeMembers}
+              assignedMap={assignedMap}
+              onAssign={handleAssign}
             />
           </div>
         )}
