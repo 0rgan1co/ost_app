@@ -9,6 +9,7 @@ import { useTopExperiments } from '../hooks/use-top-experiments'
 const NAV_ITEMS: Omit<NavigationItem, 'isActive'>[] = [
   { label: 'OST Tree', href: '/ost-tree' },
   { label: 'Experimentos', href: '/experiments' },
+  { label: 'Evaluar con IA', href: '/ai-evaluation' },
   { label: 'Business Context', href: '/business-context' },
   { label: 'Settings', href: '/settings' },
   { label: 'Help', href: '/help' },

@@ -5,14 +5,14 @@ interface CompletenessIndicatorProps {
 }
 
 function countCompleted(context: BusinessContext): number {
-  return [context.northStar, context.targetSegment, context.keyConstraints].filter(
+  return [context.strategicChallenge, context.northStar, context.targetSegment, context.keyConstraints].filter(
     f => f.value.trim().length > 0
   ).length
 }
 
 export function CompletenessIndicator({ context }: CompletenessIndicatorProps) {
   const completed = countCompleted(context)
-  const total = 3
+  const total = 4
 
   // Color scheme: red 0/3 · amber 1-2/3 · green 3/3
   const colorClass =

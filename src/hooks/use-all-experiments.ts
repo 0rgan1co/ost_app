@@ -11,6 +11,13 @@ export interface KanbanExperiment {
   status: 'to do' | 'en curso' | 'terminada'
   result: string | null
   score: number
+  // Experimento Semilla fields
+  objective: string
+  who: string
+  actions: string
+  startDate: string | null
+  endDate: string | null
+  reviewCycle: string
   // Traceability
   hypothesisId: string
   hypothesisDescription: string
@@ -73,6 +80,12 @@ export function useAllExperiments(projectId: string | undefined) {
         status: e.status,
         result: e.result,
         score: (SCORE[e.impact] ?? 1) / (SCORE[e.effort] ?? 1),
+        objective: e.objective ?? '',
+        who: e.who ?? '',
+        actions: e.actions ?? '',
+        startDate: e.start_date ?? null,
+        endDate: e.end_date ?? null,
+        reviewCycle: e.review_cycle ?? '',
         hypothesisId: e.hypothesis_id,
         hypothesisDescription: hyp?.description ?? '',
         opportunityId: hyp?.opportunity_id ?? '',
@@ -94,5 +107,23 @@ export function useAllExperiments(projectId: string | undefined) {
     await fetchAll()
   }
 
-  return { experiments, loading, changeStatus, refetch: fetchAll }
+  async function updateExperiment(id: string, fields: {
+    objective?: string; who?: string; actions?: string;
+    startDate?: string | null; endDate?: string | null; reviewCycle?: string;
+    successCriterion?: string; result?: string;
+  }) {
+    const update: any = {}
+    if (fields.objective !== undefined) update.objective = fields.objective
+    if (fields.who !== undefined) update.who = fields.who
+    if (fields.actions !== undefined) update.actions = fields.actions
+    if (fields.startDate !== undefined) update.start_date = fields.startDate
+    if (fields.endDate !== undefined) update.end_date = fields.endDate
+    if (fields.reviewCycle !== undefined) update.review_cycle = fields.reviewCycle
+    if (fields.successCriterion !== undefined) update.success_criterion = fields.successCriterion
+    if (fields.result !== undefined) update.result = fields.result
+    await supabase.from('experiments').update(update).eq('id', id)
+    await fetchAll()
+  }
+
+  return { experiments, loading, changeStatus, updateExperiment, refetch: fetchAll }
 }

@@ -14,6 +14,7 @@ interface BusinessContextRow {
 // ─── Content JSON stored in the `content` column ─────────────────────────────
 
 interface ContentJson {
+  strategicChallenge: ContextField
   northStar: ContextField
   targetSegment: ContextField
   keyConstraints: ContextField
@@ -23,6 +24,7 @@ interface ContentJson {
 
 function emptyContext(): BusinessContext {
   return {
+    strategicChallenge: { value: '', updatedAt: null },
     northStar: { value: '', updatedAt: null },
     targetSegment: { value: '', updatedAt: null },
     keyConstraints: { value: '', updatedAt: null },
@@ -33,6 +35,7 @@ function parseContent(raw: string): BusinessContext {
   try {
     const parsed = JSON.parse(raw) as Partial<ContentJson>
     return {
+      strategicChallenge: parsed.strategicChallenge ?? { value: '', updatedAt: null },
       northStar: parsed.northStar ?? { value: '', updatedAt: null },
       targetSegment: parsed.targetSegment ?? { value: '', updatedAt: null },
       keyConstraints: parsed.keyConstraints ?? { value: '', updatedAt: null },

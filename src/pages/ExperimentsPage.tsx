@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useProject } from '../contexts/ProjectContext'
 import { useAllExperiments, type KanbanExperiment } from '../hooks/use-all-experiments'
 import { ProjectSelector } from '../components/ProjectSelector'
-import { Clock, PlayCircle, CheckCircle2, X, ChevronRight, Target, Search, Lightbulb, FlaskConical } from 'lucide-react'
+import { Clock, PlayCircle, CheckCircle2, X, ChevronRight, FlaskConical } from 'lucide-react'
 
 // ─── Status config ───────────────────────────────────────────────────────────
 
@@ -32,126 +32,169 @@ function ExperimentModal({
   exp,
   onClose,
   onChangeStatus,
+  onUpdateExperiment,
 }: {
   exp: KanbanExperiment
   onClose: () => void
   onChangeStatus: (id: string, status: string, result?: string) => void
+  onUpdateExperiment: (id: string, fields: any) => void
 }) {
   const [resultText, setResultText] = useState('')
   const [showResult, setShowResult] = useState(false)
+  // Editable fields
+  const [objective, setObjective] = useState(exp.objective)
+  const [who, setWho] = useState(exp.who)
+  const [actions, setActions] = useState(exp.actions)
+  const [startDate, setStartDate] = useState(exp.startDate ?? '')
+  const [endDate, setEndDate] = useState(exp.endDate ?? '')
+  const [reviewCycle, setReviewCycle] = useState(exp.reviewCycle)
+  const [criterion, setCriterion] = useState(exp.successCriterion)
+  const [result, setResult] = useState(exp.result ?? '')
+
+  const saveField = (field: string, value: string | null) => {
+    onUpdateExperiment(exp.id, { [field]: value || null })
+  }
+
+  const fieldClass = "w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 resize-none font-[Nunito_Sans]"
 
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-lg max-h-[85vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 pointer-events-none">
+        <div className="w-full max-w-3xl max-h-[90vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
 
           {/* Header */}
           <div className="flex items-start justify-between p-5 border-b border-slate-800">
-            <div>
-              <p className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider mb-1">Experimento</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded">Experimento Semilla</span>
+                <span className={`text-[10px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded ${
+                  exp.status === 'terminada' ? 'text-green-400 bg-green-500/10' :
+                  exp.status === 'en curso' ? 'text-blue-400 bg-blue-500/10' :
+                  'text-slate-400 bg-slate-800'
+                }`}>{exp.status}</span>
+                <span className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">×{exp.score.toFixed(1)}</span>
+              </div>
               <h2 className="font-[Nunito_Sans] font-bold text-slate-100 text-base leading-snug">{exp.description}</h2>
+              {/* Traceability inline */}
+              <div className="flex items-center gap-1 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
+                <span className="text-red-400">{exp.projectName}</span>
+                <ChevronRight size={8} />
+                <span className="text-orange-400 truncate max-w-[120px]">{exp.opportunityName}</span>
+                <ChevronRight size={8} />
+                <span className="text-indigo-400 truncate max-w-[120px]">{exp.hypothesisDescription}</span>
+              </div>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 flex-shrink-0 ml-3">
               <X size={16} />
             </button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* 6-field grid: Experimento Semilla */}
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-            {/* Traceability — from experiment back to outcome */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-              <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 uppercase tracking-wider mb-3">Trazabilidad al Outcome</p>
-              <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                <span className="flex items-center gap-1 bg-red-500/10 text-red-400 px-2 py-1 rounded-lg font-[Nunito_Sans] font-semibold">
-                  <Target size={10} /> {exp.projectName}
-                </span>
-                <ChevronRight size={10} className="text-slate-700" />
-                <span className="flex items-center gap-1 bg-orange-500/10 text-orange-400 px-2 py-1 rounded-lg font-[Nunito_Sans]">
-                  <Search size={10} /> {exp.opportunityName}
-                </span>
-                <ChevronRight size={10} className="text-slate-700" />
-                <span className="flex items-center gap-1 bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-lg font-[Nunito_Sans] max-w-[200px] truncate">
-                  <Lightbulb size={10} /> {exp.hypothesisDescription}
-                </span>
-                <ChevronRight size={10} className="text-slate-700" />
-                <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 px-2 py-1 rounded-lg font-[Nunito_Sans] font-semibold">
-                  <FlaskConical size={10} /> Este experimento
-                </span>
-              </div>
-            </div>
-
-            {/* Type + Status + Score */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-300 bg-slate-800 px-2 py-1 rounded-lg">
-                {TYPE_LABEL[exp.type] ?? exp.type}
-              </span>
-              <span className={`text-[11px] font-['IBM_Plex_Mono'] px-2 py-1 rounded-lg ${
-                exp.status === 'terminada' ? 'text-green-400 bg-green-500/10' :
-                exp.status === 'en curso' ? 'text-blue-400 bg-blue-500/10' :
-                'text-slate-400 bg-slate-800'
-              }`}>
-                {exp.status}
-              </span>
-              <span className="text-[11px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">
-                Score: {exp.score.toFixed(1)}
-              </span>
-            </div>
-
-            {/* Success criterion */}
-            <div className="bg-slate-900/60 border-l-2 border-amber-500/50 rounded-r-lg pl-3 pr-3 py-2.5">
-              <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 mb-1">Criterio de éxito</p>
-              <p className="text-sm text-slate-200 font-[Nunito_Sans] leading-relaxed">{exp.successCriterion}</p>
-            </div>
-
-            {/* Effort / Impact */}
-            <div className="flex gap-4">
-              <div>
-                <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 mb-1">Esfuerzo</p>
-                <span className={`text-sm font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.effort]}`}>
-                  {exp.effort}
-                </span>
-              </div>
-              <div>
-                <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 mb-1">Impacto</p>
-                <span className={`text-sm font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.impact]}`}>
-                  {exp.impact}
-                </span>
-              </div>
-            </div>
-
-            {/* Result */}
-            {exp.result && (
-              <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
-                <p className="text-[10px] font-['IBM_Plex_Mono'] text-green-400 mb-1">Resultado</p>
-                <p className="text-sm text-slate-200 font-[Nunito_Sans] leading-relaxed">{exp.result}</p>
-              </div>
-            )}
-
-            {/* Result input for finishing */}
-            {showResult && (
-              <div className="space-y-2">
+              {/* 1. Objetivo */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-amber-400 font-bold uppercase tracking-wider">Objetivo</label>
+                <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">¿Para qué proponemos el experimento?</p>
                 <textarea
-                  autoFocus
-                  value={resultText}
-                  onChange={e => setResultText(e.target.value)}
-                  placeholder="¿Qué aprendiste? ¿Se cumplió el criterio?"
+                  value={objective}
+                  onChange={e => setObjective(e.target.value)}
+                  onBlur={() => saveField('objective', objective)}
+                  placeholder="El propósito de este experimento..."
                   rows={3}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-red-500/50 resize-none font-[Nunito_Sans]"
+                  className={fieldClass}
                 />
-                <div className="flex gap-2 justify-end">
-                  <button onClick={() => setShowResult(false)} className="text-xs text-slate-400 hover:text-slate-200 px-3 py-1.5">Cancelar</button>
-                  <button
-                    disabled={!resultText.trim()}
-                    onClick={() => { onChangeStatus(exp.id, 'terminada', resultText.trim()); onClose() }}
-                    className="text-xs bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold px-4 py-1.5 rounded-lg"
-                  >
-                    Confirmar
-                  </button>
+              </div>
+
+              {/* 2. Hipótesis */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-indigo-400 font-bold uppercase tracking-wider">Hipótesis</label>
+                <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">Creemos que si [acción], obtendremos [consecuencia]</p>
+                <textarea
+                  value={criterion}
+                  onChange={e => setCriterion(e.target.value)}
+                  onBlur={() => saveField('successCriterion', criterion)}
+                  placeholder="Si hacemos X, entonces Y..."
+                  rows={3}
+                  className={fieldClass}
+                />
+              </div>
+
+              {/* 3. ¿Quiénes? */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-cyan-400 font-bold uppercase tracking-wider">¿Quiénes?</label>
+                <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">Personas impulsoras, involucradas, impactadas</p>
+                <textarea
+                  value={who}
+                  onChange={e => setWho(e.target.value)}
+                  onBlur={() => saveField('who', who)}
+                  placeholder="Equipo, usuarios, stakeholders..."
+                  rows={3}
+                  className={fieldClass}
+                />
+              </div>
+
+              {/* 4. Acciones */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-amber-400 font-bold uppercase tracking-wider">Acciones</label>
+                <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">¿Qué vamos a hacer? ¿Cuál es el primer paso?</p>
+                <textarea
+                  value={actions}
+                  onChange={e => setActions(e.target.value)}
+                  onBlur={() => saveField('actions', actions)}
+                  placeholder="Paso 1: ...\nPaso 2: ..."
+                  rows={3}
+                  className={fieldClass}
+                />
+              </div>
+
+              {/* 5. Fechas */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-amber-400 font-bold uppercase tracking-wider">Fechas</label>
+                <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">¿Cuándo inicia? ¿Hasta cuándo? ¿Ciclos de revisión?</p>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} onBlur={() => saveField('startDate', startDate || null)}
+                      className={`${fieldClass} text-xs`} />
+                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} onBlur={() => saveField('endDate', endDate || null)}
+                      className={`${fieldClass} text-xs`} />
+                  </div>
+                  <input
+                    value={reviewCycle}
+                    onChange={e => setReviewCycle(e.target.value)}
+                    onBlur={() => saveField('reviewCycle', reviewCycle)}
+                    placeholder="Ej: revisión semanal"
+                    className={`${fieldClass} text-xs`}
+                  />
                 </div>
               </div>
-            )}
+
+              {/* 6. Resultados */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-green-400 font-bold uppercase tracking-wider">Resultados</label>
+                <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">¿Qué queremos lograr? ¿Cómo sabremos que fue exitoso?</p>
+                <textarea
+                  value={result}
+                  onChange={e => setResult(e.target.value)}
+                  onBlur={() => saveField('result', result)}
+                  placeholder={exp.status === 'terminada' ? 'Resultado obtenido...' : 'Se completará al terminar...'}
+                  rows={3}
+                  className={fieldClass}
+                />
+              </div>
+            </div>
+
+            {/* Effort / Impact inline */}
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-800">
+              <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500">Esfuerzo:</span>
+              <span className={`text-xs font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.effort]}`}>{exp.effort}</span>
+              <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 ml-2">Impacto:</span>
+              <span className={`text-xs font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.impact]}`}>{exp.impact}</span>
+              <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 ml-2">Tipo:</span>
+              <span className="text-xs font-['IBM_Plex_Mono'] text-slate-300">{TYPE_LABEL[exp.type] ?? exp.type}</span>
+            </div>
           </div>
 
           {/* Footer actions */}
@@ -171,6 +214,24 @@ function ExperimentModal({
               >
                 <CheckCircle2 size={14} /> Marcar terminada
               </button>
+            </div>
+          )}
+
+          {showResult && (
+            <div className="p-5 border-t border-slate-800 space-y-2">
+              <textarea
+                autoFocus value={resultText} onChange={e => setResultText(e.target.value)}
+                placeholder="¿Qué aprendiste? ¿Se cumplió el criterio?"
+                rows={3} className={fieldClass}
+              />
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setShowResult(false)} className="text-xs text-slate-400 px-3 py-1.5">Cancelar</button>
+                <button disabled={!resultText.trim()}
+                  onClick={() => { onChangeStatus(exp.id, 'terminada', resultText.trim()); onClose() }}
+                  className="text-xs bg-green-600 disabled:opacity-40 text-white font-semibold px-4 py-1.5 rounded-lg">
+                  Confirmar
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -208,7 +269,7 @@ function KanbanCard({ exp, onClick }: { exp: KanbanExperiment; onClick: () => vo
 
 export function ExperimentsPage() {
   const { currentProject } = useProject()
-  const { experiments, loading, changeStatus } = useAllExperiments(currentProject?.id)
+  const { experiments, loading, changeStatus, updateExperiment } = useAllExperiments(currentProject?.id)
   const [selectedExp, setSelectedExp] = useState<KanbanExperiment | null>(null)
 
   if (!currentProject) {
@@ -278,6 +339,7 @@ export function ExperimentsPage() {
           exp={selectedExp}
           onClose={() => setSelectedExp(null)}
           onChangeStatus={changeStatus}
+          onUpdateExperiment={updateExperiment}
         />
       )}
     </div>

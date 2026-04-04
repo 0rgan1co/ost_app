@@ -13,9 +13,16 @@ interface FieldDefinition {
 
 const FIELD_DEFINITIONS: FieldDefinition[] = [
   {
+    key: 'strategicChallenge',
+    label: 'Desafío estratégico',
+    description: '¿Cuál es el desafío estratégico que querés encarar? El problema o la ambición que motiva este proyecto.',
+    placeholder:
+      'Ej: Necesitamos encontrar un modelo de negocio sostenible que nos permita escalar sin depender de funding externo.',
+  },
+  {
     key: 'northStar',
     label: 'Norte estratégico',
-    description: 'Outcome principal del producto a 12 meses.',
+    description: 'Outcome principal del producto a 12 meses. ¿Qué resultado medible querés lograr?',
     placeholder:
       'Ej: Convertirnos en la app de referencia para equipos de producto en LATAM con 500 equipos activos y NPS > 50.',
   },
@@ -96,7 +103,7 @@ export function BusinessContextView({
                 className="mt-1.5 text-sm text-slate-500"
                 style={{ fontFamily: 'Nunito Sans, sans-serif' }}
               >
-                Define el norte estratégico, el segmento y las restricciones que guían las decisiones del producto.
+                Define el desafío, el norte estratégico, el segmento y las restricciones que guían las decisiones del producto.
               </p>
             </div>
 

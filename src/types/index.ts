@@ -285,9 +285,10 @@ export interface ContextField {
 }
 
 export interface BusinessContext {
-  northStar: ContextField      // Strategic north star / 12-month outcome
-  targetSegment: ContextField  // Target user: jobs, pains, gains
-  keyConstraints: ContextField // Technical, regulatory, business constraints
+  strategicChallenge: ContextField // What strategic challenge to tackle
+  northStar: ContextField          // Strategic north star / 12-month outcome
+  targetSegment: ContextField      // Target user: jobs, pains, gains
+  keyConstraints: ContextField     // Technical, regulatory, business constraints
 }
 
 export interface BusinessContextProps {
