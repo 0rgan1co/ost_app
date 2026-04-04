@@ -15,22 +15,24 @@ interface AgentGuideProps {
 interface Msg { id: string; role: 'user' | 'assistant'; content: string }
 
 const SYSTEM = `Sos un agente guía experto en Product Discovery y Opportunity Solution Tree (Teresa Torres).
-Tu trabajo es ayudar al usuario a completar su OST paso a paso a través de conversación.
+Tu trabajo es ayudar al usuario a completar su OST paso a paso.
 
 REGLAS:
-- Sé conciso (2-3 oraciones por mensaje)
-- Hacé UNA pregunta a la vez
-- Cuando el usuario responda, confirmá brevemente y avanzá
-- Usá español natural y cercano
-- Si el usuario da respuestas vagas, pedí que sea más específico
+- Sé conciso (2-3 oraciones máximo)
+- UNA pregunta a la vez
+- Confirmá brevemente y avanzá
+- Español natural y cercano
 
-Basándote en lo que falta, guialo en este orden:
-1. Si no tiene Outcome → preguntá cuál es el resultado que quiere lograr
-2. Si no tiene Oportunidades → preguntá qué problemas del usuario identificó
-3. Si no tiene Hipótesis → preguntá qué ideas de solución tiene para cada oportunidad
-4. Si no tiene Experimentos → preguntá cómo validaría cada hipótesis con una prueba pequeña
+FLUJO (según lo que falte):
+1. OUTCOME: "¿Qué resultado medible querés lograr?"
+2. OPORTUNIDADES: "Listá 2-3 problemas o necesidades de tu usuario, separados por punto y coma."
+   IMPORTANTE: Pedí explícitamente que los separe con punto y coma (;) para poder guardarlos como oportunidades individuales.
+3. EVIDENCIA: "Para cada oportunidad, ¿qué evidencia tenés? Citas de usuarios, datos, observaciones."
+4. HIPÓTESIS: "¿Qué soluciones podrían resolver cada oportunidad?"
+5. EXPERIMENTOS: "¿Cómo validarías cada hipótesis con una prueba de bajo esfuerzo?"
 
-Cuando todo esté completo, felicitalo y sugerí revisar el Top 3 de experimentos.`
+Cuando todo esté completo, felicitalo y sugerí ver el árbol visual.
+Respondé SOLO texto conversacional, nunca JSON.`
 
 export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCount, hypothesisCount, experimentCount }: AgentGuideProps) {
   const [open, setOpen] = useState(false)
@@ -190,20 +192,34 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
 async function trySaveFromChat(userText: string, projectId: string, hasOutcome: boolean, oppCount: number) {
   try {
     if (!hasOutcome) {
-      // Save as north star
-      const { data: existing } = await supabase.from('business_context').select('id, content').eq('project_id', projectId).maybeSingle()
-      const prev = existing ? (typeof existing.content === 'string' ? JSON.parse(existing.content) : existing.content) : {}
-      const content = JSON.stringify({ ...prev, northStar: { value: userText, updatedAt: new Date().toISOString() } })
+      // Save as north star — simple upsert without parsing legacy data
+      const { data: existing } = await supabase.from('business_context').select('id').eq('project_id', projectId).maybeSingle()
+      const now = new Date().toISOString()
+      const content = JSON.stringify({
+        strategicChallenge: { value: '', updatedAt: null },
+        northStar: { value: userText, updatedAt: now },
+        targetSegment: { value: '', updatedAt: null },
+        keyConstraints: { value: '', updatedAt: null },
+      })
       if (existing) {
         await supabase.from('business_context').update({ content }).eq('id', existing.id)
       } else {
         await supabase.from('business_context').insert({ project_id: projectId, content })
       }
     } else if (oppCount === 0) {
-      // Try to parse opportunities from the response
-      const lines = userText.split(/[;\n,]/).map(l => l.replace(/^[\d\-\.\)\s•]+/, '').trim()).filter(l => l.length > 5)
-      for (const name of lines) {
-        await supabase.from('opportunities').insert({ project_id: projectId, parent_id: null, name })
+      // Parse opportunities — split by semicolons, newlines, or numbered items
+      const lines = userText
+        .split(/[;\n]/)
+        .map(l => l.replace(/^[\d\-\.\)\s•]+/, '').trim())
+        .filter(l => l.length > 5)
+
+      if (lines.length === 0) {
+        // If no clear separators, treat the whole text as one opportunity
+        await supabase.from('opportunities').insert({ project_id: projectId, parent_id: null, name: userText.trim() })
+      } else {
+        for (const name of lines) {
+          await supabase.from('opportunities').insert({ project_id: projectId, parent_id: null, name })
+        }
       }
     }
   } catch (err) {
