@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Check } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Check, Plus } from 'lucide-react'
 import type { Opportunity, HypothesisSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
 
@@ -13,6 +13,9 @@ interface OSTTreeViewProps {
   onSelect: (id: string) => void
   onNavigateToDetail?: (id: string) => void
   onRenameOpportunity?: (id: string, name: string) => void
+  onAddOpportunity?: () => void
+  onAddHypothesis?: (opportunityId: string) => void
+  onAddExperiment?: (hypothesisId: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -36,7 +39,7 @@ interface Line { x1: number; y1: number; x2: number; y2: number }
 
 export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
-  selectedId, onSelect, onRenameOpportunity,
+  selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -128,6 +131,14 @@ export function OSTTreeViewCanvas({
           <p className="font-[Nunito_Sans] font-bold text-sm leading-snug">{outcome || projectName}</p>
         </div>
 
+        {/* + Add Opportunity button under Outcome */}
+        {onAddOpportunity && (
+          <button onClick={onAddOpportunity}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-orange-500/30 text-orange-400 hover:bg-orange-500/10 text-xs font-[Nunito_Sans] font-semibold transition-colors">
+            <Plus size={12} /> Oportunidad
+          </button>
+        )}
+
         {/* Level 1: Opportunities */}
         <div className="flex gap-5 flex-wrap justify-center">
           {activeOpps.map(opp => {
@@ -151,20 +162,21 @@ export function OSTTreeViewCanvas({
                   )}
                 </div>
                 {editingId === opp.id ? (
-                  <div className="flex items-center gap-1">
-                    <input
+                  <div className="flex items-start gap-1">
+                    <textarea
                       autoFocus
                       value={editText}
                       onChange={e => setEditText(e.target.value)}
                       onKeyDown={e => {
-                        if (e.key === 'Enter') { onRenameOpportunity?.(opp.id, editText); setEditingId(null) }
+                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRenameOpportunity?.(opp.id, editText); setEditingId(null) }
                         if (e.key === 'Escape') setEditingId(null)
                       }}
                       onClick={e => e.stopPropagation()}
-                      className="w-full bg-slate-800 border border-orange-500/50 rounded px-2 py-1 text-sm text-slate-100 font-[Nunito_Sans] focus:outline-none"
+                      rows={2}
+                      className="w-full bg-slate-800 border border-orange-500/50 rounded px-2 py-1 text-sm text-slate-100 font-[Nunito_Sans] focus:outline-none resize-y min-h-[2rem]"
                     />
                     <button onClick={e => { e.stopPropagation(); onRenameOpportunity?.(opp.id, editText); setEditingId(null) }}
-                      className="text-green-400 hover:text-green-300 flex-shrink-0"><Check size={14} /></button>
+                      className="text-green-400 hover:text-green-300 flex-shrink-0 mt-1"><Check size={14} /></button>
                   </div>
                 ) : (
                   <div className="flex items-start gap-1 group/title">
@@ -177,9 +189,17 @@ export function OSTTreeViewCanvas({
                     )}
                   </div>
                 )}
-                <div className="flex gap-2 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
-                  <span>ev:{opp.evidenceCount}</span>
-                  <span>hip:{hyps.length}</span>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex gap-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
+                    <span>ev:{opp.evidenceCount}</span>
+                    <span>hip:{hyps.length}</span>
+                  </div>
+                  {onAddHypothesis && (
+                    <button onClick={e => { e.stopPropagation(); onAddHypothesis(opp.id) }}
+                      className="flex items-center gap-0.5 text-[9px] text-indigo-400 hover:text-indigo-300 font-['IBM_Plex_Mono'] transition-colors">
+                      <Plus size={10} /> Solución
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -213,9 +233,17 @@ export function OSTTreeViewCanvas({
                       )}
                     </div>
                     <p className="font-[Nunito_Sans] text-xs text-slate-200 line-clamp-2 leading-snug">{h.title}</p>
-                    <div className="flex items-center gap-2 mt-1.5 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
-                      <span>{h.status}</span>
-                      {exps.length > 0 && <span>{exps.length} exp</span>}
+                    <div className="flex items-center justify-between mt-1.5">
+                      <div className="flex items-center gap-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
+                        <span>{h.status}</span>
+                        {exps.length > 0 && <span>{exps.length} exp</span>}
+                      </div>
+                      {onAddExperiment && (
+                        <button onClick={() => onAddExperiment(h.id)}
+                          className="flex items-center gap-0.5 text-[9px] text-amber-400 hover:text-amber-300 font-['IBM_Plex_Mono'] transition-colors">
+                          <Plus size={9} /> Exp
+                        </button>
+                      )}
                     </div>
                   </div>
                 )

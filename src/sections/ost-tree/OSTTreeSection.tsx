@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 import { useOSTTree } from '../../hooks/use-ost-tree'
 import { useBusinessContext } from '../../hooks/use-business-context'
 import { OSTListView } from './components/OSTListView'
@@ -186,6 +187,34 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     navigate(`/opportunity/${id}`)
   }, [navigate])
 
+  // Quick-add hypothesis from tree
+  const handleQuickAddHypothesis = useCallback(async (opportunityId: string) => {
+    const name = prompt('Nombre de la solución (hipótesis):')
+    if (!name?.trim()) return
+    await supabase.from('hypotheses').insert({
+      opportunity_id: opportunityId,
+      description: name.trim(),
+      status: 'to do',
+    })
+    refetch()
+  }, [refetch])
+
+  // Quick-add experiment from tree
+  const handleQuickAddExperiment = useCallback(async (hypothesisId: string) => {
+    const name = prompt('Descripción del experimento:')
+    if (!name?.trim()) return
+    await supabase.from('experiments').insert({
+      hypothesis_id: hypothesisId,
+      type: 'otro',
+      description: name.trim(),
+      success_criterion: 'Por definir',
+      effort: 'medio',
+      impact: 'medio',
+      status: 'to do',
+    })
+    refetch()
+  }, [refetch])
+
   // ── Shared view props ───────────────────────────────────────────────────────
   const sharedViewProps = {
     selectedId,
@@ -278,6 +307,9 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onSelect={handleSelect}
               onNavigateToDetail={handleNavigateToDetail}
               onRenameOpportunity={renameOpportunity}
+              onAddOpportunity={() => setIsModalOpen(true)}
+              onAddHypothesis={handleQuickAddHypothesis}
+              onAddExperiment={handleQuickAddExperiment}
             />
           </div>
         )}
