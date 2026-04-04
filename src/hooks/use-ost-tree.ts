@@ -54,6 +54,7 @@ export interface UseOSTTreeReturn {
   loading: boolean
   error: string | null
   createOpportunity: (data: { name: string; description?: string }) => Promise<void>
+  renameOpportunity: (id: string, name: string) => Promise<void>
   archiveOpportunity: (id: string) => Promise<void>
   restoreOpportunity: (id: string) => Promise<void>
   refetch: () => Promise<void>
@@ -238,6 +239,16 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     await fetchData()
   }, [fetchData])
 
+  const renameOpportunity = useCallback(async (id: string, name: string) => {
+    if (!name.trim()) return
+    const { error } = await supabase
+      .from('opportunities')
+      .update({ name: name.trim() })
+      .eq('id', id)
+    if (error) throw error
+    await fetchData()
+  }, [fetchData])
+
   const restoreOpportunity = useCallback(async (id: string) => {
     const { error } = await supabase
       .from('opportunities')
@@ -255,6 +266,7 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     loading,
     error,
     createOpportunity,
+    renameOpportunity,
     archiveOpportunity,
     restoreOpportunity,
     refetch: fetchData,

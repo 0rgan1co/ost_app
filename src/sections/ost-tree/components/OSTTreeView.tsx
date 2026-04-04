@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Check } from 'lucide-react'
 import type { Opportunity, HypothesisSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
 
@@ -12,6 +12,7 @@ interface OSTTreeViewProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onNavigateToDetail?: (id: string) => void
+  onRenameOpportunity?: (id: string, name: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -35,13 +36,15 @@ interface Line { x1: number; y1: number; x2: number; y2: number }
 
 export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
-  selectedId, onSelect,
+  selectedId, onSelect, onRenameOpportunity,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
   const [expandedOpps, setExpandedOpps] = useState<Set<string>>(() => new Set(opportunities.filter(o => !o.isArchived).map(o => o.id)))
   const [expandedHyps, setExpandedHyps] = useState<Set<string>>(new Set())
   const [renderKey, setRenderKey] = useState(0)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editText, setEditText] = useState('')
 
   const toggleOpp = (id: string) => {
     setExpandedOpps(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -147,7 +150,33 @@ export function OSTTreeViewCanvas({
                     </button>
                   )}
                 </div>
-                <p className="font-[Nunito_Sans] text-sm font-semibold text-slate-100 line-clamp-2 leading-snug">{opp.title}</p>
+                {editingId === opp.id ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      autoFocus
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { onRenameOpportunity?.(opp.id, editText); setEditingId(null) }
+                        if (e.key === 'Escape') setEditingId(null)
+                      }}
+                      onClick={e => e.stopPropagation()}
+                      className="w-full bg-slate-800 border border-orange-500/50 rounded px-2 py-1 text-sm text-slate-100 font-[Nunito_Sans] focus:outline-none"
+                    />
+                    <button onClick={e => { e.stopPropagation(); onRenameOpportunity?.(opp.id, editText); setEditingId(null) }}
+                      className="text-green-400 hover:text-green-300 flex-shrink-0"><Check size={14} /></button>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-1 group/title">
+                    <p className="font-[Nunito_Sans] text-sm font-semibold text-slate-100 line-clamp-2 leading-snug flex-1">{opp.title}</p>
+                    {onRenameOpportunity && (
+                      <button onClick={e => { e.stopPropagation(); setEditingId(opp.id); setEditText(opp.title) }}
+                        className="opacity-0 group-hover/title:opacity-100 text-slate-500 hover:text-orange-400 flex-shrink-0 mt-0.5">
+                        <Pencil size={11} />
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-2 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
                   <span>ev:{opp.evidenceCount}</span>
                   <span>hip:{hyps.length}</span>
@@ -175,7 +204,7 @@ export function OSTTreeViewCanvas({
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full ${dot}`} />
-                        <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Hipótesis</p>
+                        <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Solución</p>
                       </div>
                       {exps.length > 0 && (
                         <button onClick={() => toggleHyp(h.id)} className="text-slate-500 hover:text-slate-300">

@@ -13,7 +13,7 @@ interface WorkflowGuideProps {
 const STEPS = [
   { icon: Target, label: 'Outcome', short: '1', activeColor: 'bg-red-500/10 text-red-400 border border-red-500/30' },
   { icon: Search, label: 'Oportunidades', short: '2', activeColor: 'bg-orange-500/10 text-orange-400 border border-orange-500/30' },
-  { icon: Lightbulb, label: 'Hipótesis', short: '3', activeColor: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' },
+  { icon: Lightbulb, label: 'Soluciones', short: '3', activeColor: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' },
   { icon: FlaskConical, label: 'Experimentos', short: '4', activeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/30' },
 ]
 

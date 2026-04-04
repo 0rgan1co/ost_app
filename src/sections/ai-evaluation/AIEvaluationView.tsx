@@ -127,7 +127,7 @@ export function AIEvaluationView({
             {/* Hypotheses list */}
             {ostSummary && ostSummary.hypotheses.length > 0 && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <p className="text-[10px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider mb-3">Hipótesis</p>
+                <p className="text-[10px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider mb-3">Soluciones (Hipótesis)</p>
                 <div className="space-y-2.5">
                   {ostSummary.hypotheses.map((h, i) => (
                     <div key={i} className="flex items-start gap-2">

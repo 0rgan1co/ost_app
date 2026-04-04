@@ -126,6 +126,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     loading,
     error,
     createOpportunity,
+    renameOpportunity,
     archiveOpportunity,
     restoreOpportunity,
     refetch,
@@ -276,6 +277,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               selectedId={selectedId}
               onSelect={handleSelect}
               onNavigateToDetail={handleNavigateToDetail}
+              onRenameOpportunity={renameOpportunity}
             />
           </div>
         )}

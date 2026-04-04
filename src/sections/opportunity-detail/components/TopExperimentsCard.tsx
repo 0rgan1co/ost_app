@@ -110,7 +110,7 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
                 </div>
                 {/* Origin hypothesis */}
                 <p className="text-[11px] text-slate-400 font-sans truncate max-w-[200px]" title={top.hypothesisTitle}>
-                  Hipótesis: {top.hypothesisTitle}
+                  Solución: {top.hypothesisTitle}
                 </p>
               </div>
             </div>

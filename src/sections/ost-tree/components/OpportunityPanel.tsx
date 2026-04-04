@@ -110,7 +110,7 @@ export function OpportunityPanel({
                 </div>
                 <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
                   <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 uppercase tracking-wider mb-1">
-                    Hipótesis activas
+                    Soluciones activas
                   </p>
                   <p className={`font-[IBM_Plex_Mono] text-xl font-bold ${opportunity.activeHypothesisCount > 0 ? 'text-orange-400' : 'text-slate-200'}`}>
                     {opportunity.activeHypothesisCount}
@@ -157,7 +157,7 @@ export function OpportunityPanel({
               {hypothesesSummary.length > 0 && (
                 <div>
                   <h3 className="font-[Nunito_Sans] font-semibold text-slate-300 text-xs uppercase tracking-widest mb-3">
-                    Hipótesis
+                    Soluciones (Hipótesis)
                   </h3>
                   <div className="space-y-1.5">
                     {hypothesesSummary.slice(0, 4).map(h => {

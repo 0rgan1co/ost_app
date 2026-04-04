@@ -280,7 +280,7 @@ export function OpportunityDetailView({
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-indigo-400 font-sans">Hipótesis</h2>
+              <h2 className="text-base font-bold text-indigo-400 font-sans">Soluciones (Hipótesis)</h2>
               <span className="text-xs font-['IBM_Plex_Mono'] text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
                 {hypotheses.length}
               </span>
