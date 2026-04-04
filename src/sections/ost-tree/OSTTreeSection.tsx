@@ -118,6 +118,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     opportunities,
     recentEvidence,
     hypothesesSummary,
+    experimentsSummary,
     loading,
     error,
     createOpportunity,
@@ -243,7 +244,15 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
           </div>
         ) : (
           <div className="w-full h-full overflow-auto p-6">
-            <OSTTreeViewCanvas opportunities={opportunities} {...sharedViewProps} />
+            <OSTTreeViewCanvas
+              projectName={project.name}
+              outcome={bizContext.northStar.value}
+              opportunities={opportunities}
+              hypothesesSummary={hypothesesSummary}
+              experimentsSummary={experimentsSummary}
+              selectedId={selectedId}
+              onSelect={handleSelect}
+            />
           </div>
         )}
       </div>

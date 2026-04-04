@@ -2,6 +2,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Opportunity, OSTTreeEvidence, HypothesisSummary } from '../types'
 
+export interface ExperimentSummary {
+  id: string
+  hypothesisId: string
+  description: string
+  type: string
+  status: string
+  effort: string
+  impact: string
+}
+
 // ─── Raw DB rows ──────────────────────────────────────────────────────────────
 
 interface DBOpportunity {
@@ -40,6 +50,7 @@ export interface UseOSTTreeReturn {
   opportunities: Opportunity[]
   recentEvidence: Record<string, OSTTreeEvidence[]>
   hypothesesSummary: Record<string, HypothesisSummary[]>
+  experimentsSummary: Record<string, ExperimentSummary[]>
   loading: boolean
   error: string | null
   createOpportunity: (data: { name: string; description?: string }) => Promise<void>
@@ -73,6 +84,7 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [recentEvidence, setRecentEvidence] = useState<Record<string, OSTTreeEvidence[]>>({})
   const [hypothesesSummary, setHypothesesSummary] = useState<Record<string, HypothesisSummary[]>>({})
+  const [experimentsSummary, setExperimentsSummary] = useState<Record<string, ExperimentSummary[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -96,6 +108,7 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
         setOpportunities([])
         setRecentEvidence({})
         setHypothesesSummary({})
+        setExperimentsSummary({})
         setLoading(false)
         return
       }
@@ -115,6 +128,32 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
 
       const ev = (evidenceRows ?? []) as DBEvidence[]
       const hy = (hypothesisRows ?? []) as DBHypothesis[]
+
+      // Fetch experiments for all hypotheses
+      const hypIds = hy.map(h => h.id)
+      let expRows: any[] = []
+      if (hypIds.length > 0) {
+        const { data } = await supabase
+          .from('experiments')
+          .select('*')
+          .in('hypothesis_id', hypIds)
+        expRows = data ?? []
+      }
+
+      // Build experiments summary grouped by hypothesis_id
+      const experimentsSummaryMap: Record<string, ExperimentSummary[]> = {}
+      for (const e of expRows) {
+        if (!experimentsSummaryMap[e.hypothesis_id]) experimentsSummaryMap[e.hypothesis_id] = []
+        experimentsSummaryMap[e.hypothesis_id].push({
+          id: e.id,
+          hypothesisId: e.hypothesis_id,
+          description: e.description,
+          type: e.type,
+          status: e.status,
+          effort: e.effort,
+          impact: e.impact,
+        })
+      }
 
       // Build evidence counts and recent evidence per opportunity
       const evidenceCountMap: Record<string, number> = {}
@@ -164,6 +203,7 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
       setOpportunities(mapped)
       setRecentEvidence(recentEvidenceMap)
       setHypothesesSummary(hypothesesSummaryMap)
+      setExperimentsSummary(experimentsSummaryMap)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error cargando oportunidades')
     } finally {
@@ -211,6 +251,7 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     opportunities,
     recentEvidence,
     hypothesesSummary,
+    experimentsSummary,
     loading,
     error,
     createOpportunity,
