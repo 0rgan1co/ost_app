@@ -9,15 +9,16 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { OSTTreeSection } from './sections/ost-tree/OSTTreeSection'
 import { OpportunityDetailView } from './sections/opportunity-detail/OpportunityDetailView'
 import { AIEvaluationView } from './sections/ai-evaluation/AIEvaluationView'
-import { BusinessContextView } from './sections/business-context/BusinessContextView'
+// BusinessContextView now used inside BusinessContextPage
 import { useOpportunityDetail } from './hooks/use-opportunity-detail'
 import { useAIEvaluation } from './hooks/use-ai-evaluation'
-import { useBusinessContext } from './hooks/use-business-context'
+// useBusinessContext now used inside BusinessContextPage
 import { ProjectSelector } from './components/ProjectSelector'
 import { SettingsPage } from './pages/SettingsPage'
 import { ExperimentsPage } from './pages/ExperimentsPage'
 import { ReviewsPage } from './pages/ReviewsPage'
 import { AIEvaluationSelectPage } from './pages/AIEvaluationSelectPage'
+import { BusinessContextPage } from './pages/BusinessContextPage'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
@@ -115,23 +116,7 @@ function AIEvaluationPage() {
   )
 }
 
-function BusinessContextPage() {
-  const { currentProject } = useProject()
-  const { context, isSaving, saveField } = useBusinessContext(currentProject?.id ?? '')
-
-  if (!currentProject) {
-    return <ProjectSelector sectionLabel="Business Context" />
-  }
-
-  return (
-    <BusinessContextView
-      project={{ id: currentProject.id, name: currentProject.name }}
-      context={context}
-      isSaving={isSaving}
-      onSaveField={saveField}
-    />
-  )
-}
+// BusinessContextPage is now imported from pages/BusinessContextPage.tsx
 
 export function App() {
   return (
