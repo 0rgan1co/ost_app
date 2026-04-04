@@ -9,6 +9,7 @@ import { OpportunityPanel } from './components/OpportunityPanel'
 import { CreateOpportunityModal } from './components/CreateOpportunityModal'
 import { WorkflowGuide } from './components/WorkflowGuide'
 import { AgentGuide } from './components/AgentGuide'
+import { ExperimentSeedModal } from '../../components/ExperimentSeedModal'
 import type { Project } from '../../types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -148,6 +149,26 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [openExpId, setOpenExpId] = useState<string | null>(null)
+  const [openExpData, setOpenExpData] = useState<any>(null)
+
+  const handleOpenExperiment = useCallback(async (expId: string) => {
+    const { data: exp } = await supabase.from('experiments').select('*').eq('id', expId).single()
+    if (!exp) return
+    const { data: hyp } = await supabase.from('hypotheses').select('id, description, opportunity_id').eq('id', exp.hypothesis_id).single()
+    const oppName = hyp ? (opportunities.find(o => o.id === hyp.opportunity_id)?.title ?? '') : ''
+    setOpenExpData({
+      id: exp.id, description: exp.description, type: exp.type,
+      successCriterion: exp.success_criterion, effort: exp.effort, impact: exp.impact,
+      status: exp.status, result: exp.result,
+      objective: exp.objective ?? '', who: exp.who ?? '', actions: exp.actions ?? '',
+      startDate: exp.start_date, endDate: exp.end_date, reviewCycle: exp.review_cycle ?? '',
+      projectName: project.name, opportunityName: oppName,
+      hypothesisDescription: hyp?.description ?? '',
+    })
+    setOpenExpId(expId)
+  }, [opportunities, project.name])
+
   const [starredIds, setStarredIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('ost-starred') ?? '[]')) } catch { return new Set() }
   })
@@ -375,6 +396,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onDeleteOpportunity={archiveOpportunity}
               onDeleteHypothesis={handleDeleteHypothesis}
               onDeleteExperiment={handleDeleteExperiment}
+              onOpenExperiment={handleOpenExperiment}
             />
           </div>
         )}
@@ -401,6 +423,15 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         onConfirmMultiple={handleConfirmMultiple}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {/* Experiment Seed Modal */}
+      {openExpId && openExpData && (
+        <ExperimentSeedModal
+          experiment={openExpData}
+          onClose={() => { setOpenExpId(null); setOpenExpData(null) }}
+          onRefresh={refetch}
+        />
+      )}
 
       {/* Agent Guide — floating chat for incomplete projects */}
       <AgentGuide

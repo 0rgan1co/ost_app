@@ -24,6 +24,7 @@ interface OSTTreeViewProps {
   onDeleteOpportunity?: (id: string) => void
   onDeleteHypothesis?: (id: string) => void
   onDeleteExperiment?: (id: string) => void
+  onOpenExperiment?: (experimentId: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -49,7 +50,7 @@ export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
   onRenameHypothesis, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
-  onDeleteOpportunity, onDeleteHypothesis, onDeleteExperiment,
+  onDeleteOpportunity, onDeleteHypothesis, onDeleteExperiment, onOpenExperiment,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -392,7 +393,8 @@ export function OSTTreeViewCanvas({
                 const dot = EXP_DOT[e.status] ?? EXP_DOT['to do']
                 return (
                   <div key={e.id} data-n="exp" data-id={e.id} data-parent={e.hypId}
-                    className="relative bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-2 w-40 hover:border-amber-500/30 transition-all">
+                    onClick={() => onOpenExperiment?.(e.id)}
+                    className="relative bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-2 w-40 hover:border-amber-500/30 transition-all cursor-pointer">
                     {confirmDeleteId === e.id && (
                       <div className="absolute inset-0 bg-slate-950/95 rounded-lg z-10 flex flex-col items-center justify-center gap-2 p-2">
                         <p className="text-[9px] text-slate-300 font-[Nunito_Sans] text-center">¿Eliminar?</p>
