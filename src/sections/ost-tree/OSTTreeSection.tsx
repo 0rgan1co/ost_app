@@ -6,6 +6,7 @@ import { OSTListView } from './components/OSTListView'
 import { OSTTreeViewCanvas } from './components/OSTTreeView'
 import { OpportunityPanel } from './components/OpportunityPanel'
 import { CreateOpportunityModal } from './components/CreateOpportunityModal'
+import { WorkflowGuide } from './components/WorkflowGuide'
 import type { Project } from '../../types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -189,7 +190,10 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     onRestore: restoreOpportunity,
   }
 
-  const activeCount = opportunities.filter(o => !o.isArchived).length
+  const activeOpps = opportunities.filter(o => !o.isArchived)
+  const activeCount = activeOpps.length
+  const totalHypotheses = Object.values(hypothesesSummary).reduce((sum, arr) => sum + arr.length, 0)
+  const totalExperiments = Object.values(experimentsSummary).reduce((sum, arr) => sum + arr.length, 0)
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -230,6 +234,22 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
       {/* ── Content area ───────────────────────────────────────────────────── */}
       <div className={`flex-1 min-h-0 ${viewMode === 'list' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+        {/* Workflow guide */}
+        {!loading && !error && (
+          <div className="px-6 pt-4">
+            <WorkflowGuide
+              hasOutcome={!!bizContext.northStar.value}
+              opportunityCount={activeCount}
+              hypothesisCount={totalHypotheses}
+              experimentCount={totalExperiments}
+              onGoToContext={() => navigate('/business-context')}
+              onCreateOpportunity={() => setIsModalOpen(true)}
+              onGoToDetail={() => {
+                if (activeOpps[0]) navigate(`/opportunity/${activeOpps[0].id}`)
+              }}
+            />
+          </div>
+        )}
         {loading ? (
           <div className="px-6 py-6">
             <LoadingSkeleton />
