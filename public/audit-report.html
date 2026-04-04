@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auditoría OST App — Spec v2.0 vs Implementación</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-size: 28px; font-weight: 800; color: #f8fafc; margin-bottom: 8px; }
+  .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 32px; font-family: 'IBM Plex Mono', monospace; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 40px; }
+  .summary-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; text-align: center; }
+  .summary-card .num { font-size: 32px; font-weight: 800; font-family: 'IBM Plex Mono', monospace; }
+  .summary-card .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .num.green { color: #4ade80; }
+  .num.yellow { color: #fbbf24; }
+  .num.red { color: #f87171; }
+  .num.blue { color: #60a5fa; }
+  h2 { font-size: 16px; font-weight: 700; color: #f8fafc; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #334155; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #1e293b; color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace; border-bottom: 1px solid #334155; }
+  td { padding: 10px 12px; border-bottom: 1px solid #1e293b; vertical-align: top; }
+  tr:hover td { background: #1e293b40; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .badge.impl { background: #065f4620; color: #4ade80; border: 1px solid #4ade8030; }
+  .badge.partial { background: #92400e20; color: #fbbf24; border: 1px solid #fbbf2430; }
+  .badge.missing { background: #991b1b20; color: #f87171; border: 1px solid #f8717130; }
+  .badge.extra { background: #1e40af20; color: #60a5fa; border: 1px solid #60a5fa30; }
+  .section-label { font-size: 11px; color: #64748b; font-family: 'IBM Plex Mono', monospace; }
+  .gap-section { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .gap-title { font-weight: 700; color: #f87171; font-size: 14px; margin-bottom: 4px; }
+  .gap-desc { color: #94a3b8; font-size: 13px; }
+  .gap-effort { display: inline-block; margin-top: 8px; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; background: #334155; color: #cbd5e1; }
+  .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #334155; text-align: center; color: #475569; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Auditoría OST App</h1>
+<p class="subtitle">Spec v2.0 vs Implementación actual — 4 abril 2026</p>
+
+<div class="summary-grid">
+  <div class="summary-card"><div class="num green">23</div><div class="label">Implementadas</div></div>
+  <div class="summary-card"><div class="num yellow">4</div><div class="label">Parciales</div></div>
+  <div class="summary-card"><div class="num red">6</div><div class="label">Faltantes</div></div>
+  <div class="summary-card"><div class="num blue">7</div><div class="label">Extras</div></div>
+</div>
+
+<h2>Projects & Roles</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Multi-project CRUD</td><td><span class="badge impl">IMPL</span></td><td>Crear, borrar, listar. Público/privado con toggle.</td></tr>
+<tr><td>Roles admin/usuario/viewer</td><td><span class="badge partial">PARCIAL</span></td><td>Roles en UI y DB, pero sin enforcement via RLS. Viewer podría escribir si bypasea la UI.</td></tr>
+<tr><td>Gestión de miembros</td><td><span class="badge impl">IMPL</span></td><td>Drawer estilo Trello: checkbox para agregar/quitar, selector de rol inline.</td></tr>
+<tr><td>Viewer email-only (sin cuenta)</td><td><span class="badge extra">EXTRA</span></td><td>No estaba en spec. Viewers pueden ser invitados solo con email.</td></tr>
+</table>
+
+<h2>Autenticación</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Google OAuth</td><td><span class="badge impl">IMPL</span></td><td>Login con Google via Supabase Auth.</td></tr>
+<tr><td>Whitelist allowed_users</td><td><span class="badge impl">IMPL</span></td><td>AuthGuard verifica email en tabla allowed_users.</td></tr>
+<tr><td>Persistencia de sesión</td><td><span class="badge impl">IMPL</span></td><td>AuthContext con onAuthStateChange.</td></tr>
+</table>
+
+<h2>OST Tree</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Listar oportunidades</td><td><span class="badge impl">IMPL</span></td><td>Vista lista + vista tarjetas.</td></tr>
+<tr><td>Crear oportunidad</td><td><span class="badge impl">IMPL</span></td><td>Manual + Generar ideas con AI + Cargar contexto/transcript.</td></tr>
+<tr><td>Archivar / restaurar</td><td><span class="badge impl">IMPL</span></td><td>Toggle archived con UI feedback.</td></tr>
+<tr><td>Diagrama visual del árbol OST</td><td><span class="badge missing">FALTA</span></td><td>La vista "tarjetas" es un grid plano. No muestra la jerarquía Outcome → Opp → Hipótesis → Experimento como diagrama de árbol.</td></tr>
+</table>
+
+<h2>Opportunity Detail</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Evidencia CRUD (3 tipos)</td><td><span class="badge impl">IMPL</span></td><td>Cita, hecho, observación. Source para cita.</td></tr>
+<tr><td>Hipótesis CRUD + status</td><td><span class="badge impl">IMPL</span></td><td>to do → en curso → terminada con resultado.</td></tr>
+<tr><td>Experimentos CRUD + score</td><td><span class="badge impl">IMPL</span></td><td>Esfuerzo/impacto, priority score calculado.</td></tr>
+<tr><td>Top 3 experimentos</td><td><span class="badge impl">IMPL</span></td><td>Ranking en detalle + sidebar global.</td></tr>
+<tr><td>Validación source para cita</td><td><span class="badge partial">PARCIAL</span></td><td>UI oculta campo si no es cita, pero sin validación server-side (Zod falta).</td></tr>
+</table>
+
+<h2>AI Evaluation</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Evaluación con Claude Sonnet</td><td><span class="badge impl">IMPL</span></td><td>Prompt completo con business context, evidencia, hipótesis, experimentos.</td></tr>
+<tr><td>Conversación de refinamiento</td><td><span class="badge impl">IMPL</span></td><td>Multi-turn persistida en ai_conversation_messages.</td></tr>
+<tr><td>"Aplicar sugerencia" al OST</td><td><span class="badge missing">FALTA</span></td><td>Botón existe pero solo muestra toast. No parsea ni aplica cambios.</td></tr>
+</table>
+
+<h2>Business Context</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>North star, target, constraints</td><td><span class="badge impl">IMPL</span></td><td>3 campos con upsert y timestamps por campo.</td></tr>
+</table>
+
+<h2>Shell & Design</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Sidebar navigation</td><td><span class="badge impl">IMPL</span></td><td>Links + theme toggle + top 3 experiments.</td></tr>
+<tr><td>Paradigma design system</td><td><span class="badge impl">IMPL</span></td><td>Red-500, Rose-500, Slate, Nunito Sans, IBM Plex Mono.</td></tr>
+<tr><td>Dark mode (default)</td><td><span class="badge impl">IMPL</span></td><td>Toggle + Settings + localStorage. Contraste corregido.</td></tr>
+<tr><td>Light mode contraste</td><td><span class="badge partial">PARCIAL</span></td><td>Algunos textos invisibles en modo claro. En proceso de corrección.</td></tr>
+</table>
+
+<h2>Seguridad & Data</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>RLS policies (role-based)</td><td><span class="badge missing">FALTA</span></td><td>Policies existen para auth pero no validan roles. Viewer puede escribir.</td></tr>
+<tr><td>Validación Zod</td><td><span class="badge missing">FALTA</span></td><td>Sin schemas Zod. Solo validación client-side.</td></tr>
+<tr><td>Realtime subscriptions</td><td><span class="badge missing">FALTA</span></td><td>Solo refetch manual. No hay postgres_changes listeners.</td></tr>
+<tr><td>Role-based UI gates</td><td><span class="badge partial">PARCIAL</span></td><td>Callbacks opcionales pero sin guard explícito por rol.</td></tr>
+</table>
+
+<h2>Features Extra (no en spec original)</h2>
+<table>
+<tr><th>Feature</th><th>Estado</th><th>Notas</th></tr>
+<tr><td>Wizard de onboarding</td><td><span class="badge extra">EXTRA</span></td><td>Preguntas guiadas al crear proyecto + feedback AI.</td></tr>
+<tr><td>Generar ideas con AI</td><td><span class="badge extra">EXTRA</span></td><td>Claude sugiere oportunidades desde el business context.</td></tr>
+<tr><td>Cargar contexto/transcript</td><td><span class="badge extra">EXTRA</span></td><td>Pegar transcript → Claude extrae oportunidades y evidencia.</td></tr>
+<tr><td>Email invites via Brevo</td><td><span class="badge extra">EXTRA</span></td><td>Edge Function en Supabase → Brevo API → email HTML.</td></tr>
+<tr><td>Proyectos públicos/privados</td><td><span class="badge extra">EXTRA</span></td><td>Toggle visibilidad + policy de lectura pública.</td></tr>
+<tr><td>Selector de proyecto</td><td><span class="badge extra">EXTRA</span></td><td>En OST Tree y Business Context cuando no hay proyecto seleccionado.</td></tr>
+<tr><td>Settings page</td><td><span class="badge extra">EXTRA</span></td><td>Tema (claro/oscuro/sistema), cuenta, about.</td></tr>
+</table>
+
+<h2>Gaps Críticos</h2>
+
+<div class="gap-section">
+  <div class="gap-title">1. Diagrama visual del árbol OST</div>
+  <div class="gap-desc">La vista "tarjetas" muestra oportunidades en un grid plano. Falta el diagrama jerárquico Outcome → Oportunidades → Hipótesis → Experimentos que es central a la metodología de Teresa Torres.</div>
+  <span class="gap-effort">ESFUERZO: ALTO</span>
+</div>
+
+<div class="gap-section">
+  <div class="gap-title">2. RLS Policies con enforcement de roles</div>
+  <div class="gap-desc">Las policies actuales permiten a cualquier usuario autenticado escribir. Falta enforcement de que viewers solo pueden leer, y que solo miembros del proyecto acceden a sus datos.</div>
+  <span class="gap-effort">ESFUERZO: MEDIO</span>
+</div>
+
+<div class="gap-section">
+  <div class="gap-title">3. Realtime subscriptions</div>
+  <div class="gap-desc">Cuando otro usuario hace cambios, no se reflejan en tiempo real. Solo se actualizan con refetch manual. Esto limita la experiencia colaborativa.</div>
+  <span class="gap-effort">ESFUERZO: MEDIO</span>
+</div>
+
+<div class="gap-section">
+  <div class="gap-title">4. Validación Zod</div>
+  <div class="gap-desc">Sin validación server-side de datos. Un usuario podría insertar datos inválidos via API directa (ej: cita sin source, experiment sin success_criterion).</div>
+  <span class="gap-effort">ESFUERZO: MEDIO</span>
+</div>
+
+<div class="gap-section">
+  <div class="gap-title">5. "Aplicar sugerencia" en AI Evaluation</div>
+  <div class="gap-desc">El botón existe pero no hace nada más que un toast. Debería parsear la sugerencia de Claude y aplicar los cambios al OST.</div>
+  <span class="gap-effort">ESFUERZO: MEDIO</span>
+</div>
+
+<div class="gap-section">
+  <div class="gap-title">6. Contraste en modo claro</div>
+  <div class="gap-desc">Varios textos son invisibles o de muy bajo contraste en light mode. Fix en progreso.</div>
+  <span class="gap-effort">ESFUERZO: BAJO</span>
+</div>
+
+<div class="footer">
+  OST App Audit Report — Generated 2026-04-04<br>
+  Spec: TECHNICAL_SPEC_OST_APP_v2.0.md
+</div>
+
+</div>
+</body>
+</html>
