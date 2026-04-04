@@ -388,6 +388,7 @@ export function OSTTreeViewCanvas({
                         <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Solución</p>
                       </div>
                       <div className="flex items-center gap-1">
+                        <AssignAvatar itemId={h.id} type="hypothesis" members={members} assignedMap={assignedMap} onAssign={onAssign} />
                         {onToggleStar && (
                           <button onClick={() => onToggleStar(h.id)}
                             className={`flex-shrink-0 transition-colors ${starredIds?.has(h.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
@@ -469,9 +470,18 @@ export function OSTTreeViewCanvas({
                         <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
                         <p className="text-[8px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider">Experimento</p>
                       </div>
-                      {onDeleteExperiment && (
-                        <button onClick={() => setConfirmDeleteId(e.id)} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={9} /></button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <AssignAvatar itemId={e.id} type="experiment" members={members} assignedMap={assignedMap} onAssign={onAssign} />
+                        {onToggleStar && (
+                          <button onClick={(ev) => { ev.stopPropagation(); onToggleStar(e.id) }}
+                            className={`flex-shrink-0 transition-colors ${starredIds?.has(e.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
+                            <Star size={9} fill={starredIds?.has(e.id) ? 'currentColor' : 'none'} />
+                          </button>
+                        )}
+                        {onDeleteExperiment && (
+                          <button onClick={(ev) => { ev.stopPropagation(); setConfirmDeleteId(e.id) }} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={9} /></button>
+                        )}
+                      </div>
                     </div>
                     {editingId === e.id ? (
                       <div className="flex items-start gap-1">
