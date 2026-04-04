@@ -73,7 +73,7 @@ export function BusinessContextView({
   onSaveField,
 }: BusinessContextProps) {
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="dark min-h-screen bg-slate-950 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl">
 
         {/* ── Page header ──────────────────────────────────────────────────── */}

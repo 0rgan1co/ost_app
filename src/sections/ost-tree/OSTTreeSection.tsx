@@ -197,7 +197,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="dark flex flex-col h-full min-h-0 bg-slate-950">
 
       {/* ── Header bar ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800 flex-shrink-0">

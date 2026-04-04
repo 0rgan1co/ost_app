@@ -190,7 +190,7 @@ export function OpportunityDetailView({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="dark min-h-screen bg-slate-950 text-slate-100 font-sans">
       {/* ── Main content ── */}
       <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 sm:pb-32 space-y-4 sm:space-y-6">
 
