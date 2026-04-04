@@ -18,6 +18,7 @@ interface OSTTreeViewProps {
   onAddExperiment?: (hypothesisId: string) => void
   onRenameHypothesis?: (id: string, text: string) => void
   onRenameExperiment?: (id: string, text: string) => void
+  onEditOutcome?: (text: string) => void
 }
 
 const HYP_DOT: Record<string, string> = {
@@ -42,7 +43,7 @@ interface Line { x1: number; y1: number; x2: number; y2: number }
 export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
-  onRenameHypothesis, onRenameExperiment,
+  onRenameHypothesis, onRenameExperiment, onEditOutcome,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
@@ -129,9 +130,28 @@ export function OSTTreeViewCanvas({
 
         {/* Level 0: Outcome */}
         <div data-n="outcome"
-          className="bg-red-600 text-white rounded-2xl px-6 py-4 text-center max-w-lg shadow-lg shadow-red-900/30 cursor-default">
+          className="bg-red-600 text-white rounded-2xl px-6 py-4 text-center max-w-lg shadow-lg shadow-red-900/30 group/outcome">
           <p className="text-[9px] font-['IBM_Plex_Mono'] uppercase tracking-widest text-red-200 mb-1">Outcome</p>
-          <p className="font-[Nunito_Sans] font-bold text-sm leading-snug">{outcome || projectName}</p>
+          {editingId === '__outcome__' ? (
+            <div className="flex items-start gap-2">
+              <textarea autoFocus value={editText} onChange={e => setEditText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onEditOutcome?.(editText); setEditingId(null) }; if (e.key === 'Escape') setEditingId(null) }}
+                rows={2} className="w-full bg-red-700 border border-red-400/50 rounded px-2 py-1 text-sm text-white font-[Nunito_Sans] focus:outline-none resize-y min-h-[2rem] placeholder:text-red-300"
+                placeholder="¿Qué resultado querés lograr?" />
+              <button onClick={() => { onEditOutcome?.(editText); setEditingId(null) }}
+                className="text-red-200 hover:text-white flex-shrink-0 mt-1"><Check size={14} /></button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <p className="font-[Nunito_Sans] font-bold text-sm leading-snug">{outcome || projectName}</p>
+              {onEditOutcome && (
+                <button onClick={() => { setEditingId('__outcome__'); setEditText(outcome || '') }}
+                  className="opacity-0 group-hover/outcome:opacity-100 text-red-200 hover:text-white flex-shrink-0">
+                  <Pencil size={11} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* + Add Opportunity button under Outcome */}

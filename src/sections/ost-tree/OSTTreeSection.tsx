@@ -187,6 +187,23 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     navigate(`/opportunity/${id}`)
   }, [navigate])
 
+  // Edit outcome (saves to business context northStar)
+  const handleEditOutcome = useCallback(async (text: string) => {
+    if (!text.trim()) return
+    const { data: existing } = await supabase.from('business_context').select('id, content').eq('project_id', project.id).maybeSingle()
+    const now = new Date().toISOString()
+    let prev: any = {}
+    if (existing?.content) {
+      try { prev = typeof existing.content === 'string' ? JSON.parse(existing.content) : existing.content } catch {}
+    }
+    const content = JSON.stringify({ ...prev, northStar: { value: text.trim(), updatedAt: now } })
+    if (existing) {
+      await supabase.from('business_context').update({ content }).eq('id', existing.id)
+    } else {
+      await supabase.from('business_context').insert({ project_id: project.id, content })
+    }
+  }, [project.id])
+
   // Rename hypothesis
   const handleRenameHypothesis = useCallback(async (id: string, text: string) => {
     if (!text.trim()) return
@@ -326,6 +343,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onAddExperiment={handleQuickAddExperiment}
               onRenameHypothesis={handleRenameHypothesis}
               onRenameExperiment={handleRenameExperiment}
+              onEditOutcome={handleEditOutcome}
             />
           </div>
         )}
