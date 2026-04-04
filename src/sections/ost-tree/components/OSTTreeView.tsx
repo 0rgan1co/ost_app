@@ -189,18 +189,16 @@ export function OSTTreeViewCanvas({
                     )}
                   </div>
                 )}
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex gap-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
-                    <span>ev:{opp.evidenceCount}</span>
-                    <span>hip:{hyps.length}</span>
-                  </div>
-                  {onAddHypothesis && (
-                    <button onClick={e => { e.stopPropagation(); onAddHypothesis(opp.id) }}
-                      className="flex items-center gap-0.5 text-[9px] text-indigo-400 hover:text-indigo-300 font-['IBM_Plex_Mono'] transition-colors">
-                      <Plus size={10} /> Solución
-                    </button>
-                  )}
+                <div className="flex gap-2 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
+                  <span>ev:{opp.evidenceCount}</span>
+                  <span>hip:{hyps.length}</span>
                 </div>
+                {onAddHypothesis && (
+                  <button onClick={e => { e.stopPropagation(); onAddHypothesis(opp.id) }}
+                    className="w-full flex items-center justify-center gap-1 mt-2 py-1.5 rounded-lg border border-dashed border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 text-[10px] font-[Nunito_Sans] font-semibold transition-colors">
+                    <Plus size={10} /> Agregar solución
+                  </button>
+                )}
               </div>
             )
           })}
@@ -233,18 +231,16 @@ export function OSTTreeViewCanvas({
                       )}
                     </div>
                     <p className="font-[Nunito_Sans] text-xs text-slate-200 line-clamp-2 leading-snug">{h.title}</p>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <div className="flex items-center gap-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
-                        <span>{h.status}</span>
-                        {exps.length > 0 && <span>{exps.length} exp</span>}
-                      </div>
-                      {onAddExperiment && (
-                        <button onClick={() => onAddExperiment(h.id)}
-                          className="flex items-center gap-0.5 text-[9px] text-amber-400 hover:text-amber-300 font-['IBM_Plex_Mono'] transition-colors">
-                          <Plus size={9} /> Exp
-                        </button>
-                      )}
+                    <div className="flex items-center gap-2 mt-1.5 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
+                      <span>{h.status}</span>
+                      {exps.length > 0 && <span>{exps.length} exp</span>}
                     </div>
+                    {onAddExperiment && (
+                      <button onClick={() => onAddExperiment(h.id)}
+                        className="w-full flex items-center justify-center gap-1 mt-2 py-1 rounded-lg border border-dashed border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-[10px] font-[Nunito_Sans] font-semibold transition-colors">
+                        <Plus size={9} /> Agregar experimento
+                      </button>
+                    )}
                   </div>
                 )
               })}
