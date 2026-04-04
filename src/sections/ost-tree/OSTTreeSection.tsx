@@ -272,6 +272,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               experimentsSummary={experimentsSummary}
               selectedId={selectedId}
               onSelect={handleSelect}
+              onNavigateToDetail={handleNavigateToDetail}
             />
           </div>
         )}
