@@ -48,7 +48,14 @@ export function OSTTreeViewCanvas({
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
   const [expandedOpps, setExpandedOpps] = useState<Set<string>>(() => new Set(opportunities.filter(o => !o.isArchived).map(o => o.id)))
-  const [expandedHyps, setExpandedHyps] = useState<Set<string>>(new Set())
+  const [expandedHyps, setExpandedHyps] = useState<Set<string>>(() => {
+    // Auto-expand hypotheses that have experiments
+    const ids = new Set<string>()
+    Object.entries(experimentsSummary).forEach(([hypId, exps]) => {
+      if (exps.length > 0) ids.add(hypId)
+    })
+    return ids
+  })
   const [renderKey, setRenderKey] = useState(0)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -130,7 +137,8 @@ export function OSTTreeViewCanvas({
 
         {/* Level 0: Outcome */}
         <div data-n="outcome"
-          className="bg-red-600 text-white rounded-2xl px-6 py-4 text-center max-w-lg shadow-lg shadow-red-900/30 group/outcome">
+          className="bg-red-600 text-white rounded-2xl px-6 py-4 text-center max-w-lg shadow-lg shadow-red-900/30 cursor-pointer group/outcome"
+          onDoubleClick={() => { if (onEditOutcome) { setEditingId('__outcome__'); setEditText(outcome || '') } }}>
           <p className="text-[9px] font-['IBM_Plex_Mono'] uppercase tracking-widest text-red-200 mb-1">Outcome</p>
           {editingId === '__outcome__' ? (
             <div className="flex items-start gap-2">
@@ -146,7 +154,7 @@ export function OSTTreeViewCanvas({
               <p className="font-[Nunito_Sans] font-bold text-sm leading-snug">{outcome || projectName}</p>
               {onEditOutcome && (
                 <button onClick={() => { setEditingId('__outcome__'); setEditText(outcome || '') }}
-                  className="opacity-0 group-hover/outcome:opacity-100 text-red-200 hover:text-white flex-shrink-0">
+                  className="text-red-300 hover:text-white flex-shrink-0">
                   <Pencil size={11} />
                 </button>
               )}
