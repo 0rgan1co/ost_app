@@ -130,7 +130,7 @@ export function ExperimentCard({ experiment, onChangeStatus }: ExperimentCardPro
       </p>
 
       {/* Success criterion */}
-      <div className="bg-slate-900/60 border-l-2 border-red-500/50 rounded-r-lg pl-3 pr-3 py-2">
+      <div className="bg-slate-900/60 border-l-2 border-amber-500/50 rounded-r-lg pl-3 pr-3 py-2">
         <p className="text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-0.5">Criterio de éxito</p>
         <p className="text-sm text-slate-300 font-sans">{experiment.successCriterion}</p>
       </div>

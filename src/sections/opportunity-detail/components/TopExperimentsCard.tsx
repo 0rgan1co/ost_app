@@ -80,7 +80,7 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
                   </span>
                 </div>
                 {/* Score */}
-                <span className="flex-shrink-0 text-[13px] font-['IBM_Plex_Mono'] font-bold text-red-400">
+                <span className="flex-shrink-0 text-[13px] font-['IBM_Plex_Mono'] font-bold text-amber-400">
                   {top.priorityScore.toFixed(2)}
                 </span>
               </div>
@@ -91,7 +91,7 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
               </p>
 
               {/* Success criterion */}
-              <div className="bg-slate-900/60 border-l-2 border-red-500/40 rounded-r pl-3 py-1.5 mb-3">
+              <div className="bg-slate-900/60 border-l-2 border-amber-500/40 rounded-r pl-3 py-1.5 mb-3">
                 <p className="text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-0.5">Criterio de éxito</p>
                 <p className="text-xs text-slate-300 font-sans">{exp.successCriterion}</p>
               </div>

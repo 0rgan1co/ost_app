@@ -216,7 +216,7 @@ export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: E
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-slate-100 font-sans">Evidencia</h2>
+          <h2 className="text-base font-bold text-cyan-400 font-sans">Evidencia</h2>
           <span className="text-xs font-['IBM_Plex_Mono'] text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
             {evidence.length}
           </span>

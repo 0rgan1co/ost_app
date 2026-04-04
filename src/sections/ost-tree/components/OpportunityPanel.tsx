@@ -66,7 +66,7 @@ export function OpportunityPanel({
                       Descartada
                     </span>
                   ) : (
-                    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
+                    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">
                       Activa
                     </span>
                   )}
@@ -112,7 +112,7 @@ export function OpportunityPanel({
                   <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 uppercase tracking-wider mb-1">
                     Hipótesis activas
                   </p>
-                  <p className={`font-[IBM_Plex_Mono] text-xl font-bold ${opportunity.activeHypothesisCount > 0 ? 'text-red-400' : 'text-slate-200'}`}>
+                  <p className={`font-[IBM_Plex_Mono] text-xl font-bold ${opportunity.activeHypothesisCount > 0 ? 'text-orange-400' : 'text-slate-200'}`}>
                     {opportunity.activeHypothesisCount}
                     <span className="text-sm font-normal text-slate-400">/{opportunity.hypothesisCount}</span>
                   </p>

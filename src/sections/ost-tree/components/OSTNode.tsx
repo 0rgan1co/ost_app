@@ -24,7 +24,7 @@ export function OSTNode({
       Descartada
     </span>
   ) : (
-    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
+    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">
       Activa
     </span>
   )
@@ -40,7 +40,7 @@ export function OSTNode({
       {opportunity.hypothesisCount > 0 && (
         <span className="flex items-center gap-1">
           <span className="text-slate-400">hip</span>
-          <span className={opportunity.activeHypothesisCount > 0 ? 'text-red-400' : 'text-slate-400'}>
+          <span className={opportunity.activeHypothesisCount > 0 ? 'text-orange-400' : 'text-slate-400'}>
             {opportunity.activeHypothesisCount}/{opportunity.hypothesisCount}
           </span>
         </span>
@@ -90,7 +90,7 @@ export function OSTNode({
           ${isArchived
             ? 'bg-slate-900/50 border-slate-800/50 opacity-60'
             : isSelected
-              ? 'bg-slate-900 border-red-500/60 shadow-lg shadow-red-500/10'
+              ? 'bg-slate-900 border-orange-500/60 shadow-lg shadow-orange-500/10'
               : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-md hover:shadow-black/20'
           }
         `}
@@ -132,7 +132,7 @@ export function OSTNode({
       onClick={() => onSelect(opportunity.id)}
     >
       {/* Bullet */}
-      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500/60 flex-shrink-0" />
+      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500/60 flex-shrink-0" />
 
       {/* Content */}
       <div className="flex-1 min-w-0">

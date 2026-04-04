@@ -68,11 +68,11 @@ function ExperimentModal({
                   <Target size={10} /> {exp.projectName}
                 </span>
                 <ChevronRight size={10} className="text-slate-700" />
-                <span className="flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-1 rounded-lg font-[Nunito_Sans]">
+                <span className="flex items-center gap-1 bg-orange-500/10 text-orange-400 px-2 py-1 rounded-lg font-[Nunito_Sans]">
                   <Search size={10} /> {exp.opportunityName}
                 </span>
                 <ChevronRight size={10} className="text-slate-700" />
-                <span className="flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-1 rounded-lg font-[Nunito_Sans] max-w-[200px] truncate">
+                <span className="flex items-center gap-1 bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-lg font-[Nunito_Sans] max-w-[200px] truncate">
                   <Lightbulb size={10} /> {exp.hypothesisDescription}
                 </span>
                 <ChevronRight size={10} className="text-slate-700" />
@@ -94,13 +94,13 @@ function ExperimentModal({
               }`}>
                 {exp.status}
               </span>
-              <span className="text-[11px] font-['IBM_Plex_Mono'] text-red-400 font-bold">
+              <span className="text-[11px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">
                 Score: {exp.score.toFixed(1)}
               </span>
             </div>
 
             {/* Success criterion */}
-            <div className="bg-slate-900/60 border-l-2 border-red-500/50 rounded-r-lg pl-3 pr-3 py-2.5">
+            <div className="bg-slate-900/60 border-l-2 border-amber-500/50 rounded-r-lg pl-3 pr-3 py-2.5">
               <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 mb-1">Criterio de éxito</p>
               <p className="text-sm text-slate-200 font-[Nunito_Sans] leading-relaxed">{exp.successCriterion}</p>
             </div>
@@ -194,7 +194,7 @@ function KanbanCard({ exp, onClick }: { exp: KanbanExperiment; onClick: () => vo
         <span className="text-[9px] font-['IBM_Plex_Mono'] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
           {TYPE_LABEL[exp.type] ?? exp.type}
         </span>
-        <span className="text-[9px] font-['IBM_Plex_Mono'] text-red-400 font-bold">{exp.score.toFixed(1)}</span>
+        <span className="text-[9px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">{exp.score.toFixed(1)}</span>
       </div>
       {/* Traceability breadcrumb */}
       <p className="text-[9px] text-slate-600 font-[Nunito_Sans] mt-2 truncate">

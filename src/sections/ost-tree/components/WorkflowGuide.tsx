@@ -11,10 +11,10 @@ interface WorkflowGuideProps {
 }
 
 const STEPS = [
-  { icon: Target, label: 'Outcome', short: '1' },
-  { icon: Search, label: 'Oportunidades', short: '2' },
-  { icon: Lightbulb, label: 'Hipótesis', short: '3' },
-  { icon: FlaskConical, label: 'Experimentos', short: '4' },
+  { icon: Target, label: 'Outcome', short: '1', activeColor: 'bg-red-500/10 text-red-400 border border-red-500/30' },
+  { icon: Search, label: 'Oportunidades', short: '2', activeColor: 'bg-orange-500/10 text-orange-400 border border-orange-500/30' },
+  { icon: Lightbulb, label: 'Hipótesis', short: '3', activeColor: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' },
+  { icon: FlaskConical, label: 'Experimentos', short: '4', activeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/30' },
 ]
 
 export function WorkflowGuide({
@@ -49,7 +49,7 @@ export function WorkflowGuide({
                 ${done
                   ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                   : active
-                    ? 'bg-red-500/10 text-red-400 border border-red-500/30 animate-pulse'
+                    ? `${step.activeColor} animate-pulse`
                     : 'bg-slate-900 text-slate-500 border border-slate-800'
                 }
               `}

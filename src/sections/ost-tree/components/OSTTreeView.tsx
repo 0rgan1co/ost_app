@@ -93,7 +93,7 @@ export function OSTTreeViewCanvas({
               {/* Opportunity row */}
               <div className={`
                 flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-all group
-                ${isSelected ? 'bg-slate-800 border border-red-500/30' : 'hover:bg-slate-900'}
+                ${isSelected ? 'bg-slate-800 border border-orange-500/30' : 'hover:bg-slate-900'}
               `}>
                 {/* Expand toggle */}
                 <button
@@ -104,7 +104,7 @@ export function OSTTreeViewCanvas({
                     isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
                   ) : (
                     <span className="w-3.5 h-3.5 flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500/60" />
                     </span>
                   )}
                 </button>
@@ -114,7 +114,7 @@ export function OSTTreeViewCanvas({
                   onClick={() => onSelect(opp.id)}
                   className="flex-1 text-left min-w-0"
                 >
-                  <span className="font-[Nunito_Sans] text-sm font-semibold text-slate-100 group-hover:text-red-400 transition-colors">
+                  <span className="font-[Nunito_Sans] text-sm font-semibold text-slate-100 group-hover:text-orange-400 transition-colors">
                     {opp.title}
                   </span>
                 </button>

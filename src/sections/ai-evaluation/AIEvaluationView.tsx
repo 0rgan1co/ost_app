@@ -95,7 +95,7 @@ export function AIEvaluationView({
           <ChevronRight size={13} className="text-slate-700" />
           <span className="text-slate-500 max-w-[200px] truncate">{opportunity.title}</span>
           <ChevronRight size={13} className="text-slate-700" />
-          <span className="text-slate-300 font-medium">Evaluación IA</span>
+          <span className="text-violet-400 font-medium">Evaluación IA</span>
         </nav>
       </div>
 
@@ -108,7 +108,7 @@ export function AIEvaluationView({
 
             {/* Opportunity card */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-              <p className="text-[10px] font-['IBM_Plex_Mono'] text-red-400 uppercase tracking-wider mb-2">Oportunidad</p>
+              <p className="text-[10px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider mb-2">Oportunidad</p>
               <h3 className="font-[Nunito_Sans] font-bold text-slate-100 text-sm leading-snug mb-3">
                 {opportunity.title}
               </h3>
@@ -127,7 +127,7 @@ export function AIEvaluationView({
             {/* Hypotheses list */}
             {ostSummary && ostSummary.hypotheses.length > 0 && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <p className="text-[10px] font-['IBM_Plex_Mono'] text-blue-400 uppercase tracking-wider mb-3">Hipótesis</p>
+                <p className="text-[10px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider mb-3">Hipótesis</p>
                 <div className="space-y-2.5">
                   {ostSummary.hypotheses.map((h, i) => (
                     <div key={i} className="flex items-start gap-2">
@@ -164,7 +164,7 @@ export function AIEvaluationView({
                         <p className="text-xs text-slate-300 font-[Nunito_Sans] line-clamp-2">{e.description}</p>
                         <div className="flex gap-2 mt-1">
                           <span className="text-[9px] font-['IBM_Plex_Mono'] text-slate-500">{EXP_TYPE_LABEL[e.type] ?? e.type}</span>
-                          <span className="text-[9px] font-['IBM_Plex_Mono'] text-red-400 font-bold">{e.score.toFixed(1)}</span>
+                          <span className="text-[9px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">{e.score.toFixed(1)}</span>
                         </div>
                       </div>
                     </div>
@@ -181,7 +181,7 @@ export function AIEvaluationView({
           {/* Header + Evaluate button */}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-slate-100 font-[Nunito_Sans]">Evaluación IA</h1>
+              <h1 className="text-xl font-bold text-violet-400 font-[Nunito_Sans]">Evaluación IA</h1>
               <p className="text-xs text-slate-500 font-['IBM_Plex_Mono'] mt-0.5">
                 Claude claude-sonnet-4-6
               </p>
