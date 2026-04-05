@@ -56,7 +56,7 @@ function AssignAvatar({ itemId, type, members, assignedMap, onAssign }: {
   onAssign?: (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => void
 }) {
   const [open, setOpen] = useState(false)
-  if (!members || !onAssign) return null
+  if (!members?.length || !onAssign) return null
   const assignedId = assignedMap?.[itemId]
   const assigned = assignedId ? members.find(m => m.id === assignedId) : null
 
