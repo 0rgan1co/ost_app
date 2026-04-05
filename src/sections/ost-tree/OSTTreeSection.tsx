@@ -10,8 +10,72 @@ import { CreateOpportunityModal } from './components/CreateOpportunityModal'
 import { WorkflowGuide } from './components/WorkflowGuide'
 import { AgentGuide } from './components/AgentGuide'
 import { ExperimentSeedModal } from '../../components/ExperimentSeedModal'
+import { Target } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { Project } from '../../types'
+
+// ─── Outcome Editor ──────────────────────────────────────────────────────────
+
+function OutcomeEditor({ onSave }: { onSave: (text: string) => void }) {
+  const [text, setText] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+
+  if (!isEditing) {
+    return (
+      <button
+        onClick={() => setIsEditing(true)}
+        className="w-full bg-red-500/10 border-2 border-dashed border-red-500/30 rounded-2xl p-6 text-center hover:bg-red-500/15 hover:border-red-500/50 transition-all group"
+      >
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center">
+            <Target size={20} className="text-red-400" />
+          </div>
+          <p className="text-sm font-bold text-red-400 font-[Nunito_Sans]">
+            Define el Outcome esperado
+          </p>
+          <p className="text-xs text-slate-500 font-[Nunito_Sans] max-w-md">
+            El outcome es el resultado de negocio que quieres impactar. No es un feature ni un output.
+            Ejemplo: "Reducir churn en un 5%" o "Aumentar activacion de nuevos usuarios a 60%"
+          </p>
+        </div>
+      </button>
+    )
+  }
+
+  return (
+    <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5 space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Target size={16} className="text-red-400" />
+        <p className="text-xs font-bold text-red-400 font-['IBM_Plex_Mono'] uppercase tracking-wider">
+          Outcome
+        </p>
+      </div>
+      <textarea
+        autoFocus
+        value={text}
+        onChange={e => setText(e.target.value)}
+        placeholder="Ej: Reducir churn en un 5% en los proximos 6 meses"
+        rows={2}
+        className="w-full bg-slate-900 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 font-[Nunito_Sans] focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 resize-none"
+      />
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setIsEditing(false)}
+          className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 font-[Nunito_Sans] transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={() => { if (text.trim()) { onSave(text.trim()); setIsEditing(false) } }}
+          disabled={!text.trim()}
+          className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl font-[Nunito_Sans] transition-colors"
+        >
+          Guardar Outcome
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -434,6 +498,13 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
                 if (activeOpps[0]) navigate(`/opportunity/${activeOpps[0].id}`)
               }}
             />
+          </div>
+        )}
+
+        {/* Outcome editor — shows prominently when no outcome is defined */}
+        {!loading && !error && !bizContext.northStar.value && (
+          <div className="px-6 pt-2 pb-4">
+            <OutcomeEditor onSave={handleEditOutcome} />
           </div>
         )}
         {loading ? (
