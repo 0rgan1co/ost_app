@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useRealtimeProject } from './use-realtime-project'
 import type {
   OpportunityDetail,
   Evidence,
@@ -303,6 +304,11 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
   useEffect(() => {
     fetchAll()
   }, [fetchAll])
+
+  useRealtimeProject({
+    projectId: project?.id,
+    onEvent: fetchAll,
+  })
 
   // ─── CRUD ─────────────────────────────────────────────────────────────────
 

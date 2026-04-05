@@ -18,6 +18,7 @@ import type {
   EffortImpact,
 } from '../../../types'
 import { ExperimentCard } from './ExperimentCard'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
 // ─── Category config ─────────────────────────────────────────────────────────
 
@@ -293,6 +294,7 @@ export function AssumptionCard({
   const [expanded, setExpanded] = useState(false)
   const [showExperimentForm, setShowExperimentForm] = useState(false)
   const [pendingStatus, setPendingStatus] = useState<'validado' | 'invalidado' | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const categoryCfg = CATEGORY_CONFIG[assumption.category]
   const statusCfg = STATUS_CONFIG[assumption.status]
@@ -381,7 +383,7 @@ export function AssumptionCard({
           {/* Delete */}
           {onDelete && (
             <button
-              onClick={() => onDelete(assumption.id)}
+              onClick={() => setShowDeleteConfirm(true)}
               title="Eliminar supuesto"
               className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
             >
@@ -458,6 +460,20 @@ export function AssumptionCard({
           )}
         </div>
       )}
+
+      {/* Confirm delete dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Eliminar supuesto"
+        message="Se eliminarán también todos los experimentos asociados. ¿Continuar?"
+        variant="danger"
+        confirmLabel="Eliminar"
+        onConfirm={() => {
+          onDelete?.(assumption.id)
+          setShowDeleteConfirm(false)
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }

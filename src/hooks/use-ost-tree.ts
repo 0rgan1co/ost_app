@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useRealtimeProject } from './use-realtime-project'
 import type { Opportunity, OSTTreeEvidence, SolutionSummary } from '../types'
 
 export interface ExperimentSummary {
@@ -247,6 +248,8 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useRealtimeProject({ projectId, onEvent: fetchData })
 
   const createOpportunity = useCallback(async (data: {
     name: string

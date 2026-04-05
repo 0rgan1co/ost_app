@@ -81,6 +81,9 @@ export interface ProjectsProps {
   /** Create a new project with name and optional description. Returns project ID on success. */
   onCreateProject: (data: { name: string; description: string }) => Promise<string | false> | void
 
+  /** Rename a project (admin only) */
+  onRenameProject?: (projectId: string, name: string) => void
+
   /** Delete a project (admin only) */
   onDeleteProject: (projectId: string) => void
 
@@ -295,7 +298,8 @@ export interface AIEvaluationProps {
   isSendingMessage?: boolean
   onEvaluate?: (opportunityId: string) => void
   onSendMessage?: (message: string) => void
-  onApplySuggestion?: (messageId: string) => void
+  onApplySuggestion?: (messageId: string) => import('../lib/parse-suggestion').SuggestionAction[]
+  onExecuteActions?: (actions: import('../lib/parse-suggestion').SuggestionAction[]) => Promise<number>
   onNavigateBack?: () => void
 }
 

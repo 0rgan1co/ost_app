@@ -158,6 +158,15 @@ export function useProjects(currentUserId: string) {
     return project.id
   }
 
+  async function renameProject(projectId: string, name: string) {
+    const { error } = await supabase.from('projects').update({ name }).eq('id', projectId)
+    if (error) {
+      console.error('Error renaming project:', error)
+      return
+    }
+    await fetchProjects()
+  }
+
   async function deleteProject(projectId: string) {
     // Delete members first, then project
     await supabase.from('project_members').delete().eq('project_id', projectId)
@@ -296,6 +305,7 @@ export function useProjects(currentUserId: string) {
     availableUsers,
     inviteState,
     createProject,
+    renameProject,
     deleteProject,
     toggleVisibility,
     addMember,

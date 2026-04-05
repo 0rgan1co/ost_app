@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { GitBranch, Users, Clock, ChevronRight, Trash2, Globe, Lock } from 'lucide-react'
+import { GitBranch, Users, Clock, ChevronRight, Trash2, Globe, Lock, Pencil, Check, X } from 'lucide-react'
 import type { Project, ProjectRole } from '../../../types'
 
 interface ProjectCardProps {
@@ -8,6 +8,7 @@ interface ProjectCardProps {
   onOpenMembers: () => void
   onDelete: () => void
   onToggleVisibility: (isPublic: boolean) => void
+  onRename?: (name: string) => void
 }
 
 const roleConfig: Record<ProjectRole, { label: string; className: string; borderClass: string }> = {
@@ -26,9 +27,12 @@ function formatRelativeTime(isoDate: string): string {
   return `hace ${days}d`
 }
 
-function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'xs' }) {
-  const initials = name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+function Avatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: string | null; size?: 'sm' | 'xs' }) {
   const sizeClass = size === 'xs' ? 'w-6 h-6 text-[9px]' : 'w-7 h-7 text-[10px]'
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={name} className={`${sizeClass} rounded-full object-cover ring-2 ring-white dark:ring-slate-900 flex-shrink-0`} />
+  }
+  const initials = name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
   const colors = ['bg-red-500', 'bg-slate-500', 'bg-rose-500', 'bg-slate-600', 'bg-red-600']
   const colorIdx = name.charCodeAt(0) % colors.length
   return (
@@ -38,13 +42,22 @@ function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'xs' }) {
   )
 }
 
-export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onToggleVisibility }: ProjectCardProps) {
+export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onToggleVisibility, onRename }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState(project.name)
   const role = roleConfig[project.currentUserRole]
   const isAdmin = project.currentUserRole === 'admin'
   const visibleMembers = project.members.slice(0, 4)
   const extraCount = project.members.length - visibleMembers.length
+
+  const handleSaveRename = () => {
+    if (editName.trim() && editName.trim() !== project.name) {
+      onRename?.(editName.trim())
+    }
+    setEditing(false)
+  }
 
   return (
     <div
@@ -92,9 +105,35 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
       >
         {/* Top row: name + badges */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-bold text-slate-900 dark:text-slate-50 text-[15px] leading-snug font-sans group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors pr-2">
-            {project.name}
-          </h3>
+          {editing ? (
+            <div className="flex items-center gap-1 flex-1 pr-2" onClick={e => e.stopPropagation()}>
+              <input
+                type="text"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveRename(); if (e.key === 'Escape') setEditing(false) }}
+                autoFocus
+                className="flex-1 px-2 py-0.5 text-[15px] font-bold bg-slate-50 dark:bg-slate-800 border border-red-400 rounded text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+              />
+              <button onClick={handleSaveRename} className="text-green-500 hover:text-green-400"><Check size={14} /></button>
+              <button onClick={() => { setEditing(false); setEditName(project.name) }} className="text-slate-400 hover:text-slate-300"><X size={14} /></button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 pr-2 group/name">
+              <h3 className="font-bold text-slate-900 dark:text-slate-50 text-[15px] leading-snug font-sans group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                {project.name}
+              </h3>
+              {isAdmin && onRename && (
+                <button
+                  onClick={e => { e.stopPropagation(); setEditing(true); setEditName(project.name) }}
+                  className="opacity-0 group-hover/name:opacity-100 text-slate-400 hover:text-red-400 transition-all"
+                  title="Renombrar proyecto"
+                >
+                  <Pencil size={12} />
+                </button>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Visibility badge */}
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full font-['IBM_Plex_Mono'] ${
@@ -146,7 +185,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
         >
           <div className="flex -space-x-1.5">
             {visibleMembers.map(member => (
-              <Avatar key={member.id} name={member.name} size="xs" />
+              <Avatar key={member.id} name={member.name} avatarUrl={member.avatarUrl} size="xs" />
             ))}
           </div>
           {extraCount > 0 && (
