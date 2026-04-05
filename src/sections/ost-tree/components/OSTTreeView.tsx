@@ -350,7 +350,7 @@ export function OSTTreeViewCanvas({
                 {onAddHypothesis && (
                   <button onClick={e => { e.stopPropagation(); onAddHypothesis(opp.id) }}
                     className="w-full flex items-center justify-center gap-1 mt-2 py-1.5 rounded-lg border border-dashed border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 text-[10px] font-[Nunito_Sans] font-semibold transition-colors">
-                    <Plus size={10} /> Agregar hipótesis
+                    <Plus size={10} /> Agregar solución
                   </button>
                 )}
               </div>
@@ -385,7 +385,7 @@ export function OSTTreeViewCanvas({
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full ${dot}`} />
-                        <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Hipótesis</p>
+                        <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Solución</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <AssignAvatar itemId={h.id} type="hypothesis" members={members} assignedMap={assignedMap} onAssign={onAssign} />
