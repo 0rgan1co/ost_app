@@ -8,7 +8,8 @@ export interface SidebarExperiment {
   effort: string
   impact: string
   score: number
-  hypothesisDescription: string
+  assumptionDescription: string
+  solutionName: string
   opportunityName: string
   opportunityId: string
 }
@@ -44,26 +45,41 @@ export function useTopExperiments(projectId: string | undefined) {
       const oppIds = opps.map(o => o.id)
       const oppMap = new Map(opps.map(o => [o.id, o.name]))
 
-      // Get hypotheses for those opportunities
-      const { data: hyps } = await supabase
-        .from('hypotheses')
-        .select('id, opportunity_id, description')
+      // Get solutions for those opportunities
+      const { data: sols } = await supabase
+        .from('solutions')
+        .select('id, opportunity_id, name')
         .in('opportunity_id', oppIds)
 
-      if (!hyps?.length) {
+      if (!sols?.length) {
         setExperiments([])
         setLoading(false)
         return
       }
 
-      const hypIds = hyps.map(h => h.id)
-      const hypMap = new Map(hyps.map(h => [h.id, h]))
+      const solIds = sols.map(s => s.id)
+      const solMap = new Map(sols.map(s => [s.id, s]))
+
+      // Get assumptions for those solutions
+      const { data: assumptions } = await supabase
+        .from('assumptions')
+        .select('id, solution_id, description')
+        .in('solution_id', solIds)
+
+      if (!assumptions?.length) {
+        setExperiments([])
+        setLoading(false)
+        return
+      }
+
+      const assIds = assumptions.map(a => a.id)
+      const assMap = new Map(assumptions.map(a => [a.id, a]))
 
       // Get all non-finished experiments
       const { data: exps } = await supabase
         .from('experiments')
         .select('*')
-        .in('hypothesis_id', hypIds)
+        .in('assumption_id', assIds)
         .neq('status', 'terminada')
 
       if (!exps?.length) {
@@ -75,8 +91,9 @@ export function useTopExperiments(projectId: string | undefined) {
       // Score and sort
       const scored: SidebarExperiment[] = exps
         .map(e => {
-          const hyp = hypMap.get(e.hypothesis_id)
-          const oppName = hyp ? (oppMap.get(hyp.opportunity_id) ?? '') : ''
+          const assumption = assMap.get(e.assumption_id)
+          const solution = assumption ? solMap.get(assumption.solution_id) : null
+          const oppName = solution ? (oppMap.get(solution.opportunity_id) ?? '') : ''
           return {
             id: e.id,
             description: e.description,
@@ -84,9 +101,10 @@ export function useTopExperiments(projectId: string | undefined) {
             effort: e.effort,
             impact: e.impact,
             score: (SCORE[e.impact] ?? 1) / (SCORE[e.effort] ?? 1),
-            hypothesisDescription: hyp?.description ?? '',
+            assumptionDescription: assumption?.description ?? '',
+            solutionName: solution?.name ?? '',
             opportunityName: oppName,
-            opportunityId: hyp?.opportunity_id ?? '',
+            opportunityId: solution?.opportunity_id ?? '',
           }
         })
         .sort((a, b) => b.score - a.score)

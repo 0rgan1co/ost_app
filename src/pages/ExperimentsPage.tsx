@@ -82,7 +82,7 @@ function ExperimentModal({
 Contexto:
 - Proyecto: ${exp.projectName}
 - Oportunidad: ${exp.opportunityName}
-- Hipótesis: ${exp.hypothesisDescription}
+- Supuesto: ${exp.assumptionDescription}
 - Experimento: ${exp.description}
 - Tipo: ${exp.type}
 
@@ -152,7 +152,7 @@ Respondé en JSON exacto (sin texto adicional):
                 <ChevronRight size={8} />
                 <span className="text-orange-400 truncate max-w-[120px]">{exp.opportunityName}</span>
                 <ChevronRight size={8} />
-                <span className="text-indigo-400 truncate max-w-[120px]">{exp.hypothesisDescription}</span>
+                <span className="text-indigo-400 truncate max-w-[120px]">{exp.assumptionDescription}</span>
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 flex-shrink-0 ml-3">
@@ -187,9 +187,9 @@ Respondé en JSON exacto (sin texto adicional):
                   placeholder="El propósito de este experimento..." rows={3} className={fieldClass} />
               </div>
 
-              {/* 2. Hipótesis */}
+              {/* 2. Criterio de éxito */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-['IBM_Plex_Mono'] text-indigo-400 font-bold uppercase tracking-wider">Hipótesis</label>
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-indigo-400 font-bold uppercase tracking-wider">Criterio de éxito</label>
                 <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">Creemos que si [acción], obtendremos [consecuencia]</p>
                 <textarea value={criterion} onChange={e => setCriterion(e.target.value)}
                   onBlur={() => saveField('successCriterion', criterion)}
@@ -352,7 +352,7 @@ export function ExperimentsPage() {
           <div className="text-center py-16">
             <FlaskConical size={28} className="mx-auto mb-3 text-slate-700" />
             <p className="text-sm text-slate-400 font-[Nunito_Sans]">Sin experimentos aún</p>
-            <p className="text-xs text-slate-500 font-[Nunito_Sans] mt-1">Creá hipótesis y experimentos desde el detalle de una oportunidad</p>
+            <p className="text-xs text-slate-500 font-[Nunito_Sans] mt-1">Creá soluciones y experimentos desde el detalle de una oportunidad</p>
           </div>
         ) : (
           /* Kanban columns */

@@ -23,7 +23,7 @@ function useToast() {
 
 interface OSTSummary {
   evidenceCount: number
-  hypotheses: { description: string; status: string; experimentCount: number }[]
+  solutions: { name: string; assumptionCount: number; experimentCount: number }[]
   topExperiments: { description: string; type: string; score: number }[]
 }
 
@@ -35,11 +35,7 @@ interface ExtendedAIEvaluationProps extends AIEvaluationProps {
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
 
-const HYP_STATUS_STYLE: Record<string, string> = {
-  'to do': 'text-slate-400 bg-slate-800',
-  'en curso': 'text-blue-400 bg-blue-500/10',
-  'terminada': 'text-green-400 bg-green-500/10',
-}
+const SOL_BADGE_STYLE = 'text-indigo-400 bg-indigo-500/10'
 
 const EXP_TYPE_LABEL: Record<string, string> = {
   entrevista: 'Entrevista',
@@ -119,27 +115,27 @@ export function AIEvaluationView({
                 </span>
                 <span className="flex items-center gap-1">
                   <Lightbulb size={11} />
-                  {ostSummary?.hypotheses.length ?? 0} hipótesis
+                  {ostSummary?.solutions.length ?? 0} soluciones
                 </span>
               </div>
             </div>
 
-            {/* Hypotheses list */}
-            {ostSummary && ostSummary.hypotheses.length > 0 && (
+            {/* Solutions list */}
+            {ostSummary && ostSummary.solutions.length > 0 && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <p className="text-[10px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider mb-3">Soluciones (Hipótesis)</p>
+                <p className="text-[10px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider mb-3">Soluciones</p>
                 <div className="space-y-2.5">
-                  {ostSummary.hypotheses.map((h, i) => (
+                  {ostSummary.solutions.map((s, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <span className={`text-[9px] font-['IBM_Plex_Mono'] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${HYP_STATUS_STYLE[h.status] ?? HYP_STATUS_STYLE['to do']}`}>
-                        {h.status}
+                      <span className={`text-[9px] font-['IBM_Plex_Mono'] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${SOL_BADGE_STYLE}`}>
+                        {s.assumptionCount} sup
                       </span>
                       <div>
-                        <p className="text-xs text-slate-300 font-[Nunito_Sans] leading-snug line-clamp-2">{h.description}</p>
-                        {h.experimentCount > 0 && (
+                        <p className="text-xs text-slate-300 font-[Nunito_Sans] leading-snug line-clamp-2">{s.name}</p>
+                        {s.experimentCount > 0 && (
                           <p className="text-[10px] text-slate-500 font-['IBM_Plex_Mono'] mt-1">
                             <FlaskConical size={9} className="inline mr-1" />
-                            {h.experimentCount} exp
+                            {s.experimentCount} exp
                           </p>
                         )}
                       </div>

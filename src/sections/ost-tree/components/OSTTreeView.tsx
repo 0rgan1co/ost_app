@@ -1,39 +1,33 @@
 import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react'
 import { ChevronDown, ChevronRight, Pencil, Check, Plus, Star, Trash2 } from 'lucide-react'
-import type { Opportunity, HypothesisSummary } from '../../../types'
+import type { Opportunity, SolutionSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
 
 interface OSTTreeViewProps {
   projectName: string
   outcome: string
   opportunities: Opportunity[]
-  hypothesesSummary: Record<string, HypothesisSummary[]>
+  solutionsSummary: Record<string, SolutionSummary[]>
   experimentsSummary: Record<string, ExperimentSummary[]>
   selectedId: string | null
   onSelect: (id: string) => void
   onNavigateToDetail?: (id: string) => void
   onRenameOpportunity?: (id: string, name: string) => void
   onAddOpportunity?: () => void
-  onAddHypothesis?: (opportunityId: string) => void
-  onAddExperiment?: (hypothesisId: string) => void
-  onRenameHypothesis?: (id: string, text: string) => void
+  onAddSolution?: (opportunityId: string) => void
+  onAddExperiment?: (assumptionId: string) => void
+  onRenameSolution?: (id: string, text: string) => void
   onRenameExperiment?: (id: string, text: string) => void
   onEditOutcome?: (text: string) => void
   starredIds?: Set<string>
   onToggleStar?: (id: string) => void
   onDeleteOpportunity?: (id: string) => void
-  onDeleteHypothesis?: (id: string) => void
+  onDeleteSolution?: (id: string) => void
   onDeleteExperiment?: (id: string) => void
   onOpenExperiment?: (experimentId: string) => void
   members?: { id: string; name: string; avatarUrl: string | null }[]
   assignedMap?: Record<string, string | null>
-  onAssign?: (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => void
-}
-
-const HYP_DOT: Record<string, string> = {
-  'to do': 'bg-slate-500',
-  'en curso': 'bg-blue-400',
-  'terminada': 'bg-green-400',
+  onAssign?: (type: 'opportunity' | 'solution' | 'experiment', id: string, userId: string | null) => void
 }
 
 const EXP_DOT: Record<string, string> = {
@@ -50,10 +44,10 @@ const EXP_TYPE: Record<string, string> = {
 interface Line { x1: number; y1: number; x2: number; y2: number }
 
 function AssignAvatar({ itemId, type, members, assignedMap, onAssign }: {
-  itemId: string; type: 'opportunity' | 'hypothesis' | 'experiment'
+  itemId: string; type: 'opportunity' | 'solution' | 'experiment'
   members?: { id: string; name: string; avatarUrl: string | null }[]
   assignedMap?: Record<string, string | null>
-  onAssign?: (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => void
+  onAssign?: (type: 'opportunity' | 'solution' | 'experiment', id: string, userId: string | null) => void
 }) {
   const [open, setOpen] = useState(false)
   if (!members?.length || !onAssign) return null
@@ -105,25 +99,25 @@ function AssignAvatar({ itemId, type, members, assignedMap, onAssign }: {
 }
 
 export function OSTTreeViewCanvas({
-  projectName, outcome, opportunities, hypothesesSummary, experimentsSummary,
-  selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddHypothesis, onAddExperiment,
-  onRenameHypothesis, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
-  onDeleteOpportunity, onDeleteHypothesis, onDeleteExperiment, onOpenExperiment,
+  projectName, outcome, opportunities, solutionsSummary, experimentsSummary,
+  selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddSolution, onAddExperiment,
+  onRenameSolution, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
+  onDeleteOpportunity, onDeleteSolution, onDeleteExperiment, onOpenExperiment,
   members, assignedMap, onAssign,
 }: OSTTreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [lines, setLines] = useState<Line[]>([])
   const [expandedOpps, setExpandedOpps] = useState<Set<string>>(() => new Set(opportunities.filter(o => !o.isArchived).map(o => o.id)))
-  const [expandedHyps, setExpandedHyps] = useState<Set<string>>(new Set())
+  const [expandedSols, setExpandedSols] = useState<Set<string>>(new Set())
 
-  // Auto-expand hypotheses that have experiments whenever data changes
+  // Auto-expand solutions that have experiments whenever data changes
   useEffect(() => {
     const ids = new Set<string>()
-    Object.entries(experimentsSummary).forEach(([hypId, exps]) => {
-      if (exps.length > 0) ids.add(hypId)
+    Object.values(solutionsSummary).flat().forEach(sol => {
+      if (sol.experimentCount > 0) ids.add(sol.id)
     })
-    if (ids.size > 0) setExpandedHyps(prev => new Set([...prev, ...ids]))
-  }, [experimentsSummary])
+    if (ids.size > 0) setExpandedSols(prev => new Set([...prev, ...ids]))
+  }, [solutionsSummary])
   const [renderKey, setRenderKey] = useState(0)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
@@ -156,8 +150,8 @@ export function OSTTreeViewCanvas({
     setExpandedOpps(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
     setRenderKey(k => k + 1)
   }
-  const toggleHyp = (id: string) => {
-    setExpandedHyps(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleSol = (id: string) => {
+    setExpandedSols(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
     setRenderKey(k => k + 1)
   }
 
@@ -187,22 +181,22 @@ export function OSTTreeViewCanvas({
     // Outcome → Opportunities
     connect('[data-n="outcome"]', '[data-n="opp"]')
 
-    // Each opp → its hypotheses
+    // Each opp → its solutions
     const oppEls = c.querySelectorAll('[data-n="opp"]')
     oppEls.forEach(el => {
       const id = el.getAttribute('data-id')
-      connect(`[data-n="opp"][data-id="${id}"]`, `[data-n="hyp"][data-parent="${id}"]`)
+      connect(`[data-n="opp"][data-id="${id}"]`, `[data-n="sol"][data-parent="${id}"]`)
     })
 
-    // Each hyp → its experiments
-    const hypEls = c.querySelectorAll('[data-n="hyp"]')
-    hypEls.forEach(el => {
+    // Each sol → its experiments
+    const solEls = c.querySelectorAll('[data-n="sol"]')
+    solEls.forEach(el => {
       const id = el.getAttribute('data-id')
-      connect(`[data-n="hyp"][data-id="${id}"]`, `[data-n="exp"][data-parent="${id}"]`)
+      connect(`[data-n="sol"][data-id="${id}"]`, `[data-n="exp"][data-parent="${id}"]`)
     })
 
     setLines(newLines)
-  }, [expandedOpps, expandedHyps, opportunities, hypothesesSummary, experimentsSummary, renderKey])
+  }, [expandedOpps, expandedSols, opportunities, solutionsSummary, experimentsSummary, renderKey])
 
   const activeOpps = opportunities.filter(o => !o.isArchived)
 
@@ -271,15 +265,17 @@ export function OSTTreeViewCanvas({
         {/* Level 1: Opportunities */}
         <div className="flex gap-5 flex-wrap justify-center">
           {activeOpps.map(opp => {
-            const hyps = hypothesesSummary[opp.id] ?? []
+            const sols = solutionsSummary[opp.id] ?? []
             const isExp = expandedOpps.has(opp.id)
             return (
               <div key={opp.id} data-n="opp" data-id={opp.id}
                 onClick={() => onSelect(opp.id)}
                 className={`relative cursor-pointer rounded-xl border px-4 py-3 w-52 transition-all hover:shadow-md ${
-                  selectedId === opp.id
-                    ? 'bg-slate-800 border-orange-500/50 shadow-orange-500/10'
-                    : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                  opp.isTarget
+                    ? 'bg-slate-800 border-amber-500/60 shadow-amber-500/20 ring-1 ring-amber-500/30'
+                    : selectedId === opp.id
+                      ? 'bg-slate-800 border-orange-500/50 shadow-orange-500/10'
+                      : 'bg-slate-900 border-slate-800 hover:border-slate-700'
                 }`}>
                 {/* Delete confirmation overlay */}
                 {confirmDeleteId === opp.id && (
@@ -292,7 +288,10 @@ export function OSTTreeViewCanvas({
                   </div>
                 )}
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-[9px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider">Oportunidad</p>
+                  <div className="flex items-center gap-1">
+                    {opp.isTarget && <span className="text-amber-400" title="Target">{'⭐'}</span>}
+                    <p className="text-[9px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider">Oportunidad</p>
+                  </div>
                   <div className="flex items-center gap-1">
                     <AssignAvatar itemId={opp.id} type="opportunity" members={members} assignedMap={assignedMap} onAssign={onAssign} />
                     {onToggleStar && (
@@ -307,7 +306,7 @@ export function OSTTreeViewCanvas({
                         <Trash2 size={11} />
                       </button>
                     )}
-                    {hyps.length > 0 && (
+                    {sols.length > 0 && (
                       <button onClick={e => { e.stopPropagation(); toggleOpp(opp.id) }}
                         className="text-slate-500 hover:text-slate-300">
                         {isExp ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -345,10 +344,15 @@ export function OSTTreeViewCanvas({
                 )}
                 <div className="flex gap-2 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
                   <span>ev:{opp.evidenceCount}</span>
-                  <span>hip:{hyps.length}</span>
+                  <span>sol:{sols.length}</span>
                 </div>
-                {onAddHypothesis && (
-                  <button onClick={e => { e.stopPropagation(); onAddHypothesis(opp.id) }}
+                {sols.length < 3 ? (
+                  <p className="text-[9px] text-amber-400 font-[Nunito_Sans] mt-1">{'💡'} Idea al menos 3 soluciones</p>
+                ) : (
+                  <p className="text-[9px] text-green-400 font-['IBM_Plex_Mono'] mt-1">{'✓'} 3+ soluciones</p>
+                )}
+                {onAddSolution && (
+                  <button onClick={e => { e.stopPropagation(); onAddSolution(opp.id) }}
                     className="w-full flex items-center justify-center gap-1 mt-2 py-1.5 rounded-lg border border-dashed border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 text-[10px] font-[Nunito_Sans] font-semibold transition-colors">
                     <Plus size={10} /> Agregar solución
                   </button>
@@ -358,76 +362,74 @@ export function OSTTreeViewCanvas({
           })}
         </div>
 
-        {/* Level 2: Hypotheses */}
+        {/* Level 2: Solutions */}
         {(() => {
-          const visibleHyps = activeOpps
+          const visibleSols = activeOpps
             .filter(o => expandedOpps.has(o.id))
-            .flatMap(o => (hypothesesSummary[o.id] ?? []).map(h => ({ ...h, oppId: o.id })))
-          if (visibleHyps.length === 0) return null
+            .flatMap(o => (solutionsSummary[o.id] ?? []).map(s => ({ ...s, oppId: o.id })))
+          if (visibleSols.length === 0) return null
           return (
             <div className="flex gap-4 flex-wrap justify-center">
-              {visibleHyps.map(h => {
-                const exps = experimentsSummary[h.id] ?? []
-                const isExp = expandedHyps.has(h.id)
-                const dot = HYP_DOT[h.status] ?? HYP_DOT['to do']
+              {visibleSols.map(s => {
+                const isExp = expandedSols.has(s.id)
                 return (
-                  <div key={h.id} data-n="hyp" data-id={h.id} data-parent={h.oppId}
+                  <div key={s.id} data-n="sol" data-id={s.id} data-parent={s.oppId}
                     className="relative bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 w-48 hover:border-indigo-500/30 transition-all">
-                    {confirmDeleteId === h.id && (
+                    {confirmDeleteId === s.id && (
                       <div className="absolute inset-0 bg-slate-950/95 rounded-xl z-10 flex flex-col items-center justify-center gap-2 p-3">
                         <p className="text-[10px] text-slate-300 font-[Nunito_Sans] text-center">¿Eliminar esta solución?</p>
                         <div className="flex gap-2">
                           <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-1 text-[10px] text-slate-400 rounded-lg">Cancelar</button>
-                          <button onClick={() => { onDeleteHypothesis?.(h.id); setConfirmDeleteId(null) }} className="px-2 py-1 text-[10px] bg-red-600 text-white rounded-lg font-semibold">Eliminar</button>
+                          <button onClick={() => { onDeleteSolution?.(s.id); setConfirmDeleteId(null) }} className="px-2 py-1 text-[10px] bg-red-600 text-white rounded-lg font-semibold">Eliminar</button>
                         </div>
                       </div>
                     )}
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full ${dot}`} />
+                        <span className="w-2 h-2 rounded-full bg-indigo-400" />
                         <p className="text-[9px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider">Solución</p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <AssignAvatar itemId={h.id} type="hypothesis" members={members} assignedMap={assignedMap} onAssign={onAssign} />
+                        <AssignAvatar itemId={s.id} type="solution" members={members} assignedMap={assignedMap} onAssign={onAssign} />
                         {onToggleStar && (
-                          <button onClick={() => onToggleStar(h.id)}
-                            className={`flex-shrink-0 transition-colors ${starredIds?.has(h.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
-                            <Star size={10} fill={starredIds?.has(h.id) ? 'currentColor' : 'none'} />
+                          <button onClick={() => onToggleStar(s.id)}
+                            className={`flex-shrink-0 transition-colors ${starredIds?.has(s.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
+                            <Star size={10} fill={starredIds?.has(s.id) ? 'currentColor' : 'none'} />
                           </button>
                         )}
-                        {onDeleteHypothesis && (
-                          <button onClick={() => setConfirmDeleteId(h.id)} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>
+                        {onDeleteSolution && (
+                          <button onClick={() => setConfirmDeleteId(s.id)} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>
                         )}
-                        {exps.length > 0 && (
-                          <button onClick={() => toggleHyp(h.id)} className="text-slate-500 hover:text-slate-300">
+                        {s.experimentCount > 0 && (
+                          <button onClick={() => toggleSol(s.id)} className="text-slate-500 hover:text-slate-300">
                             {isExp ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                           </button>
                         )}
                       </div>
                     </div>
-                    {editingId === h.id ? (
+                    {editingId === s.id ? (
                       <div className="flex items-start gap-1">
                         <textarea autoFocus value={editText} onChange={e => setEditText(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRenameHypothesis?.(h.id, editText); setEditingId(null) }; if (e.key === 'Escape') setEditingId(null) }}
+                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRenameSolution?.(s.id, editText); setEditingId(null) }; if (e.key === 'Escape') setEditingId(null) }}
                           rows={2} className="w-full bg-slate-800 border border-indigo-500/50 rounded px-2 py-1 text-xs text-slate-100 font-[Nunito_Sans] focus:outline-none resize-y min-h-[1.5rem]" />
-                        <button onClick={() => { onRenameHypothesis?.(h.id, editText); setEditingId(null) }}
+                        <button onClick={() => { onRenameSolution?.(s.id, editText); setEditingId(null) }}
                           className="text-green-400 hover:text-green-300 flex-shrink-0 mt-0.5"><Check size={12} /></button>
                       </div>
                     ) : (
                       <div className="flex items-start gap-1 group/htitle">
-                        <p className="font-[Nunito_Sans] text-xs text-slate-200 line-clamp-2 leading-snug flex-1">{h.title}</p>
-                        {onRenameHypothesis && (
-                          <button onClick={() => { setEditingId(h.id); setEditText(h.title) }}
+                        <p className="font-[Nunito_Sans] text-xs text-slate-200 line-clamp-2 leading-snug flex-1">{s.name}</p>
+                        {onRenameSolution && (
+                          <button onClick={() => { setEditingId(s.id); setEditText(s.name) }}
                             className="opacity-0 group-hover/htitle:opacity-100 text-slate-500 hover:text-indigo-400 flex-shrink-0 mt-0.5"><Pencil size={9} /></button>
                         )}
                       </div>
                     )}
                     <div className="flex items-center gap-2 mt-1.5 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
-                      <span>{h.status}</span>
-                      {exps.length > 0 && <span>{exps.length} exp</span>}
+                      <span>{s.assumptionCount} sup</span>
+                      {s.experimentCount > 0 && <span>{s.experimentCount} exp</span>}
                     </div>
                     {onAddExperiment && (
-                      <button onClick={() => onAddExperiment(h.id)}
+                      <button onClick={() => onAddExperiment(s.id)}
                         className="w-full flex items-center justify-center gap-1 mt-2 py-1 rounded-lg border border-dashed border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-[10px] font-[Nunito_Sans] font-semibold transition-colors">
                         <Plus size={9} /> Agregar experimento
                       </button>
@@ -443,9 +445,9 @@ export function OSTTreeViewCanvas({
         {(() => {
           const visibleExps = activeOpps
             .filter(o => expandedOpps.has(o.id))
-            .flatMap(o => (hypothesesSummary[o.id] ?? [])
-              .filter(h => expandedHyps.has(h.id))
-              .flatMap(h => (experimentsSummary[h.id] ?? []).map(e => ({ ...e, hypId: h.id })))
+            .flatMap(o => (solutionsSummary[o.id] ?? [])
+              .filter(s => expandedSols.has(s.id))
+              .flatMap(s => (experimentsSummary[s.id] ?? []).map(e => ({ ...e, solId: s.id })))
             )
           if (visibleExps.length === 0) return null
           return (
@@ -453,7 +455,7 @@ export function OSTTreeViewCanvas({
               {visibleExps.map(e => {
                 const dot = EXP_DOT[e.status] ?? EXP_DOT['to do']
                 return (
-                  <div key={e.id} data-n="exp" data-id={e.id} data-parent={e.hypId}
+                  <div key={e.id} data-n="exp" data-id={e.id} data-parent={e.solId}
                     onClick={() => onOpenExperiment?.(e.id)}
                     className="relative bg-slate-900/60 border border-slate-800/60 rounded-lg px-3 py-2 w-40 hover:border-amber-500/30 transition-all cursor-pointer">
                     {confirmDeleteId === e.id && (

@@ -21,7 +21,7 @@ interface ExperimentData {
   // Traceability
   projectName: string
   opportunityName: string
-  hypothesisDescription: string
+  assumptionDescription: string
 }
 
 interface Props {
@@ -70,7 +70,7 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
   const handleBreakBlank = async () => {
     setGenerating(true)
     try {
-      const prompt = `Completá los campos de este Experimento Semilla:\nProyecto: ${exp.projectName}\nOportunidad: ${exp.opportunityName}\nHipótesis: ${exp.hypothesisDescription}\nExperimento: ${exp.description}\nTipo: ${exp.type}\n\nRespondé SOLO JSON:\n{"objective":"...","criterion":"Si...entonces...","who":"...","action1":"...","action2":"...","action3":"...","reviewCycle":"..."}`
+      const prompt = `Completá los campos de este Experimento Semilla:\nProyecto: ${exp.projectName}\nOportunidad: ${exp.opportunityName}\nSupuesto: ${exp.assumptionDescription}\nExperimento: ${exp.description}\nTipo: ${exp.type}\n\nRespondé SOLO JSON:\n{"objective":"...","criterion":"Si...entonces...","who":"...","action1":"...","action2":"...","action3":"...","reviewCycle":"..."}`
       const r = await anthropic.messages.create({ model: AI_MODEL, max_tokens: 512, messages: [{ role: 'user', content: prompt }] })
       const text = r.content[0].type === 'text' ? r.content[0].text : '{}'
       const match = text.match(/\{[\s\S]*\}/)
@@ -120,7 +120,7 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
                 <ChevronRight size={8} />
                 <span className="text-orange-400 truncate max-w-[120px]">{exp.opportunityName}</span>
                 <ChevronRight size={8} />
-                <span className="text-indigo-400 truncate max-w-[120px]">{exp.hypothesisDescription}</span>
+                <span className="text-indigo-400 truncate max-w-[120px]">{exp.assumptionDescription}</span>
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 flex-shrink-0 ml-3"><X size={16} /></button>
@@ -146,7 +146,7 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
                 <textarea value={objective} onChange={e => setObjective(e.target.value)} onBlur={() => save('objective', objective)} placeholder="El propósito..." rows={3} className={fc} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-['IBM_Plex_Mono'] text-indigo-400 font-bold uppercase tracking-wider">Hipótesis</label>
+                <label className="text-[11px] font-['IBM_Plex_Mono'] text-indigo-400 font-bold uppercase tracking-wider">Criterio de éxito</label>
                 <p className="text-[10px] text-slate-500 font-[Nunito_Sans]">Si [acción], obtendremos [consecuencia]</p>
                 <textarea value={criterion} onChange={e => setCriterion(e.target.value)} onBlur={() => save('successCriterion', criterion)} placeholder="Si hacemos X..." rows={3} className={fc} />
               </div>

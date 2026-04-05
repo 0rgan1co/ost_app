@@ -37,11 +37,11 @@ export function OSTNode({
           <span className="text-slate-400">{opportunity.evidenceCount}</span>
         </span>
       )}
-      {opportunity.hypothesisCount > 0 && (
+      {opportunity.solutionCount > 0 && (
         <span className="flex items-center gap-1">
-          <span className="text-slate-400">hip</span>
-          <span className={opportunity.activeHypothesisCount > 0 ? 'text-orange-400' : 'text-slate-400'}>
-            {opportunity.activeHypothesisCount}/{opportunity.hypothesisCount}
+          <span className="text-slate-400">sol</span>
+          <span className="text-slate-400">
+            {opportunity.solutionCount}
           </span>
         </span>
       )}

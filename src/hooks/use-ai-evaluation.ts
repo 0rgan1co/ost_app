@@ -35,16 +35,25 @@ interface DBEvidence {
   source: string | null
 }
 
-interface DBHypothesis {
+interface DBSolution {
   id: string
+  opportunity_id: string
+  name: string
+  description: string | null
+}
+
+interface DBAssumption {
+  id: string
+  solution_id: string
   description: string
+  category: string
   status: string
   result: string | null
 }
 
 interface DBExperiment {
   id: string
-  hypothesis_id: string
+  assumption_id: string
   type: string
   description: string
   success_criterion: string
@@ -132,7 +141,7 @@ async function buildEvaluationPrompt(
   const [
     { data: oppData },
     { data: evidenceData },
-    { data: hypothesesData },
+    { data: solutionsData },
     { data: contextData },
   ] = await Promise.all([
     supabase
@@ -146,8 +155,8 @@ async function buildEvaluationPrompt(
       .eq('opportunity_id', opportunityId)
       .order('created_at', { ascending: true }),
     supabase
-      .from('hypotheses')
-      .select('id, description, status, result')
+      .from('solutions')
+      .select('id, opportunity_id, name, description')
       .eq('opportunity_id', opportunityId)
       .order('created_at', { ascending: true }),
     supabase
@@ -159,7 +168,7 @@ async function buildEvaluationPrompt(
 
   const opp = oppData as DBOpportunity | null
   const evidence = (evidenceData ?? []) as DBEvidence[]
-  const hypotheses = (hypothesesData ?? []) as DBHypothesis[]
+  const solutions = (solutionsData ?? []) as DBSolution[]
 
   // Parse business context
   let bizContext: ParsedBusinessContext = {
@@ -175,24 +184,44 @@ async function buildEvaluationPrompt(
     }
   }
 
-  // Fetch experiments for each hypothesis
-  const hypothesisIds = hypotheses.map(h => h.id)
+  // Fetch assumptions for each solution
+  const solutionIds = solutions.map(s => s.id)
+  let assumptions: DBAssumption[] = []
+  if (solutionIds.length > 0) {
+    const { data: assData } = await supabase
+      .from('assumptions')
+      .select('id, solution_id, description, category, status, result')
+      .in('solution_id', solutionIds)
+      .order('created_at', { ascending: true })
+    assumptions = (assData ?? []) as DBAssumption[]
+  }
+
+  // Fetch experiments for each assumption
+  const assumptionIds = assumptions.map(a => a.id)
   let experiments: DBExperiment[] = []
-  if (hypothesisIds.length > 0) {
+  if (assumptionIds.length > 0) {
     const { data: expData } = await supabase
       .from('experiments')
-      .select('id, hypothesis_id, type, description, success_criterion, effort, impact, status, result')
-      .in('hypothesis_id', hypothesisIds)
+      .select('id, assumption_id, type, description, success_criterion, effort, impact, status, result')
+      .in('assumption_id', assumptionIds)
       .order('created_at', { ascending: true })
     experiments = (expData ?? []) as DBExperiment[]
   }
 
-  // Map experiments by hypothesis
-  const expByHypothesis = new Map<string, DBExperiment[]>()
+  // Map assumptions by solution
+  const assumptionsBySolution = new Map<string, DBAssumption[]>()
+  assumptions.forEach(a => {
+    const list = assumptionsBySolution.get(a.solution_id) ?? []
+    list.push(a)
+    assumptionsBySolution.set(a.solution_id, list)
+  })
+
+  // Map experiments by assumption
+  const expByAssumption = new Map<string, DBExperiment[]>()
   experiments.forEach(exp => {
-    const list = expByHypothesis.get(exp.hypothesis_id) ?? []
+    const list = expByAssumption.get(exp.assumption_id) ?? []
     list.push(exp)
-    expByHypothesis.set(exp.hypothesis_id, list)
+    expByAssumption.set(exp.assumption_id, list)
   })
 
   // Build prompt sections
@@ -203,22 +232,31 @@ async function buildEvaluationPrompt(
           .map(e => `  - [${e.type}] ${e.content}${e.source ? ` (fuente: ${e.source})` : ''}`)
           .join('\n')
 
-  const hypothesesText =
-    hypotheses.length === 0
-      ? '  (sin hipótesis registradas)'
-      : hypotheses
-          .map(h => {
-            const exps = expByHypothesis.get(h.id) ?? []
-            const expsText =
-              exps.length === 0
-                ? '    (sin experimentos)'
-                : exps
-                    .map(
-                      e =>
-                        `    - [${e.type}] ${e.description} | criterio: ${e.success_criterion} | esfuerzo: ${e.effort} | impacto: ${e.impact} | estado: ${e.status}${e.result ? ` | resultado: ${e.result}` : ''}`
-                    )
+  const solutionsText =
+    solutions.length === 0
+      ? '  (sin soluciones registradas)'
+      : solutions
+          .map(s => {
+            const sAssumptions = assumptionsBySolution.get(s.id) ?? []
+            const assumptionsText =
+              sAssumptions.length === 0
+                ? '    (sin supuestos)'
+                : sAssumptions
+                    .map(a => {
+                      const exps = expByAssumption.get(a.id) ?? []
+                      const expsText =
+                        exps.length === 0
+                          ? '      (sin experimentos)'
+                          : exps
+                              .map(
+                                e =>
+                                  `      - [${e.type}] ${e.description} | criterio: ${e.success_criterion} | esfuerzo: ${e.effort} | impacto: ${e.impact} | estado: ${e.status}${e.result ? ` | resultado: ${e.result}` : ''}`
+                              )
+                              .join('\n')
+                      return `    - Supuesto [${a.category}]: ${a.description} (${a.status})${a.result ? ` → resultado: ${a.result}` : ''}\n${expsText}`
+                    })
                     .join('\n')
-            return `  - Hipótesis: ${h.description} (${h.status})${h.result ? ` → resultado: ${h.result}` : ''}\n${expsText}`
+            return `  - Solución: ${s.name}${s.description ? ` — ${s.description}` : ''}\n${assumptionsText}`
           })
           .join('\n')
 
@@ -242,9 +280,9 @@ Analiza la siguiente oportunidad y proporciona una evaluación estructurada.
 
 ${evidenceText}
 
-## Hipótesis y experimentos
+## Soluciones, supuestos y experimentos
 
-${hypothesesText}
+${solutionsText}
 
 ## Instrucciones de respuesta
 
@@ -471,8 +509,8 @@ export function useAIEvaluation(
 
 Mensaje: "${msg.content}"
 
-Respondé SOLO con un JSON array. Cada item tiene: type ("add_opportunity" | "add_hypothesis" | "add_evidence") y data con los campos necesarios.
-Ejemplo: [{"type":"add_opportunity","data":{"name":"..."}}, {"type":"add_hypothesis","data":{"opportunityIndex":0,"description":"..."}}]
+Respondé SOLO con un JSON array. Cada item tiene: type ("add_opportunity" | "add_solution" | "add_evidence") y data con los campos necesarios.
+Ejemplo: [{"type":"add_opportunity","data":{"name":"..."}}, {"type":"add_solution","data":{"opportunityIndex":0,"name":"..."}}]
 Si no hay acciones claras, respondé []`
 
       const response = await anthropic.messages.create({
@@ -502,10 +540,10 @@ Si no hay acciones claras, respondé []`
             description: action.data.description ?? null,
           })
           applied++
-        } else if (action.type === 'add_hypothesis' && action.data?.description && opps?.length) {
+        } else if (action.type === 'add_solution' && (action.data?.name || action.data?.description) && opps?.length) {
           const targetOpp = opps[action.data.opportunityIndex ?? 0] ?? opps[0]
-          await supabase.from('hypotheses').insert({
-            opportunity_id: targetOpp.id, description: action.data.description, status: 'to do',
+          await supabase.from('solutions').insert({
+            opportunity_id: targetOpp.id, name: action.data.name ?? action.data.description, description: action.data.description ?? '',
           })
           applied++
         } else if (action.type === 'add_evidence' && action.data?.content && opps?.length) {

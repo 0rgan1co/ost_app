@@ -3,7 +3,7 @@ import { Target, Search, Lightbulb, FlaskConical, ChevronRight } from 'lucide-re
 interface WorkflowGuideProps {
   hasOutcome: boolean
   opportunityCount: number
-  hypothesisCount: number
+  solutionCount: number
   experimentCount: number
   onGoToContext: () => void
   onCreateOpportunity: () => void
@@ -20,7 +20,7 @@ const STEPS = [
 export function WorkflowGuide({
   hasOutcome,
   opportunityCount,
-  hypothesisCount,
+  solutionCount,
   experimentCount,
   onGoToContext,
   onCreateOpportunity,
@@ -29,7 +29,7 @@ export function WorkflowGuide({
   let currentStep = 0
   if (hasOutcome) currentStep = 1
   if (opportunityCount > 0) currentStep = 2
-  if (hypothesisCount > 0) currentStep = 3
+  if (solutionCount > 0) currentStep = 3
   if (experimentCount > 0) currentStep = 4
 
   const handlers = [onGoToContext, onCreateOpportunity, onGoToDetail, onGoToDetail]

@@ -57,7 +57,7 @@ function OppSelector({ projectId, projectName, onSelect }: { projectId: string; 
                     {opp.title}
                   </p>
                   <p className="text-xs text-slate-500 font-['IBM_Plex_Mono'] mt-0.5">
-                    {opp.evidenceCount} evidencias · {opp.hypothesisCount} soluciones
+                    {opp.evidenceCount} evidencias · {opp.solutionCount} soluciones
                   </p>
                 </div>
                 <ChevronRight size={16} className="text-slate-600 group-hover:text-violet-400 transition-colors flex-shrink-0" />
