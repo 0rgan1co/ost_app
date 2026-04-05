@@ -33,6 +33,11 @@ interface RawOpportunity {
   description: string | null
   outcome: string | null
   archived: boolean
+  priority_impact: string | null
+  priority_frequency: string | null
+  priority_intensity: string | null
+  priority_capacity: string | null
+  is_target: boolean | null
   created_at: string
 }
 
@@ -88,6 +93,11 @@ function mapOpportunity(raw: RawOpportunity): OpportunityDetail {
     description: raw.description ?? '',
     outcome: raw.outcome ?? '',
     status: raw.archived ? 'descartada' : 'activa',
+    priorityImpact: (raw.priority_impact as EffortImpact) ?? null,
+    priorityFrequency: (raw.priority_frequency as EffortImpact) ?? null,
+    priorityIntensity: (raw.priority_intensity as EffortImpact) ?? null,
+    priorityCapacity: (raw.priority_capacity as EffortImpact) ?? null,
+    isTarget: raw.is_target ?? false,
     createdAt: raw.created_at,
   }
 }
@@ -183,6 +193,8 @@ export interface UseOpportunityDetailReturn {
     data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) => Promise<void>
   changeExperimentStatus: (id: string, status: ExperimentStatus, result?: string) => Promise<void>
+  updatePriority: (field: string, value: EffortImpact) => Promise<void>
+  toggleTarget: () => Promise<void>
 }
 
 export function useOpportunityDetail(opportunityId: string): UseOpportunityDetailReturn {
@@ -411,6 +423,55 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
     [fetchAll]
   )
 
+  const updatePriority = useCallback(
+    async (field: string, value: EffortImpact) => {
+      // Map camelCase field names to snake_case DB columns
+      const fieldMap: Record<string, string> = {
+        priorityImpact: 'priority_impact',
+        priorityFrequency: 'priority_frequency',
+        priorityIntensity: 'priority_intensity',
+        priorityCapacity: 'priority_capacity',
+      }
+      const column = fieldMap[field]
+      if (!column) return
+      await supabase.from('opportunities').update({ [column]: value }).eq('id', opportunityId)
+      await fetchAll()
+    },
+    [opportunityId, fetchAll]
+  )
+
+  const toggleTarget = useCallback(
+    async () => {
+      // Get the project_id for this opportunity
+      const { data: rawOpp } = await supabase
+        .from('opportunities')
+        .select('project_id, is_target')
+        .eq('id', opportunityId)
+        .single()
+
+      if (!rawOpp) return
+
+      const newValue = !rawOpp.is_target
+
+      if (newValue) {
+        // Unset is_target on all opportunities in the project first
+        await supabase
+          .from('opportunities')
+          .update({ is_target: false })
+          .eq('project_id', rawOpp.project_id)
+      }
+
+      // Set is_target on the specified opportunity
+      await supabase
+        .from('opportunities')
+        .update({ is_target: newValue })
+        .eq('id', opportunityId)
+
+      await fetchAll()
+    },
+    [opportunityId, fetchAll]
+  )
+
   return {
     project,
     opportunity,
@@ -429,5 +490,7 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
     deleteAssumption,
     addExperiment,
     changeExperimentStatus,
+    updatePriority,
+    toggleTarget,
   }
 }

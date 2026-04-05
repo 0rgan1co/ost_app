@@ -169,6 +169,11 @@ export interface OpportunityDetail {
   description: string
   outcome: string
   status: OpportunityStatus
+  priorityImpact: EffortImpact | null
+  priorityFrequency: EffortImpact | null
+  priorityIntensity: EffortImpact | null
+  priorityCapacity: EffortImpact | null
+  isTarget: boolean
   createdAt: string
 }
 
@@ -239,6 +244,8 @@ export interface OpportunityDetailProps {
     data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) => void
   onChangeExperimentStatus?: (id: string, status: ExperimentStatus, result?: string) => void
+  onUpdatePriority?: (field: string, value: EffortImpact) => void
+  onToggleTarget?: () => void
   onNavigateToAIEvaluation?: (opportunityId: string) => void
   onNavigateBack?: () => void
 }

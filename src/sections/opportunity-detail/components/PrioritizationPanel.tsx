@@ -1,89 +1,135 @@
-import { Star } from 'lucide-react'
 import type { EffortImpact } from '../../../types'
 
-const SCORE: Record<EffortImpact, number> = { bajo: 1, medio: 2, alto: 3 }
-const LEVELS: EffortImpact[] = ['bajo', 'medio', 'alto']
-
-interface Criterion {
-  key: string
-  label: string
-  value: EffortImpact | null
-}
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface PrioritizationPanelProps {
-  criteria: Criterion[]
+  priorityImpact: EffortImpact | null
+  priorityFrequency: EffortImpact | null
+  priorityIntensity: EffortImpact | null
+  priorityCapacity: EffortImpact | null
   isTarget: boolean
   onUpdatePriority: (field: string, value: EffortImpact) => void
   onToggleTarget: () => void
 }
 
-function computeScore(criteria: Criterion[]): number {
-  return criteria.reduce((sum, c) => sum + (c.value ? SCORE[c.value] : 0), 0)
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const SCORE: Record<EffortImpact, number> = { bajo: 1, medio: 2, alto: 3 }
+
+const CRITERIA: { field: string; label: string }[] = [
+  { field: 'priorityImpact', label: 'Impacto en outcome' },
+  { field: 'priorityFrequency', label: 'Frecuencia' },
+  { field: 'priorityIntensity', label: 'Intensidad del dolor' },
+  { field: 'priorityCapacity', label: 'Capacidad del equipo' },
+]
+
+const LEVELS: { value: EffortImpact; label: string }[] = [
+  { value: 'bajo', label: 'Bajo' },
+  { value: 'medio', label: 'Medio' },
+  { value: 'alto', label: 'Alto' },
+]
+
+const LEVEL_STYLE: Record<EffortImpact, { active: string; inactive: string }> = {
+  bajo: {
+    active: 'bg-green-500/20 text-green-400 border-green-500/40',
+    inactive: 'bg-slate-900 text-slate-500 border-slate-800 hover:border-green-500/30 hover:text-green-400/70',
+  },
+  medio: {
+    active: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+    inactive: 'bg-slate-900 text-slate-500 border-slate-800 hover:border-amber-500/30 hover:text-amber-400/70',
+  },
+  alto: {
+    active: 'bg-red-500/20 text-red-400 border-red-500/40',
+    inactive: 'bg-slate-900 text-slate-500 border-slate-800 hover:border-red-500/30 hover:text-red-400/70',
+  },
 }
 
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export function PrioritizationPanel({
-  criteria,
+  priorityImpact,
+  priorityFrequency,
+  priorityIntensity,
+  priorityCapacity,
   isTarget,
   onUpdatePriority,
   onToggleTarget,
 }: PrioritizationPanelProps) {
-  const score = computeScore(criteria)
-  const maxScore = criteria.length * 3
-  const hasAnyScore = criteria.some(c => c.value !== null)
+  const values: Record<string, EffortImpact | null> = {
+    priorityImpact,
+    priorityFrequency,
+    priorityIntensity,
+    priorityCapacity,
+  }
+
+  // Compute composite score (sum of all 4 criteria, each 1-3)
+  const filled = Object.values(values).filter(Boolean) as EffortImpact[]
+  const compositeScore = filled.reduce((sum, v) => sum + SCORE[v], 0)
+  const maxScore = CRITERIA.length * 3
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-slate-100 font-[Nunito_Sans]">
-            Priorización
-          </h3>
-          {hasAnyScore && (
-            <span className="font-['IBM_Plex_Mono'] text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400">
-              {score}/{maxScore}
+          <h2 className="text-sm font-bold text-slate-300 font-['Nunito_Sans']">Priorizacion</h2>
+          {filled.length === CRITERIA.length && (
+            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-500/15 text-red-400 text-sm font-['IBM_Plex_Mono'] font-bold">
+              {compositeScore}
+            </span>
+          )}
+          {filled.length > 0 && filled.length < CRITERIA.length && (
+            <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500">
+              {compositeScore}/{maxScore}
             </span>
           )}
         </div>
         <button
           onClick={onToggleTarget}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold font-[Nunito_Sans] transition-all ${
-            isTarget
-              ? 'bg-red-500/15 text-red-400 border border-red-500/30'
-              : 'text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-600'
-          }`}
+          className={`
+            flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
+            font-['Nunito_Sans'] transition-all border
+            ${isTarget
+              ? 'bg-red-500/15 text-red-400 border-red-500/40 hover:bg-red-500/25'
+              : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-red-500/30 hover:text-red-400'
+            }
+          `}
         >
-          <Star size={12} className={isTarget ? 'fill-red-400' : ''} />
-          {isTarget ? 'Target' : 'Marcar como Target'}
+          {'\u2B50'} {isTarget ? 'Target' : 'Marcar como Target'}
         </button>
       </div>
 
+      {/* Criteria rows */}
       <div className="space-y-3">
-        {criteria.map(c => (
-          <div key={c.key} className="flex items-center justify-between gap-3">
-            <span className="text-xs text-slate-400 font-[Nunito_Sans] min-w-0 flex-1">
-              {c.label}
-            </span>
-            <div className="flex gap-1">
-              {LEVELS.map(level => (
-                <button
-                  key={level}
-                  onClick={() => onUpdatePriority(c.key, level)}
-                  className={`px-2.5 py-1 rounded-md text-[10px] font-['IBM_Plex_Mono'] font-semibold transition-all ${
-                    c.value === level
-                      ? level === 'alto'
-                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        : level === 'medio'
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'bg-green-500/20 text-green-400 border border-green-500/30'
-                      : 'text-slate-600 hover:text-slate-400 border border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  {level}
-                </button>
-              ))}
+        {CRITERIA.map(({ field, label }) => {
+          const current = values[field]
+          return (
+            <div key={field} className="flex items-center gap-3">
+              <span className="text-xs text-slate-400 font-[Nunito_Sans] w-40 flex-shrink-0">
+                {label}
+              </span>
+              <div className="flex gap-1.5">
+                {LEVELS.map(({ value, label: lvlLabel }) => {
+                  const isActive = current === value
+                  const style = LEVEL_STYLE[value]
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => onUpdatePriority(field, value)}
+                      className={`
+                        px-3 py-1 rounded-lg text-[11px] font-['IBM_Plex_Mono'] font-semibold
+                        border transition-all
+                        ${isActive ? style.active : style.inactive}
+                      `}
+                    >
+                      {lvlLabel}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

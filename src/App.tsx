@@ -67,6 +67,8 @@ function OpportunityDetailPage() {
       onDeleteAssumption={deleteAssumption}
       onAddExperiment={addExperiment}
       onChangeExperimentStatus={changeExperimentStatus}
+      onUpdatePriority={(field, value) => updatePriority(field, value)}
+      onToggleTarget={() => toggleTarget()}
       onNavigateToAIEvaluation={(oppId) => navigate(`/ai-evaluation/${oppId}`)}
       onNavigateBack={() => navigate('/ost-tree')}
     />

@@ -14,6 +14,7 @@ import type {
 import { EvidenceSection } from './components/EvidenceSection'
 import { SolutionCard } from './components/SolutionCard'
 import { TopExperimentsCard } from './components/TopExperimentsCard'
+import { PrioritizationPanel } from './components/PrioritizationPanel'
 
 // ─── Inline editable field ────────────────────────────────────────────────────
 
@@ -188,6 +189,8 @@ export function OpportunityDetailView({
   onDeleteAssumption,
   onAddExperiment,
   onChangeExperimentStatus,
+  onUpdatePriority,
+  onToggleTarget,
   onNavigateToAIEvaluation,
   onNavigateBack,
 }: OpportunityDetailProps) {
@@ -289,6 +292,19 @@ export function OpportunityDetailView({
             </div>
           </div>
         </header>
+
+        {/* ── Prioritization ── */}
+        {onUpdatePriority && onToggleTarget && (
+          <PrioritizationPanel
+            priorityImpact={opportunity.priorityImpact}
+            priorityFrequency={opportunity.priorityFrequency}
+            priorityIntensity={opportunity.priorityIntensity}
+            priorityCapacity={opportunity.priorityCapacity}
+            isTarget={opportunity.isTarget}
+            onUpdatePriority={onUpdatePriority}
+            onToggleTarget={onToggleTarget}
+          />
+        )}
 
         {/* ── Evidence ── */}
         <EvidenceSection
