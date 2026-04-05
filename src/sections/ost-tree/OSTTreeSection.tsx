@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useOSTTree } from '../../hooks/use-ost-tree'
@@ -150,6 +150,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [evalToast, setEvalToast] = useState(false)
+  const evalTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null)
   const [openExpId, setOpenExpId] = useState<string | null>(null)
   const [openExpData, setOpenExpData] = useState<any>(null)
@@ -378,7 +380,14 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="dark flex flex-col h-full min-h-0 bg-slate-950">
+    <div className="dark flex flex-col h-full min-h-0 bg-slate-950 relative">
+
+      {/* Toast */}
+      {evalToast && (
+        <div className="absolute top-4 right-4 z-50 flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 py-3 text-sm font-medium text-violet-300 shadow-lg font-[Nunito_Sans] animate-[fadeIn_0.2s_ease-out]">
+          Gael o Rick ¿pueden tomarlo?
+        </div>
+      )}
 
       {/* ── Header bar ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800 flex-shrink-0">
@@ -395,9 +404,17 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
         <div className="flex items-center gap-3 flex-shrink-0">
           <ViewToggle mode={viewMode} onChange={setViewMode} />
-          <span className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 font-[Nunito_Sans] text-xs">
-            Gael o Rick ¿pueden tomarlo?
-          </span>
+          <button
+            onClick={() => {
+              setEvalToast(true)
+              if (evalTimer.current) clearTimeout(evalTimer.current)
+              evalTimer.current = setTimeout(() => setEvalToast(false), 3000)
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-[Nunito_Sans] font-semibold text-sm transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M18 14l.75 2.25L21 17l-2.25.75L18 20l-.75-2.25L15 17l2.25-.75L18 14z"/></svg>
+            Evaluar con IA
+          </button>
         </div>
       </div>
 
