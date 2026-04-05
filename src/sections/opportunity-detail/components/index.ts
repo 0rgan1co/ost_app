@@ -1,4 +1,5 @@
 export { EvidenceSection } from './EvidenceSection'
-export { HypothesisCard } from './HypothesisCard'
+export { SolutionCard } from './SolutionCard'
+export { AssumptionCard } from './AssumptionCard'
 export { ExperimentCard } from './ExperimentCard'
 export { TopExperimentsCard } from './TopExperimentsCard'

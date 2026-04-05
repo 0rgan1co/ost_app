@@ -40,7 +40,7 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
         <div className="py-6 text-center">
           <p className="text-slate-500 text-sm font-sans">Sin experimentos registrados</p>
           <p className="text-slate-400 text-xs mt-1 font-sans">
-            Añade experimentos a tus hipótesis para ver los de mayor prioridad aquí
+            Agrega experimentos a tus supuestos para ver los de mayor prioridad aqui
           </p>
         </div>
       </section>
@@ -96,7 +96,7 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
                 <p className="text-xs text-slate-300 font-sans">{exp.successCriterion}</p>
               </div>
 
-              {/* Effort / Impact + Hypothesis origin */}
+              {/* Effort / Impact + Solution origin */}
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-400 font-['IBM_Plex_Mono']">Esfuerzo:</span>
@@ -108,9 +108,9 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
                     {exp.impact}
                   </span>
                 </div>
-                {/* Origin hypothesis */}
-                <p className="text-[11px] text-slate-400 font-sans truncate max-w-[200px]" title={top.hypothesisTitle}>
-                  Solución: {top.hypothesisTitle}
+                {/* Origin solution + assumption */}
+                <p className="text-[11px] text-slate-400 font-sans truncate max-w-[200px]" title={`${top.solutionName} — ${top.assumptionDescription}`}>
+                  {top.solutionName}
                 </p>
               </div>
             </div>

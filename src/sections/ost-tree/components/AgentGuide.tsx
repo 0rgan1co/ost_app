@@ -8,7 +8,7 @@ interface AgentGuideProps {
   projectName: string
   hasOutcome: boolean
   opportunityCount: number
-  hypothesisCount: number
+  solutionCount: number
   experimentCount: number
 }
 
@@ -28,13 +28,13 @@ FLUJO (según lo que falte):
 1. OUTCOME: "¿Qué resultado medible querés lograr?"
 2. OPORTUNIDADES: "¿Qué problemas o necesidades del usuario identificaste? Contame todos los que se te ocurran."
 3. EVIDENCIA: "Para cada oportunidad, ¿qué evidencia tenés?"
-4. HIPÓTESIS: "¿Qué soluciones podrían resolver cada oportunidad?"
-5. EXPERIMENTOS: "¿Cómo validarías cada hipótesis con una prueba de bajo esfuerzo?"
+4. SOLUCIONES: "¿Qué soluciones podrían resolver cada oportunidad?"
+5. EXPERIMENTOS: "¿Cómo validarías cada solución con una prueba de bajo esfuerzo?"
 
 Cuando todo esté completo, felicitalo y sugerí ver el árbol visual.
 Respondé SOLO texto conversacional, nunca JSON.`
 
-export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCount, hypothesisCount, experimentCount }: AgentGuideProps) {
+export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCount, solutionCount, experimentCount }: AgentGuideProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
@@ -44,7 +44,7 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
   const sendingRef = useRef(false)
   const startedRef = useRef(false)
 
-  const isComplete = hasOutcome && opportunityCount > 0 && hypothesisCount > 0 && experimentCount > 0
+  const isComplete = hasOutcome && opportunityCount > 0 && solutionCount > 0 && experimentCount > 0
 
   const callClaude = useCallback(async (msgs: { role: 'user' | 'assistant'; content: string }[]): Promise<string> => {
     const r = await anthropic.messages.create({ model: AI_MODEL, max_tokens: 512, system: SYSTEM, messages: msgs })
@@ -56,7 +56,7 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
     if (!open || startedRef.current) return
     startedRef.current = true
 
-    const status = `Proyecto: "${projectName}"\nEstado actual: Outcome=${hasOutcome ? 'sí' : 'no'}, Oportunidades=${opportunityCount}, Hipótesis=${hypothesisCount}, Experimentos=${experimentCount}\n\nAyudame a completar lo que falta.`
+    const status = `Proyecto: "${projectName}"\nEstado actual: Outcome=${hasOutcome ? 'sí' : 'no'}, Oportunidades=${opportunityCount}, Soluciones=${solutionCount}, Experimentos=${experimentCount}\n\nAyudame a completar lo que falta.`
 
     apiHistoryRef.current = [{ role: 'user', content: status }]
     setSending(true)
@@ -75,7 +75,7 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
       setMessages([{ id: crypto.randomUUID(), role: 'assistant', content: fallback }])
       setSending(false)
     })
-  }, [open, projectName, hasOutcome, opportunityCount, hypothesisCount, experimentCount, callClaude])
+  }, [open, projectName, hasOutcome, opportunityCount, solutionCount, experimentCount, callClaude])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })

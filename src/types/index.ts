@@ -11,7 +11,9 @@ export type OpportunityStatus = 'activa' | 'descartada'
 
 export type EvidenceType = 'cita' | 'hecho' | 'observacion'
 
-export type HypothesisStatus = 'to do' | 'en curso' | 'terminada'
+export type AssumptionCategory = 'deseabilidad' | 'viabilidad' | 'factibilidad' | 'usabilidad'
+
+export type AssumptionStatus = 'pendiente' | 'validado' | 'invalidado'
 
 export type ExperimentType =
   | 'entrevista'
@@ -116,10 +118,14 @@ export interface Opportunity {
   isArchived: boolean
   isExpanded: boolean
   evidenceCount: number
-  hypothesisCount: number
-  activeHypothesisCount: number
+  solutionCount: number
   experimentCount: number
   activeExperimentCount: number
+  priorityImpact: EffortImpact | null
+  priorityFrequency: EffortImpact | null
+  priorityIntensity: EffortImpact | null
+  priorityCapacity: EffortImpact | null
+  isTarget: boolean
   createdAt: string
 }
 
@@ -130,17 +136,18 @@ export interface OSTTreeEvidence {
   source: string
 }
 
-export interface HypothesisSummary {
+export interface SolutionSummary {
   id: string
-  title: string
-  status: HypothesisStatus
+  name: string
+  assumptionCount: number
+  experimentCount: number
 }
 
 export interface OSTTreeProps {
   project: OSTTreeProject
   opportunities: Opportunity[]
   recentEvidence: Record<string, OSTTreeEvidence[]>
-  hypothesesSummary: Record<string, HypothesisSummary[]>
+  solutionsSummary: Record<string, SolutionSummary[]>
   onViewModeChange?: (mode: 'list' | 'tree') => void
   onSelectOpportunity?: (opportunityId: string) => void
   onCreateOpportunity?: () => void
@@ -162,6 +169,11 @@ export interface OpportunityDetail {
   description: string
   outcome: string
   status: OpportunityStatus
+  priorityImpact: EffortImpact | null
+  priorityFrequency: EffortImpact | null
+  priorityIntensity: EffortImpact | null
+  priorityCapacity: EffortImpact | null
+  isTarget: boolean
   createdAt: string
 }
 
@@ -175,7 +187,7 @@ export interface Evidence {
 
 export interface Experiment {
   id: string
-  hypothesisId: string
+  assumptionId: string
   type: ExperimentType
   description: string
   successCriterion: string // mandatory, defined before executing
@@ -186,18 +198,30 @@ export interface Experiment {
   priorityScore: number // SCORE[impact] / SCORE[effort], calculated server-side
 }
 
-export interface Hypothesis {
+export interface Assumption {
   id: string
-  description: string // only field — no separate title
-  status: HypothesisStatus
-  result: string | null // recorded when status becomes 'terminada'
+  solutionId: string
+  description: string
+  category: AssumptionCategory
+  status: AssumptionStatus
+  result: string | null // recorded when status changes to validado/invalidado
   experiments: Experiment[]
+  createdAt: string
+}
+
+export interface Solution {
+  id: string
+  opportunityId: string
+  name: string
+  description: string
+  assumptions: Assumption[]
   createdAt: string
 }
 
 export interface TopExperiment {
   experiment: Experiment
-  hypothesisTitle: string
+  assumptionDescription: string
+  solutionName: string
   priorityScore: number
 }
 
@@ -205,20 +229,23 @@ export interface OpportunityDetailProps {
   project: DetailProject
   opportunity: OpportunityDetail
   evidence: Evidence[]
-  hypotheses: Hypothesis[]
+  solutions: Solution[]
   topExperiments: TopExperiment[]
   onUpdateOpportunity?: (id: string, data: Partial<OpportunityDetail>) => void
   onAddEvidence?: (data: Omit<Evidence, 'id' | 'createdAt'>) => void
   onDeleteEvidence?: (id: string) => void
-  onAddHypothesis?: (data: Pick<Hypothesis, 'description'>) => void
-  onChangeHypothesisStatus?: (id: string, status: HypothesisStatus, result?: string) => void
-  onDeleteHypothesis?: (id: string) => void
-  /** effort and impact are 'bajo' | 'medio' | 'alto' */
+  onAddSolution?: (data: { name: string; description?: string }) => void
+  onDeleteSolution?: (id: string) => void
+  onAddAssumption?: (solutionId: string, data: { description: string; category: AssumptionCategory }) => void
+  onChangeAssumptionStatus?: (id: string, status: AssumptionStatus, result?: string) => void
+  onDeleteAssumption?: (id: string) => void
   onAddExperiment?: (
-    hypothesisId: string,
-    data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>
+    assumptionId: string,
+    data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) => void
   onChangeExperimentStatus?: (id: string, status: ExperimentStatus, result?: string) => void
+  onUpdatePriority?: (field: string, value: EffortImpact) => void
+  onToggleTarget?: () => void
   onNavigateToAIEvaluation?: (opportunityId: string) => void
   onNavigateBack?: () => void
 }

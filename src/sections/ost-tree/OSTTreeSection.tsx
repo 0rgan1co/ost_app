@@ -123,7 +123,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const {
     opportunities,
     recentEvidence,
-    hypothesesSummary,
+    solutionsSummary,
     experimentsSummary,
     loading,
     error,
@@ -134,7 +134,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch,
   } = useOSTTree(project.id)
 
-  const { context: bizContext, refetch: refetchContext } = useBusinessContext(project.id)
+  const { context: bizContext } = useBusinessContext(project.id)
 
   const businessContextSummary = (bizContext.northStar.value || bizContext.targetSegment.value)
     ? {
@@ -156,24 +156,30 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   // Load assigned_to for all items
   useEffect(() => {
     async function loadAssigned() {
-      const [{ data: opps }, { data: hyps }, { data: exps }] = await Promise.all([
+      const solIds = Object.values(solutionsSummary).flat().map(s => s.id)
+      const [{ data: opps }, { data: sols }, { data: exps }] = await Promise.all([
         supabase.from('opportunities').select('id, assigned_to').eq('project_id', project.id),
-        supabase.from('hypotheses').select('id, assigned_to').in('opportunity_id', opportunities.map(o => o.id)),
-        supabase.from('experiments').select('id, assigned_to').in('hypothesis_id',
-          Object.values(hypothesesSummary).flat().map(h => h.id)
-        ),
+        supabase.from('solutions').select('id, assigned_to').in('opportunity_id', opportunities.map(o => o.id)),
+        solIds.length > 0
+          ? supabase.from('assumptions').select('id').in('solution_id', solIds).then(({ data: assumptions }) => {
+              const assIds = (assumptions ?? []).map((a: any) => a.id)
+              return assIds.length > 0
+                ? supabase.from('experiments').select('id, assigned_to').in('assumption_id', assIds)
+                : { data: [] }
+            })
+          : Promise.resolve({ data: [] }),
       ])
       const map: Record<string, string | null> = {}
-      for (const o of opps ?? []) if (o.assigned_to) map[o.id] = o.assigned_to
-      for (const h of hyps ?? []) if (h.assigned_to) map[h.id] = h.assigned_to
-      for (const e of exps ?? []) if (e.assigned_to) map[e.id] = e.assigned_to
+      for (const o of (opps ?? []) as any[]) if (o.assigned_to) map[o.id] = o.assigned_to
+      for (const s of (sols ?? []) as any[]) if (s.assigned_to) map[s.id] = s.assigned_to
+      for (const e of (exps ?? []) as any[]) if (e.assigned_to) map[e.id] = e.assigned_to
       setAssignedMap(map)
     }
     if (opportunities.length > 0) loadAssigned()
-  }, [project.id, opportunities, hypothesesSummary])
+  }, [project.id, opportunities, solutionsSummary])
 
-  const handleAssign = useCallback(async (type: 'opportunity' | 'hypothesis' | 'experiment', id: string, userId: string | null) => {
-    const table = type === 'opportunity' ? 'opportunities' : type === 'hypothesis' ? 'hypotheses' : 'experiments'
+  const handleAssign = useCallback(async (type: 'opportunity' | 'solution' | 'experiment', id: string, userId: string | null) => {
+    const table = type === 'opportunity' ? 'opportunities' : type === 'solution' ? 'solutions' : 'experiments'
     await supabase.from(table).update({ assigned_to: userId }).eq('id', id)
     setAssignedMap(prev => ({ ...prev, [id]: userId }))
   }, [])
@@ -183,8 +189,17 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const handleOpenExperiment = useCallback(async (expId: string) => {
     const { data: exp } = await supabase.from('experiments').select('*').eq('id', expId).single()
     if (!exp) return
-    const { data: hyp } = await supabase.from('hypotheses').select('id, description, opportunity_id').eq('id', exp.hypothesis_id).single()
-    const oppName = hyp ? (opportunities.find(o => o.id === hyp.opportunity_id)?.title ?? '') : ''
+    // Navigate: experiment -> assumption -> solution -> opportunity
+    const { data: assumption } = await supabase.from('assumptions').select('id, description, solution_id').eq('id', exp.assumption_id).single()
+    let oppName = ''
+    let solutionName = ''
+    if (assumption) {
+      const { data: sol } = await supabase.from('solutions').select('id, name, opportunity_id').eq('id', assumption.solution_id).single()
+      if (sol) {
+        solutionName = sol.name
+        oppName = opportunities.find(o => o.id === sol.opportunity_id)?.title ?? ''
+      }
+    }
     setOpenExpData({
       id: exp.id, description: exp.description, type: exp.type,
       successCriterion: exp.success_criterion, effort: exp.effort, impact: exp.impact,
@@ -192,7 +207,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       objective: exp.objective ?? '', who: exp.who ?? '', actions: exp.actions ?? '',
       startDate: exp.start_date, endDate: exp.end_date, reviewCycle: exp.review_cycle ?? '',
       projectName: project.name, opportunityName: oppName,
-      hypothesisDescription: hyp?.description ?? '',
+      assumptionDescription: assumption?.description ?? '',
+      solutionName,
     })
     setOpenExpId(expId)
   }, [opportunities, project.name])
@@ -264,13 +280,12 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     } else {
       await supabase.from('business_context').insert({ project_id: project.id, content })
     }
-    refetchContext()
-  }, [project.id, refetchContext])
+  }, [project.id])
 
-  // Rename hypothesis
-  const handleRenameHypothesis = useCallback(async (id: string, text: string) => {
+  // Rename solution
+  const handleRenameSolution = useCallback(async (id: string, text: string) => {
     if (!text.trim()) return
-    await supabase.from('hypotheses').update({ description: text.trim() }).eq('id', id)
+    await supabase.from('solutions').update({ name: text.trim() }).eq('id', id)
     refetch()
   }, [refetch])
 
@@ -281,10 +296,19 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch()
   }, [refetch])
 
-  // Delete hypothesis
-  const handleDeleteHypothesis = useCallback(async (id: string) => {
-    await supabase.from('experiments').delete().eq('hypothesis_id', id)
-    await supabase.from('hypotheses').delete().eq('id', id)
+  // Delete solution (cascade: delete experiments -> assumptions -> solution)
+  const handleDeleteSolution = useCallback(async (id: string) => {
+    // Get all assumptions for this solution
+    const { data: assumptions } = await supabase.from('assumptions').select('id').eq('solution_id', id)
+    const assIds = (assumptions ?? []).map((a: any) => a.id)
+    // Delete experiments linked to those assumptions
+    if (assIds.length > 0) {
+      await supabase.from('experiments').delete().in('assumption_id', assIds)
+    }
+    // Delete assumptions
+    await supabase.from('assumptions').delete().eq('solution_id', id)
+    // Delete solution
+    await supabase.from('solutions').delete().eq('id', id)
     refetch()
   }, [refetch])
 
@@ -294,24 +318,24 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch()
   }, [refetch])
 
-  // Quick-add hypothesis from tree
-  const handleQuickAddHypothesis = useCallback(async (opportunityId: string) => {
+  // Quick-add solution from tree
+  const handleQuickAddSolution = useCallback(async (opportunityId: string) => {
     const name = prompt('Escribí la solución (hipótesis): "Si hacemos [acción], vamos a obtener [resultado]"')
     if (!name?.trim()) return
-    await supabase.from('hypotheses').insert({
+    await supabase.from('solutions').insert({
       opportunity_id: opportunityId,
-      description: name.trim(),
-      status: 'to do',
+      name: name.trim(),
+      description: '',
     })
     refetch()
   }, [refetch])
 
-  // Quick-add experiment from tree
-  const handleQuickAddExperiment = useCallback(async (hypothesisId: string) => {
+  // Quick-add experiment from tree (assumes the id passed is an assumption_id)
+  const handleQuickAddExperiment = useCallback(async (assumptionId: string) => {
     const name = prompt('Descripción del experimento:')
     if (!name?.trim()) return
     await supabase.from('experiments').insert({
-      hypothesis_id: hypothesisId,
+      assumption_id: assumptionId,
       type: 'otro',
       description: name.trim(),
       success_criterion: 'Por definir',
@@ -332,7 +356,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   const activeOpps = opportunities.filter(o => !o.isArchived)
   const activeCount = activeOpps.length
-  const totalHypotheses = Object.values(hypothesesSummary).reduce((sum, arr) => sum + arr.length, 0)
+  const totalSolutions = Object.values(solutionsSummary).reduce((sum, arr) => sum + arr.length, 0)
   const totalExperiments = Object.values(experimentsSummary).reduce((sum, arr) => sum + arr.length, 0)
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -368,7 +392,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
             <WorkflowGuide
               hasOutcome={!!bizContext.northStar.value}
               opportunityCount={activeCount}
-              hypothesisCount={totalHypotheses}
+              solutionCount={totalSolutions}
               experimentCount={totalExperiments}
               onGoToContext={() => navigate('/business-context')}
               onCreateOpportunity={() => setIsModalOpen(true)}
@@ -396,22 +420,22 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               projectName={project.name}
               outcome={bizContext.northStar.value}
               opportunities={opportunities}
-              hypothesesSummary={hypothesesSummary}
+              solutionsSummary={solutionsSummary}
               experimentsSummary={experimentsSummary}
               selectedId={selectedId}
               onSelect={handleSelect}
               onNavigateToDetail={handleNavigateToDetail}
               onRenameOpportunity={renameOpportunity}
               onAddOpportunity={() => setIsModalOpen(true)}
-              onAddHypothesis={handleQuickAddHypothesis}
+              onAddSolution={handleQuickAddSolution}
               onAddExperiment={handleQuickAddExperiment}
-              onRenameHypothesis={handleRenameHypothesis}
+              onRenameSolution={handleRenameSolution}
               onRenameExperiment={handleRenameExperiment}
               onEditOutcome={handleEditOutcome}
               starredIds={starredIds}
               onToggleStar={toggleStar}
               onDeleteOpportunity={archiveOpportunity}
-              onDeleteHypothesis={handleDeleteHypothesis}
+              onDeleteSolution={handleDeleteSolution}
               onDeleteExperiment={handleDeleteExperiment}
               onOpenExperiment={handleOpenExperiment}
               members={treeMembers}
@@ -426,7 +450,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       <OpportunityPanel
         opportunity={selectedOpportunity}
         recentEvidence={selectedId ? (recentEvidence[selectedId] ?? []) : []}
-        hypothesesSummary={selectedId ? (hypothesesSummary[selectedId] ?? []) : []}
+        solutionsSummary={selectedId ? (solutionsSummary[selectedId] ?? []) : []}
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         onNavigateToDetail={handleNavigateToDetail}
@@ -459,7 +483,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         projectName={project.name}
         hasOutcome={!!bizContext.northStar.value}
         opportunityCount={activeCount}
-        hypothesisCount={totalHypotheses}
+        solutionCount={totalSolutions}
         experimentCount={totalExperiments}
       />
     </div>

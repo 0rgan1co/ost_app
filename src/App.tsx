@@ -38,10 +38,12 @@ function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const {
-    project, opportunity, evidence, hypotheses, topExperiments,
+    project, opportunity, evidence, solutions, topExperiments,
     updateOpportunity, addEvidence, deleteEvidence,
-    addHypothesis, changeHypothesisStatus, deleteHypothesis,
+    addSolution, deleteSolution,
+    addAssumption, changeAssumptionStatus, deleteAssumption,
     addExperiment, changeExperimentStatus,
+    updatePriority, toggleTarget,
   } = useOpportunityDetail(id ?? '')
 
   if (!opportunity || !project) {
@@ -53,16 +55,20 @@ function OpportunityDetailPage() {
       project={project}
       opportunity={opportunity}
       evidence={evidence}
-      hypotheses={hypotheses}
+      solutions={solutions}
       topExperiments={topExperiments}
       onUpdateOpportunity={updateOpportunity}
       onAddEvidence={addEvidence}
       onDeleteEvidence={deleteEvidence}
-      onAddHypothesis={addHypothesis}
-      onChangeHypothesisStatus={changeHypothesisStatus}
-      onDeleteHypothesis={deleteHypothesis}
+      onAddSolution={addSolution}
+      onDeleteSolution={deleteSolution}
+      onAddAssumption={addAssumption}
+      onChangeAssumptionStatus={changeAssumptionStatus}
+      onDeleteAssumption={deleteAssumption}
       onAddExperiment={addExperiment}
       onChangeExperimentStatus={changeExperimentStatus}
+      onUpdatePriority={(field, value) => updatePriority(field, value)}
+      onToggleTarget={() => toggleTarget()}
       onNavigateToAIEvaluation={(oppId) => navigate(`/ai-evaluation/${oppId}`)}
       onNavigateBack={() => navigate('/ost-tree')}
     />
@@ -80,7 +86,7 @@ function AIEvaluationPage() {
 
   // Load opportunity data for the left column
   const {
-    opportunity, evidence, hypotheses, topExperiments,
+    opportunity, evidence, solutions, topExperiments,
   } = useOpportunityDetail(opportunityId ?? '')
 
   if (!currentProject || !opportunityId) {
@@ -101,10 +107,10 @@ function AIEvaluationPage() {
       onNavigateBack={() => navigate(`/opportunity/${opportunityId}`)}
       ostSummary={{
         evidenceCount: evidence.length,
-        hypotheses: hypotheses.map(h => ({
-          description: h.description,
-          status: h.status,
-          experimentCount: h.experiments.length,
+        solutions: solutions.map(s => ({
+          name: s.name,
+          assumptionCount: s.assumptions.length,
+          experimentCount: s.assumptions.reduce((sum, a) => sum + a.experiments.length, 0),
         })),
         topExperiments: topExperiments.map(t => ({
           description: t.experiment.description,

@@ -14,12 +14,12 @@ export type WizardPhase =
   | 'constraints'
   | 'opportunities'
   | 'evidence'
-  | 'hypotheses'
+  | 'solutions'
   | 'feedback'
   | 'done'
 
 const PHASE_ORDER: WizardPhase[] = [
-  'challenge', 'target', 'constraints', 'opportunities', 'evidence', 'hypotheses', 'feedback', 'done',
+  'challenge', 'target', 'constraints', 'opportunities', 'evidence', 'solutions', 'feedback', 'done',
 ]
 
 // ─── Hardcoded questions per phase ────────────────────────────────────────────
@@ -30,7 +30,7 @@ const QUESTIONS: Record<WizardPhase, string> = {
   constraints: '¿Qué restricciones importantes tienen? (presupuesto, tecnología, tiempo, regulación, equipo...)',
   opportunities: 'Listá 2-3 oportunidades o problemas del usuario que quieras explorar. Separalas con punto y coma o una por línea.',
   evidence: '¿Qué evidencia tenés para estas oportunidades? (citas de usuarios, datos, observaciones). Si no tenés aún, escribí "ninguna por ahora".',
-  hypotheses: '¿Qué ideas de solución están considerando para estas oportunidades? Listá las que se te ocurran.',
+  solutions: '¿Qué ideas de solución están considerando para estas oportunidades? Listá las que se te ocurran.',
   feedback: '',
   done: '',
 }
@@ -44,7 +44,7 @@ const CONFIRMATIONS: Record<string, (input: string) => string> = {
     return `Registré ${count} oportunidad${count !== 1 ? 'es' : ''}. Ahora veamos la evidencia.`
   },
   evidence: () => 'Evidencia registrada.',
-  hypotheses: () => '¡Genial! Ya tengo todo para armar tu OST. Dame un momento para analizar y darte feedback...',
+  solutions: () => '¡Genial! Ya tengo todo para armar tu OST. Dame un momento para analizar y darte feedback...',
 }
 
 function parseItems(text: string): string[] {
@@ -120,7 +120,7 @@ export function useOSTWizard(projectId: string, projectName: string) {
         setPhase('done')
       } catch (err) {
         console.error('Feedback error:', err)
-        setMessages(prev => [...prev, msg('assistant', '¡Tu OST está armado! Podés verlo en la sección OST Tree. Revisá las oportunidades y agregá más evidencia para fortalecer tus hipótesis.')])
+        setMessages(prev => [...prev, msg('assistant', '¡Tu OST está armado! Podés verlo en la sección OST Tree. Revisá las oportunidades y agregá más evidencia para fortalecer tus soluciones.')])
         setPhase('done')
       }
     }
@@ -143,7 +143,7 @@ const PHASE_LABELS: Record<WizardPhase, string> = {
   constraints: 'Restricciones',
   opportunities: 'Oportunidades',
   evidence: 'Evidencia',
-  hypotheses: 'Hipótesis de solución',
+  solutions: 'Soluciones',
   feedback: 'Generando feedback...',
   done: 'Completado',
 }
@@ -234,7 +234,7 @@ async function savePhaseData(
         break
       }
 
-      case 'hypotheses': {
+      case 'solutions': {
         const items = parseItems(userText)
         const { data: opps } = await supabase
           .from('opportunities')
@@ -242,11 +242,11 @@ async function savePhaseData(
           .eq('project_id', projectId)
           .limit(1)
         if (opps?.[0]) {
-          for (const desc of items) {
-            await supabase.from('hypotheses').insert({
+          for (const name of items) {
+            await supabase.from('solutions').insert({
               opportunity_id: opps[0].id,
-              description: desc,
-              status: 'to do',
+              name,
+              description: '',
             })
           }
         }
@@ -270,7 +270,7 @@ Acabo de completar el OST inicial del proyecto "${projectName}". Acá está lo q
 **Restricciones:** ${collected.constraints || 'No definidas'}
 **Oportunidades:** ${collected.opportunities || 'No definidas'}
 **Evidencia:** ${collected.evidence || 'Ninguna aún'}
-**Hipótesis de solución:** ${collected.hypotheses || 'Ninguna aún'}
+**Soluciones propuestas:** ${collected.solutions || 'Ninguna aún'}
 
 Dame feedback breve (máximo 5 oraciones) sobre:
 1. Qué está bien armado

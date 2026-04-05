@@ -34,14 +34,14 @@ export const OST_COLORS = {
     label: 'Evidencia',
     hex: '#06b6d4',
   },
-  hypothesis: {
+  solution: {
     text: 'text-indigo-400',
     textBright: 'text-indigo-300',
     bg: 'bg-indigo-500/10',
     bgSolid: 'bg-indigo-600',
     border: 'border-indigo-500/20',
     dot: 'bg-indigo-500',
-    label: 'Hipótesis',
+    label: 'Solución',
     hex: '#6366f1',
   },
   experiment: {

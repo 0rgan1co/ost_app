@@ -19,8 +19,10 @@ export interface KanbanExperiment {
   endDate: string | null
   reviewCycle: string
   // Traceability
-  hypothesisId: string
-  hypothesisDescription: string
+  assumptionId: string
+  assumptionDescription: string
+  solutionId: string
+  solutionName: string
   opportunityId: string
   opportunityName: string
   projectName: string
@@ -53,23 +55,37 @@ export function useAllExperiments(projectId: string | undefined) {
     const oppIds = opps.map(o => o.id)
     const oppMap = new Map(opps.map(o => [o.id, o.name]))
 
-    const { data: hyps } = await supabase
-      .from('hypotheses')
-      .select('id, opportunity_id, description')
+    // Fetch solutions for these opportunities
+    const { data: sols } = await supabase
+      .from('solutions')
+      .select('id, opportunity_id, name')
       .in('opportunity_id', oppIds)
 
-    if (!hyps?.length) { setExperiments([]); setLoading(false); return }
+    if (!sols?.length) { setExperiments([]); setLoading(false); return }
 
-    const hypIds = hyps.map(h => h.id)
-    const hypMap = new Map(hyps.map(h => [h.id, h]))
+    const solIds = sols.map(s => s.id)
+    const solMap = new Map(sols.map(s => [s.id, s]))
 
+    // Fetch assumptions for these solutions
+    const { data: assumptions } = await supabase
+      .from('assumptions')
+      .select('id, solution_id, description')
+      .in('solution_id', solIds)
+
+    if (!assumptions?.length) { setExperiments([]); setLoading(false); return }
+
+    const assIds = assumptions.map(a => a.id)
+    const assMap = new Map(assumptions.map(a => [a.id, a]))
+
+    // Fetch experiments for these assumptions
     const { data: exps } = await supabase
       .from('experiments')
       .select('*')
-      .in('hypothesis_id', hypIds)
+      .in('assumption_id', assIds)
 
     const mapped: KanbanExperiment[] = (exps ?? []).map(e => {
-      const hyp = hypMap.get(e.hypothesis_id)
+      const assumption = assMap.get(e.assumption_id)
+      const solution = assumption ? solMap.get(assumption.solution_id) : null
       return {
         id: e.id,
         description: e.description,
@@ -86,10 +102,12 @@ export function useAllExperiments(projectId: string | undefined) {
         startDate: e.start_date ?? null,
         endDate: e.end_date ?? null,
         reviewCycle: e.review_cycle ?? '',
-        hypothesisId: e.hypothesis_id,
-        hypothesisDescription: hyp?.description ?? '',
-        opportunityId: hyp?.opportunity_id ?? '',
-        opportunityName: oppMap.get(hyp?.opportunity_id ?? '') ?? '',
+        assumptionId: e.assumption_id,
+        assumptionDescription: assumption?.description ?? '',
+        solutionId: solution?.id ?? '',
+        solutionName: solution?.name ?? '',
+        opportunityId: solution?.opportunity_id ?? '',
+        opportunityName: oppMap.get(solution?.opportunity_id ?? '') ?? '',
         projectName: project?.name ?? '',
       }
     }).sort((a, b) => b.score - a.score)

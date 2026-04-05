@@ -3,14 +3,15 @@ import {
   ChevronDown,
   ChevronRight,
   CheckCircle2,
-  Clock,
-  PlayCircle,
+  XCircle,
+  Circle,
   Plus,
   Trash2,
 } from 'lucide-react'
 import type {
-  Hypothesis,
-  HypothesisStatus,
+  Assumption,
+  AssumptionCategory,
+  AssumptionStatus,
   Experiment,
   ExperimentStatus,
   ExperimentType,
@@ -18,31 +19,24 @@ import type {
 } from '../../../types'
 import { ExperimentCard } from './ExperimentCard'
 
-// ─── Status config ────────────────────────────────────────────────────────────
+// ─── Category config ─────────────────────────────────────────────────────────
 
-const HYPOTHESIS_STATUS_CONFIG: Record<
-  HypothesisStatus,
-  { label: string; color: string; icon: React.ReactNode; next: HypothesisStatus | null }
-> = {
-  'to do': {
-    label: 'Pendiente',
-    color: 'text-slate-300 bg-slate-700',
-    icon: <Clock size={11} />,
-    next: 'en curso',
-  },
-  'en curso': {
-    label: 'En curso',
-    color: 'text-amber-400 bg-amber-500/15',
-    icon: <PlayCircle size={11} />,
-    next: 'terminada',
-  },
-  'terminada': {
-    label: 'Terminada',
-    color: 'text-green-400 bg-green-500/15',
-    icon: <CheckCircle2 size={11} />,
-    next: null,
-  },
+const CATEGORY_CONFIG: Record<AssumptionCategory, { label: string; color: string }> = {
+  deseabilidad: { label: 'Deseabilidad', color: 'text-blue-400 bg-blue-400/15 ring-1 ring-blue-400/30' },
+  viabilidad:   { label: 'Viabilidad',   color: 'text-green-400 bg-green-400/15 ring-1 ring-green-400/30' },
+  factibilidad: { label: 'Factibilidad', color: 'text-amber-400 bg-amber-400/15 ring-1 ring-amber-400/30' },
+  usabilidad:   { label: 'Usabilidad',   color: 'text-purple-400 bg-purple-400/15 ring-1 ring-purple-400/30' },
 }
+
+// ─── Status config ───────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<AssumptionStatus, { label: string; icon: React.ReactNode; color: string }> = {
+  pendiente:  { label: 'Pendiente',   icon: <Circle size={11} />,        color: 'text-slate-400 bg-slate-700' },
+  validado:   { label: 'Validado',    icon: <CheckCircle2 size={11} />,  color: 'text-green-400 bg-green-500/15' },
+  invalidado: { label: 'Invalidado',  icon: <XCircle size={11} />,       color: 'text-red-400 bg-red-500/15' },
+}
+
+// ─── Add Experiment Form ─────────────────────────────────────────────────────
 
 const EFFORT_IMPACT_OPTIONS: EffortImpact[] = ['bajo', 'medio', 'alto']
 const EXPERIMENT_TYPES: ExperimentType[] = [
@@ -60,10 +54,8 @@ const EXPERIMENT_TYPE_LABELS: Record<ExperimentType, string> = {
   otro:              'Otro',
 }
 
-// ─── Add Experiment Form ──────────────────────────────────────────────────────
-
 interface AddExperimentFormProps {
-  onAdd: (data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>) => void
+  onAdd: (data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>) => void
   onCancel: () => void
 }
 
@@ -110,12 +102,12 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
 
       {/* Description */}
       <div>
-        <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-1.5">Descripción</label>
+        <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-1.5">Descripcion</label>
         <textarea
           autoFocus
           value={description}
           onChange={e => setDescription(e.target.value)}
-          placeholder="¿Qué vas a hacer y por qué?"
+          placeholder="Que vas a hacer y por que?"
           rows={2}
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
@@ -128,11 +120,11 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
 
       {/* Success criterion */}
       <div>
-        <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-1.5">Criterio de éxito</label>
+        <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-1.5">Criterio de exito</label>
         <textarea
           value={successCriterion}
           onChange={e => setSuccessCriterion(e.target.value)}
-          placeholder="¿Cómo sabrás que el experimento tuvo éxito?"
+          placeholder="Como sabras que el experimento tuvo exito?"
           rows={2}
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
@@ -145,7 +137,6 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
 
       {/* Effort / Impact */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {/* Effort */}
         <div>
           <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-2">Esfuerzo</label>
           <div className="flex gap-1.5">
@@ -169,7 +160,6 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
             ))}
           </div>
         </div>
-        {/* Impact */}
         <div>
           <label className="block text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-2">Impacto</label>
           <div className="flex gap-1.5">
@@ -212,32 +202,38 @@ function AddExperimentForm({ onAdd, onCancel }: AddExperimentFormProps) {
             text-white text-sm font-semibold rounded-lg transition-colors font-sans
           "
         >
-          Añadir experimento
+          Anadir experimento
         </button>
       </div>
     </form>
   )
 }
 
-// ─── Result Modal ─────────────────────────────────────────────────────────────
+// ─── Result Input ────────────────────────────────────────────────────────────
 
-interface ResultModalProps {
+interface ResultInputProps {
+  targetStatus: 'validado' | 'invalidado'
   onConfirm: (result: string) => void
   onCancel: () => void
 }
 
-function ResultModal({ onConfirm, onCancel }: ResultModalProps) {
+function ResultInput({ targetStatus, onConfirm, onCancel }: ResultInputProps) {
   const [result, setResult] = useState('')
+  const label = targetStatus === 'validado' ? 'validado' : 'invalidado'
   return (
     <div className="mt-3 bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
       <p className="text-sm text-slate-300 font-sans">
-        Registra el resultado de la hipótesis:
+        Registra el resultado para marcar como <strong className="text-slate-100">{label}</strong>:
       </p>
       <textarea
         autoFocus
         value={result}
         onChange={e => setResult(e.target.value)}
-        placeholder="¿Qué aprendiste? ¿Se validó la hipótesis?"
+        placeholder={
+          targetStatus === 'validado'
+            ? 'Que evidencia confirma este supuesto?'
+            : 'Que evidencia refuta este supuesto?'
+        }
         rows={3}
         className="
           w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2
@@ -258,10 +254,14 @@ function ResultModal({ onConfirm, onCancel }: ResultModalProps) {
           type="button"
           disabled={!result.trim()}
           onClick={() => onConfirm(result.trim())}
-          className="
-            px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed
+          className={`
+            px-4 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed
             text-white text-sm font-semibold rounded-lg transition-colors font-sans
-          "
+            ${targetStatus === 'validado'
+              ? 'bg-green-600 hover:bg-green-700'
+              : 'bg-red-600 hover:bg-red-700'
+            }
+          `}
         >
           Confirmar
         </button>
@@ -270,95 +270,100 @@ function ResultModal({ onConfirm, onCancel }: ResultModalProps) {
   )
 }
 
-// ─── HypothesisCard ───────────────────────────────────────────────────────────
+// ─── AssumptionCard ──────────────────────────────────────────────────────────
 
-interface HypothesisCardProps {
-  hypothesis: Hypothesis
-  onChangeStatus?: (id: string, status: HypothesisStatus, result?: string) => void
+interface AssumptionCardProps {
+  assumption: Assumption
+  onChangeStatus?: (id: string, status: AssumptionStatus, result?: string) => void
   onDelete?: (id: string) => void
   onAddExperiment?: (
-    hypothesisId: string,
-    data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>
+    assumptionId: string,
+    data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) => void
   onChangeExperimentStatus?: (id: string, status: ExperimentStatus, result?: string) => void
 }
 
-export function HypothesisCard({
-  hypothesis,
+export function AssumptionCard({
+  assumption,
   onChangeStatus,
   onDelete,
   onAddExperiment,
   onChangeExperimentStatus,
-}: HypothesisCardProps) {
+}: AssumptionCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [showExperimentForm, setShowExperimentForm] = useState(false)
-  const [showResultModal, setShowResultModal] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<'validado' | 'invalidado' | null>(null)
 
-  const statusCfg = HYPOTHESIS_STATUS_CONFIG[hypothesis.status]
-
-  function handleStatusAdvance() {
-    if (!statusCfg.next) return
-    if (statusCfg.next === 'terminada') {
-      setShowResultModal(true)
-    } else {
-      onChangeStatus?.(hypothesis.id, statusCfg.next)
-    }
-  }
+  const categoryCfg = CATEGORY_CONFIG[assumption.category]
+  const statusCfg = STATUS_CONFIG[assumption.status]
 
   function handleResultConfirm(result: string) {
-    onChangeStatus?.(hypothesis.id, 'terminada', result)
-    setShowResultModal(false)
+    if (!pendingStatus) return
+    onChangeStatus?.(assumption.id, pendingStatus, result)
+    setPendingStatus(null)
   }
 
   function handleAddExperiment(
-    data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>
+    data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) {
-    onAddExperiment?.(hypothesis.id, data)
+    onAddExperiment?.(assumption.id, data)
     setShowExperimentForm(false)
     setExpanded(true)
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl overflow-hidden">
       {/* Header row */}
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-3 p-3">
         {/* Expand toggle */}
         <button
           onClick={() => setExpanded(e => !e)}
           className="flex-shrink-0 mt-0.5 text-slate-500 hover:text-slate-300 transition-colors"
         >
-          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </button>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-slate-200 leading-relaxed font-sans">
-            {hypothesis.description}
+          <p className="text-sm text-slate-200 leading-relaxed font-['Nunito_Sans']">
+            {assumption.description}
           </p>
 
-          {/* Status + experiment count */}
+          {/* Category + Status + experiment count */}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className={`flex items-center gap-1 text-[11px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded-md ${statusCfg.color}`}>
+            <span className={`text-[10px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded-md ${categoryCfg.color}`}>
+              {categoryCfg.label}
+            </span>
+            <span className={`flex items-center gap-1 text-[10px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded-md ${statusCfg.color}`}>
               {statusCfg.icon}
               {statusCfg.label}
             </span>
-            <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-400">
-              {hypothesis.experiments.length} experimento{hypothesis.experiments.length !== 1 ? 's' : ''}
+            <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500">
+              {assumption.experiments.length} exp.
             </span>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          {/* Advance status */}
-          {onChangeStatus && statusCfg.next && (
-            <button
-              onClick={handleStatusAdvance}
-              title={`Pasar a ${statusCfg.next}`}
-              className="p-1.5 text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all"
-            >
-              <ChevronRight size={14} />
-            </button>
+          {/* Status controls — only if pendiente */}
+          {onChangeStatus && assumption.status === 'pendiente' && (
+            <>
+              <button
+                onClick={() => setPendingStatus('validado')}
+                title="Marcar validado"
+                className="p-1.5 text-slate-500 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
+              >
+                <CheckCircle2 size={13} />
+              </button>
+              <button
+                onClick={() => setPendingStatus('invalidado')}
+                title="Marcar invalidado"
+                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+              >
+                <XCircle size={13} />
+              </button>
+            </>
           )}
           {/* Add experiment */}
           {onAddExperiment && (
@@ -367,49 +372,58 @@ export function HypothesisCard({
                 setShowExperimentForm(f => !f)
                 if (!expanded) setExpanded(true)
               }}
-              title="Añadir experimento"
+              title="Anadir experimento"
               className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
             >
-              <Plus size={14} />
+              <Plus size={13} />
             </button>
           )}
           {/* Delete */}
           {onDelete && (
             <button
-              onClick={() => onDelete(hypothesis.id)}
-              title="Eliminar hipótesis"
+              onClick={() => onDelete(assumption.id)}
+              title="Eliminar supuesto"
               className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
             >
-              <Trash2 size={14} />
+              <Trash2 size={13} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Result (if finished) */}
-      {hypothesis.status === 'terminada' && hypothesis.result && (
-        <div className="mx-4 mb-3 bg-green-500/5 border border-green-500/20 rounded-lg p-3">
-          <p className="text-[11px] font-['IBM_Plex_Mono'] text-green-500/70 mb-1">Resultado</p>
-          <p className="text-sm text-slate-300 font-sans">{hypothesis.result}</p>
+      {/* Result (if validated/invalidated) */}
+      {assumption.status !== 'pendiente' && assumption.result && (
+        <div className={`mx-3 mb-3 rounded-lg p-3 ${
+          assumption.status === 'validado'
+            ? 'bg-green-500/5 border border-green-500/20'
+            : 'bg-red-500/5 border border-red-500/20'
+        }`}>
+          <p className={`text-[10px] font-['IBM_Plex_Mono'] mb-1 ${
+            assumption.status === 'validado' ? 'text-green-500/70' : 'text-red-500/70'
+          }`}>
+            Resultado
+          </p>
+          <p className="text-sm text-slate-300 font-['Nunito_Sans']">{assumption.result}</p>
         </div>
       )}
 
-      {/* Result modal */}
-      {showResultModal && (
-        <div className="mx-4 mb-4">
-          <ResultModal
+      {/* Result input modal */}
+      {pendingStatus && (
+        <div className="mx-3 mb-3">
+          <ResultInput
+            targetStatus={pendingStatus}
             onConfirm={handleResultConfirm}
-            onCancel={() => setShowResultModal(false)}
+            onCancel={() => setPendingStatus(null)}
           />
         </div>
       )}
 
       {/* Experiments (expanded) */}
       {expanded && (
-        <div className="border-t border-slate-800">
+        <div className="border-t border-slate-700/50">
           {/* Add experiment form */}
           {showExperimentForm && (
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-3 border-b border-slate-700/50">
               <AddExperimentForm
                 onAdd={handleAddExperiment}
                 onCancel={() => setShowExperimentForm(false)}
@@ -418,22 +432,22 @@ export function HypothesisCard({
           )}
 
           {/* Experiment list */}
-          {hypothesis.experiments.length === 0 && !showExperimentForm ? (
-            <div className="py-6 text-center">
-              <p className="text-slate-500 text-sm font-sans">Sin experimentos</p>
+          {assumption.experiments.length === 0 && !showExperimentForm ? (
+            <div className="py-4 text-center">
+              <p className="text-slate-500 text-xs font-['Nunito_Sans']">Sin experimentos</p>
               {onAddExperiment && (
                 <button
                   onClick={() => setShowExperimentForm(true)}
-                  className="mt-2 text-xs text-red-400 hover:text-red-300 flex items-center gap-1 mx-auto font-sans"
+                  className="mt-2 text-xs text-red-400 hover:text-red-300 flex items-center gap-1 mx-auto font-['Nunito_Sans']"
                 >
-                  <Plus size={12} />
-                  Añadir el primer experimento
+                  <Plus size={11} />
+                  Anadir el primer experimento
                 </button>
               )}
             </div>
           ) : (
-            <div className="p-4 space-y-3">
-              {hypothesis.experiments.map(exp => (
+            <div className="p-3 space-y-2">
+              {assumption.experiments.map(exp => (
                 <ExperimentCard
                   key={exp.id}
                   experiment={exp}
