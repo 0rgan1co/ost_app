@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Quote, BarChart2, Eye, Plus, Trash2, X } from 'lucide-react'
 import type { Evidence, EvidenceType } from '../../../types'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
+import { UndoToast } from '../../../components/UndoToast'
+import { supabase } from '../../../lib/supabase'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -205,11 +208,49 @@ interface EvidenceSectionProps {
 
 export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: EvidenceSectionProps) {
   const [showForm, setShowForm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [undoData, setUndoData] = useState<{ type: string; row: Evidence } | null>(null)
 
   function handleAdd(data: Omit<Evidence, 'id' | 'createdAt'>) {
     onAddEvidence?.(data)
     setShowForm(false)
   }
+
+  function handleDeleteRequest(id: string) {
+    setDeleteTarget(id)
+  }
+
+  function handleConfirmDelete() {
+    if (!deleteTarget) return
+    // Save the evidence data before deleting for undo
+    const targetEvidence = evidence.find(e => e.id === deleteTarget)
+    if (targetEvidence) {
+      setUndoData({ type: 'evidence', row: targetEvidence })
+    }
+    onDeleteEvidence?.(deleteTarget)
+    setDeleteTarget(null)
+  }
+
+  function handleCancelDelete() {
+    setDeleteTarget(null)
+  }
+
+  const handleUndo = useCallback(async () => {
+    if (!undoData) return
+    const { row } = undoData
+    await supabase.from('opportunity_evidence').insert({
+      id: row.id,
+      type: row.type,
+      content: row.content,
+      source: row.source,
+      created_at: row.createdAt,
+    })
+    setUndoData(null)
+  }, [undoData])
+
+  const handleUndoDismiss = useCallback(() => {
+    setUndoData(null)
+  }, [])
 
   return (
     <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-5">
@@ -261,10 +302,30 @@ export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: E
             <EvidenceItem
               key={e.id}
               evidence={e}
-              onDelete={onDeleteEvidence}
+              onDelete={onDeleteEvidence ? handleDeleteRequest : undefined}
             />
           ))}
         </div>
+      )}
+
+      {/* Confirm delete dialog */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Eliminar evidencia"
+        message="Esta acción no se puede deshacer. ¿Estás seguro?"
+        variant="danger"
+        confirmLabel="Eliminar"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      {/* Undo toast */}
+      {undoData && (
+        <UndoToast
+          message="Evidencia eliminada"
+          onUndo={handleUndo}
+          onDismiss={handleUndoDismiss}
+        />
       )}
     </section>
   )

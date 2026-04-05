@@ -10,6 +10,7 @@ import { CreateOpportunityModal } from './components/CreateOpportunityModal'
 import { WorkflowGuide } from './components/WorkflowGuide'
 import { AgentGuide } from './components/AgentGuide'
 import { ExperimentSeedModal } from '../../components/ExperimentSeedModal'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { Project } from '../../types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -149,6 +150,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null)
   const [openExpId, setOpenExpId] = useState<string | null>(null)
   const [openExpData, setOpenExpData] = useState<any>(null)
   const [assignedMap, setAssignedMap] = useState<Record<string, string | null>>({})
@@ -262,8 +264,23 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   }, [createOpportunity])
 
   const handleNavigateToDetail = useCallback((id: string) => {
-    navigate(`/opportunity/${id}`)
-  }, [navigate])
+    navigate(`/projects/${project.id}/opportunity/${id}`)
+  }, [navigate, project.id])
+
+  const handleArchiveRequest = useCallback((id: string) => {
+    setArchiveTarget(id)
+  }, [])
+
+  const handleConfirmArchive = useCallback(() => {
+    if (archiveTarget) {
+      archiveOpportunity(archiveTarget)
+      setArchiveTarget(null)
+    }
+  }, [archiveTarget, archiveOpportunity])
+
+  const handleCancelArchive = useCallback(() => {
+    setArchiveTarget(null)
+  }, [])
 
   // Edit outcome (saves to business context northStar)
   const handleEditOutcome = useCallback(async (text: string) => {
@@ -350,7 +367,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const sharedViewProps = {
     selectedId,
     onSelect: handleSelect,
-    onArchive: archiveOpportunity,
+    onArchive: handleArchiveRequest,
     onRestore: restoreOpportunity,
   }
 
@@ -485,6 +502,17 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         opportunityCount={activeCount}
         solutionCount={totalSolutions}
         experimentCount={totalExperiments}
+      />
+
+      {/* ── Archive confirmation ────────────────────────────────────────────── */}
+      <ConfirmDialog
+        isOpen={archiveTarget !== null}
+        title="Archivar oportunidad"
+        message="La oportunidad será archivada. Podrás restaurarla después."
+        variant="warning"
+        confirmLabel="Archivar"
+        onConfirm={handleConfirmArchive}
+        onCancel={handleCancelArchive}
       />
     </div>
   )
