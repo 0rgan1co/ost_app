@@ -14,6 +14,7 @@ export function ProjectsPage() {
     loading,
     availableUsers,
     createProject,
+    renameProject,
     deleteProject,
     toggleVisibility,
     addMember,
@@ -47,6 +48,7 @@ export function ProjectsPage() {
         navigate(`/projects/${id}/ost-tree`)
       }}
       onCreateProject={createProject}
+      onRenameProject={renameProject}
       onDeleteProject={deleteProject}
       onToggleVisibility={toggleVisibility}
       onAddMember={addMember}

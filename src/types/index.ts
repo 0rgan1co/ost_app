@@ -81,6 +81,9 @@ export interface ProjectsProps {
   /** Create a new project with name and optional description. Returns project ID on success. */
   onCreateProject: (data: { name: string; description: string }) => Promise<string | false> | void
 
+  /** Rename a project (admin only) */
+  onRenameProject?: (projectId: string, name: string) => void
+
   /** Delete a project (admin only) */
   onDeleteProject: (projectId: string) => void
 
