@@ -114,12 +114,8 @@ function parseEvaluationText(raw: string, id: string, opportunityId: string, cre
 
 function mapDBMessageToConversation(msg: DBMessage): ConversationMessage {
   // Detect suggestion pattern in assistant messages
-  const hasSuggestion =
-    msg.role === 'assistant' &&
-    (msg.content.toLowerCase().includes('sugerencia') ||
-      msg.content.toLowerCase().includes('te sugiero') ||
-      msg.content.toLowerCase().includes('recomiendo agregar') ||
-      msg.content.toLowerCase().includes('podrías agregar'))
+  // Show "Aplicar" on ALL assistant messages (any response may contain actionable suggestions)
+  const hasSuggestion = msg.role === 'assistant' && msg.content.length > 50
 
   return {
     id: msg.id,
