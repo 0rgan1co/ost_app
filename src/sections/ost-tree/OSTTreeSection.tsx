@@ -134,7 +134,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch,
   } = useOSTTree(project.id)
 
-  const { context: bizContext } = useBusinessContext(project.id)
+  const { context: bizContext, refetch: refetchContext } = useBusinessContext(project.id)
 
   const businessContextSummary = (bizContext.northStar.value || bizContext.targetSegment.value)
     ? {
@@ -264,7 +264,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     } else {
       await supabase.from('business_context').insert({ project_id: project.id, content })
     }
-  }, [project.id])
+    refetchContext()
+  }, [project.id, refetchContext])
 
   // Rename hypothesis
   const handleRenameHypothesis = useCallback(async (id: string, text: string) => {
