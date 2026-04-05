@@ -354,19 +354,22 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         <div className="flex items-center gap-3 flex-shrink-0">
           <ViewToggle mode={viewMode} onChange={setViewMode} />
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              const firstOpp = activeOpps[0]
+              if (firstOpp) navigate(`/ai-evaluation/${firstOpp.id}`)
+              else navigate('/ai-evaluation')
+            }}
             className="
               flex items-center gap-2 px-4 py-2 rounded-xl
-              bg-red-600 hover:bg-red-500 text-white
+              bg-violet-600 hover:bg-violet-500 text-white
               font-[Nunito_Sans] font-semibold text-sm
-              transition-colors shadow-sm shadow-red-900/30
+              transition-colors shadow-sm shadow-violet-900/30
             "
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 3l1.5 4.5H18l-3.5 2.5L16 14.5 12 11.5 8 14.5l1.5-4.5L6 7.5h4.5z" />
             </svg>
-            Nueva oportunidad
+            Evaluar OST con IA
           </button>
         </div>
       </div>
