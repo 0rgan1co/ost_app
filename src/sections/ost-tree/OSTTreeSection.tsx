@@ -295,7 +295,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   // Quick-add hypothesis from tree
   const handleQuickAddHypothesis = useCallback(async (opportunityId: string) => {
-    const name = prompt('Nombre de la solución (hipótesis):')
+    const name = prompt('Escribí la hipótesis: "Si hacemos [acción], vamos a obtener [resultado]"')
     if (!name?.trim()) return
     await supabase.from('hypotheses').insert({
       opportunity_id: opportunityId,
