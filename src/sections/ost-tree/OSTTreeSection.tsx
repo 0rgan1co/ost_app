@@ -320,7 +320,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   // Quick-add solution from tree
   const handleQuickAddSolution = useCallback(async (opportunityId: string) => {
-    const name = prompt('Nombre de la solución:')
+    const name = prompt('Escribí la solución (hipótesis): "Si hacemos [acción], vamos a obtener [resultado]"')
     if (!name?.trim()) return
     await supabase.from('solutions').insert({
       opportunity_id: opportunityId,
@@ -378,21 +378,9 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
         <div className="flex items-center gap-3 flex-shrink-0">
           <ViewToggle mode={viewMode} onChange={setViewMode} />
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="
-              flex items-center gap-2 px-4 py-2 rounded-xl
-              bg-red-600 hover:bg-red-500 text-white
-              font-[Nunito_Sans] font-semibold text-sm
-              transition-colors shadow-sm shadow-red-900/30
-            "
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Nueva oportunidad
-          </button>
+          <span className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 font-[Nunito_Sans] text-xs">
+            Gael o Rick ¿pueden tomarlo?
+          </span>
         </div>
       </div>
 
