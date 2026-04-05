@@ -11,7 +11,9 @@ export type OpportunityStatus = 'activa' | 'descartada'
 
 export type EvidenceType = 'cita' | 'hecho' | 'observacion'
 
-export type HypothesisStatus = 'to do' | 'en curso' | 'terminada'
+export type AssumptionCategory = 'deseabilidad' | 'viabilidad' | 'factibilidad' | 'usabilidad'
+
+export type AssumptionStatus = 'pendiente' | 'validado' | 'invalidado'
 
 export type ExperimentType =
   | 'entrevista'
@@ -48,6 +50,7 @@ export interface Project {
   id: string
   name: string
   description: string
+  isPublic: boolean
   currentUserRole: ProjectRole
   opportunityCount: number
   lastActivityAt: string // ISO date string
@@ -60,20 +63,38 @@ export interface InviteState {
   status: InviteStatus
 }
 
+export interface AvailableUser {
+  id: string
+  fullName: string | null
+  email: string
+  avatarUrl: string | null
+}
+
 export interface ProjectsProps {
   currentUser: User
   projects: Project[]
   roleOptions: ProjectRole[]
-  inviteState: InviteState
 
   /** Navigate to the OST Tree of the selected project */
   onSelectProject: (projectId: string) => void
 
-  /** Create a new project with name and optional description */
-  onCreateProject: (data: { name: string; description: string }) => Promise<boolean> | void
+  /** Create a new project with name and optional description. Returns project ID on success. */
+  onCreateProject: (data: { name: string; description: string }) => Promise<string | false> | void
 
-  /** Invite a new member to a project by email and role (admin only) */
-  onInviteMember: (projectId: string, email: string, role: ProjectRole) => void
+  /** Delete a project (admin only) */
+  onDeleteProject: (projectId: string) => void
+
+  /** Toggle project visibility between public and private */
+  onToggleVisibility: (projectId: string, isPublic: boolean) => void
+
+  /** Available users that can be added to projects */
+  availableUsers: User[]
+
+  /** Add a member to a project by userId and role (admin only) */
+  onAddMember: (projectId: string, userId: string, role: ProjectRole) => void
+
+  /** Invite a viewer by email — no account needed */
+  onInviteViewer: (projectId: string, email: string) => Promise<boolean>
 
   /** Change the role of an existing member (admin only) */
   onChangeMemberRole: (projectId: string, memberId: string, role: ProjectRole) => void
@@ -91,17 +112,20 @@ export interface OSTTreeProject {
 
 export interface Opportunity {
   id: string
-  parentId: string | null
   title: string
   description: string
   status: OpportunityStatus
   isArchived: boolean
   isExpanded: boolean
   evidenceCount: number
-  hypothesisCount: number
-  activeHypothesisCount: number
+  solutionCount: number
   experimentCount: number
   activeExperimentCount: number
+  priorityImpact: EffortImpact | null
+  priorityFrequency: EffortImpact | null
+  priorityIntensity: EffortImpact | null
+  priorityCapacity: EffortImpact | null
+  isTarget: boolean
   createdAt: string
 }
 
@@ -112,21 +136,21 @@ export interface OSTTreeEvidence {
   source: string
 }
 
-export interface HypothesisSummary {
+export interface SolutionSummary {
   id: string
-  title: string
-  status: HypothesisStatus
+  name: string
+  assumptionCount: number
+  experimentCount: number
 }
 
 export interface OSTTreeProps {
   project: OSTTreeProject
   opportunities: Opportunity[]
   recentEvidence: Record<string, OSTTreeEvidence[]>
-  hypothesesSummary: Record<string, HypothesisSummary[]>
+  solutionsSummary: Record<string, SolutionSummary[]>
   onViewModeChange?: (mode: 'list' | 'tree') => void
-  onToggleExpand?: (opportunityId: string) => void
   onSelectOpportunity?: (opportunityId: string) => void
-  onCreateOpportunity?: (parentId: string | null) => void
+  onCreateOpportunity?: () => void
   onChangeStatus?: (opportunityId: string, status: OpportunityStatus) => void
   onArchiveOpportunity?: (opportunityId: string) => void
   onNavigateToDetail?: (opportunityId: string) => void
@@ -145,6 +169,11 @@ export interface OpportunityDetail {
   description: string
   outcome: string
   status: OpportunityStatus
+  priorityImpact: EffortImpact | null
+  priorityFrequency: EffortImpact | null
+  priorityIntensity: EffortImpact | null
+  priorityCapacity: EffortImpact | null
+  isTarget: boolean
   createdAt: string
 }
 
@@ -158,7 +187,7 @@ export interface Evidence {
 
 export interface Experiment {
   id: string
-  hypothesisId: string
+  assumptionId: string
   type: ExperimentType
   description: string
   successCriterion: string // mandatory, defined before executing
@@ -169,18 +198,30 @@ export interface Experiment {
   priorityScore: number // SCORE[impact] / SCORE[effort], calculated server-side
 }
 
-export interface Hypothesis {
+export interface Assumption {
   id: string
-  description: string // only field — no separate title
-  status: HypothesisStatus
-  result: string | null // recorded when status becomes 'terminada'
+  solutionId: string
+  description: string
+  category: AssumptionCategory
+  status: AssumptionStatus
+  result: string | null // recorded when status changes to validado/invalidado
   experiments: Experiment[]
+  createdAt: string
+}
+
+export interface Solution {
+  id: string
+  opportunityId: string
+  name: string
+  description: string
+  assumptions: Assumption[]
   createdAt: string
 }
 
 export interface TopExperiment {
   experiment: Experiment
-  hypothesisTitle: string
+  assumptionDescription: string
+  solutionName: string
   priorityScore: number
 }
 
@@ -188,20 +229,23 @@ export interface OpportunityDetailProps {
   project: DetailProject
   opportunity: OpportunityDetail
   evidence: Evidence[]
-  hypotheses: Hypothesis[]
+  solutions: Solution[]
   topExperiments: TopExperiment[]
   onUpdateOpportunity?: (id: string, data: Partial<OpportunityDetail>) => void
   onAddEvidence?: (data: Omit<Evidence, 'id' | 'createdAt'>) => void
   onDeleteEvidence?: (id: string) => void
-  onAddHypothesis?: (data: Pick<Hypothesis, 'description'>) => void
-  onChangeHypothesisStatus?: (id: string, status: HypothesisStatus, result?: string) => void
-  onDeleteHypothesis?: (id: string) => void
-  /** effort and impact are 'bajo' | 'medio' | 'alto' */
+  onAddSolution?: (data: { name: string; description?: string }) => void
+  onDeleteSolution?: (id: string) => void
+  onAddAssumption?: (solutionId: string, data: { description: string; category: AssumptionCategory }) => void
+  onChangeAssumptionStatus?: (id: string, status: AssumptionStatus, result?: string) => void
+  onDeleteAssumption?: (id: string) => void
   onAddExperiment?: (
-    hypothesisId: string,
-    data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>
+    assumptionId: string,
+    data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) => void
   onChangeExperimentStatus?: (id: string, status: ExperimentStatus, result?: string) => void
+  onUpdatePriority?: (field: string, value: EffortImpact) => void
+  onToggleTarget?: () => void
   onNavigateToAIEvaluation?: (opportunityId: string) => void
   onNavigateBack?: () => void
 }
@@ -269,9 +313,10 @@ export interface ContextField {
 }
 
 export interface BusinessContext {
-  northStar: ContextField      // Strategic north star / 12-month outcome
-  targetSegment: ContextField  // Target user: jobs, pains, gains
-  keyConstraints: ContextField // Technical, regulatory, business constraints
+  strategicChallenge: ContextField // What strategic challenge to tackle
+  northStar: ContextField          // Strategic north star / 12-month outcome
+  targetSegment: ContextField      // Target user: jobs, pains, gains
+  keyConstraints: ContextField     // Technical, regulatory, business constraints
 }
 
 export interface BusinessContextProps {

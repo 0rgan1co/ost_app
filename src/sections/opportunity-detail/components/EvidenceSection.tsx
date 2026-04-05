@@ -64,7 +64,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
       className="bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3"
     >
       {/* Type selector */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(['cita', 'hecho', 'observacion'] as EvidenceType[]).map(t => (
           <button
             key={t}
@@ -74,7 +74,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
               flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-['IBM_Plex_Mono'] transition-all
               ${type === t
                 ? EVIDENCE_COLORS[t] + ' ring-1 ring-current'
-                : 'text-slate-500 bg-slate-800 hover:bg-slate-700'
+                : 'text-slate-400 bg-slate-800 hover:bg-slate-700'
               }
             `}
           >
@@ -93,7 +93,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
         autoFocus
         className="
           w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-          text-sm text-slate-200 placeholder:text-slate-500
+          text-sm text-slate-200 placeholder:text-slate-400
           focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
           resize-none font-sans
         "
@@ -108,7 +108,7 @@ function AddEvidenceForm({ onAdd, onCancel }: AddEvidenceFormProps) {
           placeholder="Fuente (entrevista, documento, etc.)"
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2
-            text-sm text-slate-200 placeholder:text-slate-500
+            text-sm text-slate-200 placeholder:text-slate-400
             focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
             font-sans
           "
@@ -174,7 +174,7 @@ function EvidenceItem({ evidence, onDelete }: EvidenceItemProps) {
               — {evidence.source}
             </span>
           )}
-          <span className="text-[11px] text-slate-600 font-['IBM_Plex_Mono']">
+          <span className="text-[11px] text-slate-400 font-['IBM_Plex_Mono']">
             {formatDate(evidence.createdAt)}
           </span>
         </div>
@@ -185,7 +185,7 @@ function EvidenceItem({ evidence, onDelete }: EvidenceItemProps) {
         <button
           onClick={() => onDelete(evidence.id)}
           className={`
-            flex-shrink-0 p-1 rounded-md text-slate-600 hover:text-red-400 hover:bg-red-500/10
+            flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-red-400 hover:bg-red-500/10
             transition-all duration-150
             ${hovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
           `}
@@ -253,11 +253,11 @@ export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: E
   }, [])
 
   return (
-    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-slate-100 font-sans">Evidencia</h2>
+          <h2 className="text-base font-bold text-cyan-400 font-sans">Evidencia</h2>
           <span className="text-xs font-['IBM_Plex_Mono'] text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
             {evidence.length}
           </span>
@@ -292,7 +292,7 @@ export function EvidenceSection({ evidence, onAddEvidence, onDeleteEvidence }: E
       {evidence.length === 0 && !showForm ? (
         <div className="py-8 text-center">
           <p className="text-slate-500 text-sm font-sans">Sin evidencia registrada</p>
-          <p className="text-slate-600 text-xs mt-1 font-sans">
+          <p className="text-slate-400 text-xs mt-1 font-sans">
             Añade citas, hechos u observaciones para sustentar esta oportunidad
           </p>
         </div>

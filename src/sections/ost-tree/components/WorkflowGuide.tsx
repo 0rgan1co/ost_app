@@ -1,0 +1,74 @@
+import { Target, Search, Lightbulb, FlaskConical, ChevronRight } from 'lucide-react'
+
+interface WorkflowGuideProps {
+  hasOutcome: boolean
+  opportunityCount: number
+  solutionCount: number
+  experimentCount: number
+  onGoToContext: () => void
+  onCreateOpportunity: () => void
+  onGoToDetail: () => void
+}
+
+const STEPS = [
+  { icon: Target, label: 'Outcome', short: '1', activeColor: 'bg-red-500/10 text-red-400 border border-red-500/30' },
+  { icon: Search, label: 'Oportunidades', short: '2', activeColor: 'bg-orange-500/10 text-orange-400 border border-orange-500/30' },
+  { icon: Lightbulb, label: 'Soluciones', short: '3', activeColor: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30' },
+  { icon: FlaskConical, label: 'Experimentos', short: '4', activeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/30' },
+]
+
+export function WorkflowGuide({
+  hasOutcome,
+  opportunityCount,
+  solutionCount,
+  experimentCount,
+  onGoToContext,
+  onCreateOpportunity,
+  onGoToDetail,
+}: WorkflowGuideProps) {
+  let currentStep = 0
+  if (hasOutcome) currentStep = 1
+  if (opportunityCount > 0) currentStep = 2
+  if (solutionCount > 0) currentStep = 3
+  if (experimentCount > 0) currentStep = 4
+
+  const handlers = [onGoToContext, onCreateOpportunity, onGoToDetail, onGoToDetail]
+
+  return (
+    <div className="flex items-center mb-3">
+      {STEPS.map((step, idx) => {
+        const done = currentStep > idx
+        const active = currentStep === idx
+        const Icon = step.icon
+        return (
+          <div key={idx} className="flex items-center">
+            <button
+              onClick={handlers[idx]}
+              className={`
+                flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold font-[Nunito_Sans] transition-all
+                ${done
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : active
+                    ? `${step.activeColor} animate-pulse`
+                    : 'bg-slate-900 text-slate-500 border border-slate-800'
+                }
+              `}
+            >
+              <Icon size={12} />
+              <span className="hidden sm:inline">{step.label}</span>
+              <span className="sm:hidden">{step.short}</span>
+            </button>
+            {idx < STEPS.length - 1 && (
+              <ChevronRight size={14} className={`mx-1 flex-shrink-0 ${currentStep > idx ? 'text-green-500/40' : 'text-slate-700'}`} />
+            )}
+          </div>
+        )
+      })}
+      {currentStep < 4 && (
+        <span className="text-[10px] text-slate-500 font-['IBM_Plex_Mono'] ml-2">
+          {currentStep + 1}/4
+        </span>
+      )}
+    </div>
+  )
+}

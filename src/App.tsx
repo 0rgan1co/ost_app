@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthGuard } from './components/AuthGuard'
 import { ShellWrapper } from './components/ShellWrapper'
 import { LoginPage } from './pages/LoginPage'
@@ -9,14 +10,18 @@ import { ProjectLayout, useProjectFromRoute } from './layouts/ProjectLayout'
 import { OSTTreeSection } from './sections/ost-tree/OSTTreeSection'
 import { OpportunityDetailView } from './sections/opportunity-detail/OpportunityDetailView'
 import { AIEvaluationView } from './sections/ai-evaluation/AIEvaluationView'
-import { BusinessContextView } from './sections/business-context/BusinessContextView'
+// BusinessContextView now used inside BusinessContextPage
 import { useOpportunityDetail } from './hooks/use-opportunity-detail'
 import { useAIEvaluation } from './hooks/use-ai-evaluation'
-import { useBusinessContext } from './hooks/use-business-context'
 import { supabase } from './lib/supabase'
+import { SettingsPage } from './pages/SettingsPage'
+import { ExperimentsPage } from './pages/ExperimentsPage'
+import { ReviewsPage } from './pages/ReviewsPage'
+import { AIEvaluationSelectPage } from './pages/AIEvaluationSelectPage'
+import { BusinessContextPage } from './pages/BusinessContextPage'
 
 const Stub = ({ label }: { label: string }) => (
-  <div className="p-8 text-slate-400 font-sans">{label} — coming soon</div>
+  <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
 )
 
 function OSTTreePage() {
@@ -29,10 +34,12 @@ function OpportunityDetailPage() {
   const { project } = useProjectFromRoute()
   const navigate = useNavigate()
   const {
-    opportunity, evidence, hypotheses, topExperiments,
+    opportunity, evidence, solutions, topExperiments,
     updateOpportunity, addEvidence, deleteEvidence,
-    addHypothesis, changeHypothesisStatus, deleteHypothesis,
+    addSolution, deleteSolution,
+    addAssumption, changeAssumptionStatus, deleteAssumption,
     addExperiment, changeExperimentStatus,
+    updatePriority, toggleTarget,
   } = useOpportunityDetail(id ?? '')
 
   if (!opportunity) {
@@ -44,16 +51,20 @@ function OpportunityDetailPage() {
       project={{ id: project.id, name: project.name }}
       opportunity={opportunity}
       evidence={evidence}
-      hypotheses={hypotheses}
+      solutions={solutions}
       topExperiments={topExperiments}
       onUpdateOpportunity={updateOpportunity}
       onAddEvidence={addEvidence}
       onDeleteEvidence={deleteEvidence}
-      onAddHypothesis={addHypothesis}
-      onChangeHypothesisStatus={changeHypothesisStatus}
-      onDeleteHypothesis={deleteHypothesis}
+      onAddSolution={addSolution}
+      onDeleteSolution={deleteSolution}
+      onAddAssumption={addAssumption}
+      onChangeAssumptionStatus={changeAssumptionStatus}
+      onDeleteAssumption={deleteAssumption}
       onAddExperiment={addExperiment}
       onChangeExperimentStatus={changeExperimentStatus}
+      onUpdatePriority={(field, value) => updatePriority(field, value)}
+      onToggleTarget={() => toggleTarget()}
       onNavigateToAIEvaluation={(oppId) => navigate(`/projects/${project.id}/ai-evaluation/${oppId}`)}
       onNavigateBack={() => navigate(`/projects/${project.id}/ost-tree`)}
     />
@@ -69,6 +80,11 @@ function AIEvaluationPage() {
     evaluations, conversation, isEvaluating, isSendingMessage,
     evaluate, sendMessage, applySuggestion, executeActions,
   } = useAIEvaluation(opportunityId ?? '', project.id)
+
+  // Load opportunity data for the left column
+  const {
+    opportunity, evidence, solutions, topExperiments,
+  } = useOpportunityDetail(opportunityId ?? '')
 
   useEffect(() => {
     if (!opportunityId) return
@@ -87,7 +103,7 @@ function AIEvaluationPage() {
   return (
     <AIEvaluationView
       project={{ id: project.id, name: project.name }}
-      opportunity={{ id: opportunityId, title: oppTitle, status: 'activa' }}
+      opportunity={{ id: opportunityId, title: opportunity?.title ?? oppTitle, status: opportunity?.status ?? 'activa' }}
       evaluations={evaluations}
       conversation={conversation}
       isEvaluating={isEvaluating}
@@ -97,23 +113,24 @@ function AIEvaluationPage() {
       onApplySuggestion={applySuggestion}
       onExecuteActions={executeActions}
       onNavigateBack={() => navigate(`/projects/${project.id}/opportunity/${opportunityId}`)}
+      ostSummary={{
+        evidenceCount: evidence.length,
+        solutions: solutions.map(s => ({
+          name: s.name,
+          assumptionCount: s.assumptions.length,
+          experimentCount: s.assumptions.reduce((sum, a) => sum + a.experiments.length, 0),
+        })),
+        topExperiments: topExperiments.map(t => ({
+          description: t.experiment.description,
+          type: t.experiment.type,
+          score: t.priorityScore,
+        })),
+      }}
     />
   )
 }
 
-function BusinessContextPage() {
-  const { project } = useProjectFromRoute()
-  const { context, isSaving, saveField } = useBusinessContext(project.id)
-
-  return (
-    <BusinessContextView
-      project={{ id: project.id, name: project.name }}
-      context={context}
-      isSaving={isSaving}
-      onSaveField={saveField}
-    />
-  )
-}
+// BusinessContextPage is now imported from pages/BusinessContextPage.tsx
 
 function ProjectIndexRedirect() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -122,6 +139,7 @@ function ProjectIndexRedirect() {
 
 export function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter basename="/ost_app">
         <Routes>
@@ -154,7 +172,10 @@ export function App() {
             <Route path="opportunity/:id" element={<OpportunityDetailPage />} />
             <Route path="ai-evaluation/:opportunityId" element={<AIEvaluationPage />} />
             <Route path="business-context" element={<BusinessContextPage />} />
-            <Route path="settings" element={<Stub label="Settings" />} />
+            <Route path="experiments" element={<ExperimentsPage />} />
+            <Route path="reviews" element={<ReviewsPage />} />
+            <Route path="ai-evaluation" element={<AIEvaluationSelectPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
 
           {/* Top-level non-project routes */}
@@ -172,6 +193,7 @@ export function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ThemeProvider>
   )
 }
 

@@ -12,9 +12,12 @@ export function ProjectsPage() {
   const {
     projects,
     loading,
-    inviteState,
+    availableUsers,
     createProject,
-    inviteMember,
+    deleteProject,
+    toggleVisibility,
+    addMember,
+    inviteViewer,
     updateMemberRole,
     removeMember,
   } = useProjects(user!.id)
@@ -39,12 +42,15 @@ export function ProjectsPage() {
       currentUser={currentUser}
       projects={projects}
       roleOptions={[...ROLE_OPTIONS]}
-      inviteState={inviteState}
+      availableUsers={availableUsers}
       onSelectProject={(id) => {
         navigate(`/projects/${id}/ost-tree`)
       }}
       onCreateProject={createProject}
-      onInviteMember={inviteMember}
+      onDeleteProject={deleteProject}
+      onToggleVisibility={toggleVisibility}
+      onAddMember={addMember}
+      onInviteViewer={inviteViewer}
       onChangeMemberRole={updateMemberRole}
       onRemoveMember={removeMember}
     />

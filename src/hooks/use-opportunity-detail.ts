@@ -5,8 +5,10 @@ import type {
   OpportunityDetail,
   Evidence,
   EvidenceType,
-  Hypothesis,
-  HypothesisStatus,
+  Solution,
+  Assumption,
+  AssumptionCategory,
+  AssumptionStatus,
   Experiment,
   ExperimentStatus,
   ExperimentType,
@@ -32,6 +34,11 @@ interface RawOpportunity {
   description: string | null
   outcome: string | null
   archived: boolean
+  priority_impact: string | null
+  priority_frequency: string | null
+  priority_intensity: string | null
+  priority_capacity: string | null
+  is_target: boolean | null
   created_at: string
 }
 
@@ -44,11 +51,21 @@ interface RawEvidence {
   created_at: string
 }
 
-interface RawHypothesis {
+interface RawSolution {
   id: string
   opportunity_id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+interface RawAssumption {
+  id: string
+  solution_id: string
   description: string
-  status: HypothesisStatus
+  category: AssumptionCategory
+  status: AssumptionStatus
   result: string | null
   created_at: string
   updated_at: string
@@ -56,7 +73,7 @@ interface RawHypothesis {
 
 interface RawExperiment {
   id: string
-  hypothesis_id: string
+  assumption_id: string
   type: ExperimentType
   description: string
   success_criterion: string
@@ -77,6 +94,11 @@ function mapOpportunity(raw: RawOpportunity): OpportunityDetail {
     description: raw.description ?? '',
     outcome: raw.outcome ?? '',
     status: raw.archived ? 'descartada' : 'activa',
+    priorityImpact: (raw.priority_impact as EffortImpact) ?? null,
+    priorityFrequency: (raw.priority_frequency as EffortImpact) ?? null,
+    priorityIntensity: (raw.priority_intensity as EffortImpact) ?? null,
+    priorityCapacity: (raw.priority_capacity as EffortImpact) ?? null,
+    isTarget: raw.is_target ?? false,
     createdAt: raw.created_at,
   }
 }
@@ -94,7 +116,7 @@ function mapEvidence(raw: RawEvidence): Evidence {
 function mapExperiment(raw: RawExperiment): Experiment {
   return {
     id: raw.id,
-    hypothesisId: raw.hypothesis_id,
+    assumptionId: raw.assumption_id,
     type: raw.type,
     description: raw.description,
     successCriterion: raw.success_criterion,
@@ -106,10 +128,12 @@ function mapExperiment(raw: RawExperiment): Experiment {
   }
 }
 
-function mapHypothesis(raw: RawHypothesis, experiments: Experiment[]): Hypothesis {
+function mapAssumption(raw: RawAssumption, experiments: Experiment[]): Assumption {
   return {
     id: raw.id,
+    solutionId: raw.solution_id,
     description: raw.description,
+    category: raw.category,
     status: raw.status,
     result: raw.result,
     experiments,
@@ -117,15 +141,29 @@ function mapHypothesis(raw: RawHypothesis, experiments: Experiment[]): Hypothesi
   }
 }
 
-function computeTopExperiments(hypotheses: Hypothesis[]): TopExperiment[] {
+function mapSolution(raw: RawSolution, assumptions: Assumption[]): Solution {
+  return {
+    id: raw.id,
+    opportunityId: raw.opportunity_id,
+    name: raw.name,
+    description: raw.description ?? '',
+    assumptions,
+    createdAt: raw.created_at,
+  }
+}
+
+function computeTopExperiments(solutions: Solution[]): TopExperiment[] {
   const all: TopExperiment[] = []
-  for (const h of hypotheses) {
-    for (const e of h.experiments) {
-      all.push({
-        experiment: e,
-        hypothesisTitle: h.description,
-        priorityScore: e.priorityScore,
-      })
+  for (const s of solutions) {
+    for (const a of s.assumptions) {
+      for (const e of a.experiments) {
+        all.push({
+          experiment: e,
+          assumptionDescription: a.description,
+          solutionName: s.name,
+          priorityScore: e.priorityScore,
+        })
+      }
     }
   }
   return all
@@ -139,28 +177,32 @@ export interface UseOpportunityDetailReturn {
   project: DetailProject | null
   opportunity: OpportunityDetail | null
   evidence: Evidence[]
-  hypotheses: Hypothesis[]
+  solutions: Solution[]
   topExperiments: TopExperiment[]
   loading: boolean
   error: string | null
   updateOpportunity: (id: string, data: Partial<OpportunityDetail>) => Promise<void>
   addEvidence: (data: Omit<Evidence, 'id' | 'createdAt'>) => Promise<void>
   deleteEvidence: (id: string) => Promise<void>
-  addHypothesis: (data: Pick<Hypothesis, 'description'>) => Promise<void>
-  changeHypothesisStatus: (id: string, status: HypothesisStatus, result?: string) => Promise<void>
-  deleteHypothesis: (id: string) => Promise<void>
+  addSolution: (data: { name: string; description?: string }) => Promise<void>
+  deleteSolution: (id: string) => Promise<void>
+  addAssumption: (solutionId: string, data: { description: string; category: AssumptionCategory }) => Promise<void>
+  changeAssumptionStatus: (id: string, status: AssumptionStatus, result?: string) => Promise<void>
+  deleteAssumption: (id: string) => Promise<void>
   addExperiment: (
-    hypothesisId: string,
-    data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>
+    assumptionId: string,
+    data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
   ) => Promise<void>
   changeExperimentStatus: (id: string, status: ExperimentStatus, result?: string) => Promise<void>
+  updatePriority: (field: string, value: EffortImpact) => Promise<void>
+  toggleTarget: () => Promise<void>
 }
 
 export function useOpportunityDetail(opportunityId: string): UseOpportunityDetailReturn {
   const [project, setProject] = useState<DetailProject | null>(null)
   const [opportunity, setOpportunity] = useState<OpportunityDetail | null>(null)
   const [evidence, setEvidence] = useState<Evidence[]>([])
-  const [hypotheses, setHypotheses] = useState<Hypothesis[]>([])
+  const [solutions, setSolutions] = useState<Solution[]>([])
   const [topExperiments, setTopExperiments] = useState<TopExperiment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -202,38 +244,56 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
       const mappedEvidence = (rawEvidence ?? []).map(e => mapEvidence(e as RawEvidence))
       setEvidence(mappedEvidence)
 
-      // Fetch hypotheses
-      const { data: rawHypotheses } = await supabase
-        .from('hypotheses')
+      // Fetch solutions
+      const { data: rawSolutions } = await supabase
+        .from('solutions')
         .select('*')
         .eq('opportunity_id', opportunityId)
         .order('created_at', { ascending: true })
 
-      if (!rawHypotheses?.length) {
-        setHypotheses([])
+      if (!rawSolutions?.length) {
+        setSolutions([])
         setTopExperiments([])
         setLoading(false)
         return
       }
 
-      const hypothesisIds = rawHypotheses.map(h => h.id)
+      const solutionIds = rawSolutions.map(s => s.id)
 
-      // Fetch all experiments for these hypotheses
-      const { data: rawExperiments } = await supabase
-        .from('experiments')
+      // Fetch all assumptions for these solutions
+      const { data: rawAssumptions } = await supabase
+        .from('assumptions')
         .select('*')
-        .in('hypothesis_id', hypothesisIds)
+        .in('solution_id', solutionIds)
         .order('created_at', { ascending: true })
 
-      const mappedHypotheses = (rawHypotheses as RawHypothesis[]).map(h => {
-        const exps = (rawExperiments ?? [])
-          .filter(e => e.hypothesis_id === h.id)
-          .map(e => mapExperiment(e as RawExperiment))
-        return mapHypothesis(h, exps)
+      // Fetch all experiments for these assumptions
+      const assumptionIds = (rawAssumptions ?? []).map(a => a.id)
+      let rawExperiments: RawExperiment[] = []
+      if (assumptionIds.length > 0) {
+        const { data } = await supabase
+          .from('experiments')
+          .select('*')
+          .in('assumption_id', assumptionIds)
+          .order('created_at', { ascending: true })
+        rawExperiments = (data ?? []) as RawExperiment[]
+      }
+
+      // Build nested structure: Solution[] > Assumption[] > Experiment[]
+      const mappedSolutions = (rawSolutions as RawSolution[]).map(s => {
+        const solutionAssumptions = (rawAssumptions ?? [])
+          .filter(a => a.solution_id === s.id)
+          .map(a => {
+            const exps = rawExperiments
+              .filter(e => e.assumption_id === a.id)
+              .map(e => mapExperiment(e))
+            return mapAssumption(a as RawAssumption, exps)
+          })
+        return mapSolution(s, solutionAssumptions)
       })
 
-      setHypotheses(mappedHypotheses)
-      setTopExperiments(computeTopExperiments(mappedHypotheses))
+      setSolutions(mappedSolutions)
+      setTopExperiments(computeTopExperiments(mappedSolutions))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
@@ -287,31 +347,54 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
     [fetchAll]
   )
 
-  const addHypothesis = useCallback(
-    async (data: Pick<Hypothesis, 'description'>) => {
-      await supabase.from('hypotheses').insert({
+  const addSolution = useCallback(
+    async (data: { name: string; description?: string }) => {
+      await supabase.from('solutions').insert({
         opportunity_id: opportunityId,
-        description: data.description,
-        status: 'to do',
+        name: data.name,
+        description: data.description ?? null,
       })
       await fetchAll()
     },
     [opportunityId, fetchAll]
   )
 
-  const changeHypothesisStatus = useCallback(
-    async (id: string, status: HypothesisStatus, result?: string) => {
-      const patch: Record<string, unknown> = { status }
-      if (status === 'terminada' && result) patch.result = result
-      await supabase.from('hypotheses').update(patch).eq('id', id)
+  const deleteSolution = useCallback(
+    async (id: string) => {
+      await supabase.from('solutions').delete().eq('id', id)
       await fetchAll()
     },
     [fetchAll]
   )
 
-  const deleteHypothesis = useCallback(
+  const addAssumption = useCallback(
+    async (solutionId: string, data: { description: string; category: AssumptionCategory }) => {
+      await supabase.from('assumptions').insert({
+        solution_id: solutionId,
+        description: data.description,
+        category: data.category,
+        status: 'pendiente',
+      })
+      await fetchAll()
+    },
+    [fetchAll]
+  )
+
+  const changeAssumptionStatus = useCallback(
+    async (id: string, status: AssumptionStatus, result?: string) => {
+      const patch: Record<string, unknown> = { status }
+      if ((status === 'validado' || status === 'invalidado') && result) {
+        patch.result = result
+      }
+      await supabase.from('assumptions').update(patch).eq('id', id)
+      await fetchAll()
+    },
+    [fetchAll]
+  )
+
+  const deleteAssumption = useCallback(
     async (id: string) => {
-      await supabase.from('hypotheses').delete().eq('id', id)
+      await supabase.from('assumptions').delete().eq('id', id)
       await fetchAll()
     },
     [fetchAll]
@@ -319,11 +402,11 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
 
   const addExperiment = useCallback(
     async (
-      hypothesisId: string,
-      data: Omit<Experiment, 'id' | 'hypothesisId' | 'priorityScore' | 'result' | 'status'>
+      assumptionId: string,
+      data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
     ) => {
       await supabase.from('experiments').insert({
-        hypothesis_id: hypothesisId,
+        assumption_id: assumptionId,
         type: data.type,
         description: data.description,
         success_criterion: data.successCriterion,
@@ -346,21 +429,74 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
     [fetchAll]
   )
 
+  const updatePriority = useCallback(
+    async (field: string, value: EffortImpact) => {
+      // Map camelCase field names to snake_case DB columns
+      const fieldMap: Record<string, string> = {
+        priorityImpact: 'priority_impact',
+        priorityFrequency: 'priority_frequency',
+        priorityIntensity: 'priority_intensity',
+        priorityCapacity: 'priority_capacity',
+      }
+      const column = fieldMap[field]
+      if (!column) return
+      await supabase.from('opportunities').update({ [column]: value }).eq('id', opportunityId)
+      await fetchAll()
+    },
+    [opportunityId, fetchAll]
+  )
+
+  const toggleTarget = useCallback(
+    async () => {
+      // Get the project_id for this opportunity
+      const { data: rawOpp } = await supabase
+        .from('opportunities')
+        .select('project_id, is_target')
+        .eq('id', opportunityId)
+        .single()
+
+      if (!rawOpp) return
+
+      const newValue = !rawOpp.is_target
+
+      if (newValue) {
+        // Unset is_target on all opportunities in the project first
+        await supabase
+          .from('opportunities')
+          .update({ is_target: false })
+          .eq('project_id', rawOpp.project_id)
+      }
+
+      // Set is_target on the specified opportunity
+      await supabase
+        .from('opportunities')
+        .update({ is_target: newValue })
+        .eq('id', opportunityId)
+
+      await fetchAll()
+    },
+    [opportunityId, fetchAll]
+  )
+
   return {
     project,
     opportunity,
     evidence,
-    hypotheses,
+    solutions,
     topExperiments,
     loading,
     error,
     updateOpportunity,
     addEvidence,
     deleteEvidence,
-    addHypothesis,
-    changeHypothesisStatus,
-    deleteHypothesis,
+    addSolution,
+    deleteSolution,
+    addAssumption,
+    changeAssumptionStatus,
+    deleteAssumption,
     addExperiment,
     changeExperimentStatus,
+    updatePriority,
+    toggleTarget,
   }
 }

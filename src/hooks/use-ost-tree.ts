@@ -1,14 +1,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useRealtimeProject } from './use-realtime-project'
-import type { Opportunity, OSTTreeEvidence, HypothesisSummary } from '../types'
+import type { Opportunity, OSTTreeEvidence, SolutionSummary } from '../types'
+
+export interface ExperimentSummary {
+  id: string
+  assumptionId: string
+  description: string
+  type: string
+  status: string
+  effort: string
+  impact: string
+}
 
 // ─── Raw DB rows ──────────────────────────────────────────────────────────────
 
 interface DBOpportunity {
   id: string
   project_id: string
-  parent_id: string | null
   name: string
   description: string | null
   outcome: string | null
@@ -26,34 +35,35 @@ interface DBEvidence {
   created_at: string
 }
 
-interface DBHypothesis {
+interface DBSolution {
   id: string
   opportunity_id: string
-  description: string
-  status: 'to do' | 'en curso' | 'terminada'
-  result: string | null
+  name: string
+  description: string | null
   created_at: string
   updated_at: string
 }
 
-// ─── Tree node ────────────────────────────────────────────────────────────────
-
-export interface OSTTreeNode extends Opportunity {
-  children: OSTTreeNode[]
+interface DBAssumption {
+  id: string
+  solution_id: string
+  description: string
+  category: string
+  status: string
+  created_at: string
 }
 
 // ─── Hook return ─────────────────────────────────────────────────────────────
 
 export interface UseOSTTreeReturn {
-  nodes: OSTTreeNode[]
-  flatOpportunities: Opportunity[]
+  opportunities: Opportunity[]
   recentEvidence: Record<string, OSTTreeEvidence[]>
-  hypothesesSummary: Record<string, HypothesisSummary[]>
+  solutionsSummary: Record<string, SolutionSummary[]>
+  experimentsSummary: Record<string, ExperimentSummary[]>
   loading: boolean
   error: string | null
-  expandedIds: Set<string>
-  toggleExpand: (id: string) => void
-  createOpportunity: (data: { name: string; description?: string; parentId?: string | null }) => Promise<void>
+  createOpportunity: (data: { name: string; description?: string }) => Promise<void>
+  renameOpportunity: (id: string, name: string) => Promise<void>
   archiveOpportunity: (id: string) => Promise<void>
   restoreOpportunity: (id: string) => Promise<void>
   refetch: () => Promise<void>
@@ -61,52 +71,31 @@ export interface UseOSTTreeReturn {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function mapDBToOpportunity(row: DBOpportunity, evidenceCount: number, activeHypothesisCount: number): Opportunity {
+function mapDBToOpportunity(row: DBOpportunity, evidenceCount: number, solutionCount: number): Opportunity {
   return {
     id: row.id,
-    parentId: row.parent_id,
     title: row.name,
     description: row.description ?? '',
     status: row.archived ? 'descartada' : 'activa',
     isArchived: row.archived,
     isExpanded: true,
     evidenceCount,
-    hypothesisCount: 0, // filled below
-    activeHypothesisCount,
+    solutionCount,
     experimentCount: 0,
     activeExperimentCount: 0,
     createdAt: row.created_at,
   }
 }
 
-function buildTree(opportunities: Opportunity[]): OSTTreeNode[] {
-  const map = new Map<string, OSTTreeNode>()
-  const roots: OSTTreeNode[] = []
-
-  opportunities.forEach(opp => {
-    map.set(opp.id, { ...opp, children: [] })
-  })
-
-  map.forEach(node => {
-    if (node.parentId && map.has(node.parentId)) {
-      map.get(node.parentId)!.children.push(node)
-    } else {
-      roots.push(node)
-    }
-  })
-
-  return roots
-}
-
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useOSTTree(projectId: string): UseOSTTreeReturn {
-  const [flatOpportunities, setFlatOpportunities] = useState<Opportunity[]>([])
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [recentEvidence, setRecentEvidence] = useState<Record<string, OSTTreeEvidence[]>>({})
-  const [hypothesesSummary, setHypothesesSummary] = useState<Record<string, HypothesisSummary[]>>({})
+  const [solutionsSummary, setSolutionsSummary] = useState<Record<string, SolutionSummary[]>>({})
+  const [experimentsSummary, setExperimentsSummary] = useState<Record<string, ExperimentSummary[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const fetchData = useCallback(async () => {
     if (!projectId) return
@@ -114,7 +103,6 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     setError(null)
 
     try {
-      // Fetch opportunities
       const { data: oppRows, error: oppError } = await supabase
         .from('opportunities')
         .select('*')
@@ -126,29 +114,66 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
       const oppIds = rows.map(r => r.id)
 
       if (oppIds.length === 0) {
-        setFlatOpportunities([])
+        setOpportunities([])
         setRecentEvidence({})
-        setHypothesesSummary({})
+        setSolutionsSummary({})
+        setExperimentsSummary({})
         setLoading(false)
         return
       }
 
-      // Fetch evidence and hypotheses in parallel
-      const [{ data: evidenceRows }, { data: hypothesisRows }] = await Promise.all([
+      const [{ data: evidenceRows }, { data: solutionRows }] = await Promise.all([
         supabase
           .from('opportunity_evidence')
           .select('*')
           .in('opportunity_id', oppIds)
           .order('created_at', { ascending: false }),
         supabase
-          .from('hypotheses')
+          .from('solutions')
           .select('*')
           .in('opportunity_id', oppIds)
           .order('created_at', { ascending: false }),
       ])
 
       const ev = (evidenceRows ?? []) as DBEvidence[]
-      const hy = (hypothesisRows ?? []) as DBHypothesis[]
+      const sols = (solutionRows ?? []) as DBSolution[]
+
+      // Fetch assumptions for all solutions
+      const solIds = sols.map(s => s.id)
+      let assumptionRows: DBAssumption[] = []
+      if (solIds.length > 0) {
+        const { data } = await supabase
+          .from('assumptions')
+          .select('*')
+          .in('solution_id', solIds)
+        assumptionRows = (data ?? []) as DBAssumption[]
+      }
+
+      // Fetch experiments for all assumptions
+      const assumptionIds = assumptionRows.map(a => a.id)
+      let expRows: any[] = []
+      if (assumptionIds.length > 0) {
+        const { data } = await supabase
+          .from('experiments')
+          .select('*')
+          .in('assumption_id', assumptionIds)
+        expRows = data ?? []
+      }
+
+      // Build experiments summary grouped by assumption_id
+      const experimentsSummaryMap: Record<string, ExperimentSummary[]> = {}
+      for (const e of expRows) {
+        if (!experimentsSummaryMap[e.assumption_id]) experimentsSummaryMap[e.assumption_id] = []
+        experimentsSummaryMap[e.assumption_id].push({
+          id: e.id,
+          assumptionId: e.assumption_id,
+          description: e.description,
+          type: e.type,
+          status: e.status,
+          effort: e.effort,
+          impact: e.impact,
+        })
+      }
 
       // Build evidence counts and recent evidence per opportunity
       const evidenceCountMap: Record<string, number> = {}
@@ -167,42 +192,54 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
         }
       })
 
-      // Build hypothesis counts and summary per opportunity
-      const activeHypothesisCountMap: Record<string, number> = {}
-      const totalHypothesisCountMap: Record<string, number> = {}
-      const hypothesesSummaryMap: Record<string, HypothesisSummary[]> = {}
+      // Build assumption count per solution
+      const assumptionCountBySolution: Record<string, number> = {}
+      for (const a of assumptionRows) {
+        assumptionCountBySolution[a.solution_id] = (assumptionCountBySolution[a.solution_id] ?? 0) + 1
+      }
 
-      hy.forEach(h => {
-        totalHypothesisCountMap[h.opportunity_id] = (totalHypothesisCountMap[h.opportunity_id] ?? 0) + 1
-        if (h.status !== 'terminada') {
-          activeHypothesisCountMap[h.opportunity_id] = (activeHypothesisCountMap[h.opportunity_id] ?? 0) + 1
+      // Build experiment count per solution (through assumptions)
+      const assumptionToSolution: Record<string, string> = {}
+      for (const a of assumptionRows) {
+        assumptionToSolution[a.id] = a.solution_id
+      }
+      const experimentCountBySolution: Record<string, number> = {}
+      for (const e of expRows) {
+        const solId = assumptionToSolution[e.assumption_id]
+        if (solId) {
+          experimentCountBySolution[solId] = (experimentCountBySolution[solId] ?? 0) + 1
         }
-        if (!hypothesesSummaryMap[h.opportunity_id]) hypothesesSummaryMap[h.opportunity_id] = []
-        hypothesesSummaryMap[h.opportunity_id].push({
-          id: h.id,
-          title: h.description,
-          status: h.status,
+      }
+
+      // Build solution counts and summary per opportunity
+      const solutionCountMap: Record<string, number> = {}
+      const solutionsSummaryMap: Record<string, SolutionSummary[]> = {}
+
+      sols.forEach(s => {
+        solutionCountMap[s.opportunity_id] = (solutionCountMap[s.opportunity_id] ?? 0) + 1
+        if (!solutionsSummaryMap[s.opportunity_id]) solutionsSummaryMap[s.opportunity_id] = []
+        solutionsSummaryMap[s.opportunity_id].push({
+          id: s.id,
+          name: s.name,
+          assumptionCount: assumptionCountBySolution[s.id] ?? 0,
+          experimentCount: experimentCountBySolution[s.id] ?? 0,
         })
       })
 
-      // Map DB rows to Opportunity type
-      const opportunities: Opportunity[] = rows.map(row => {
-        const opp = mapDBToOpportunity(
+      const mapped: Opportunity[] = rows.map(row => {
+        return mapDBToOpportunity(
           row,
           evidenceCountMap[row.id] ?? 0,
-          activeHypothesisCountMap[row.id] ?? 0,
+          solutionCountMap[row.id] ?? 0,
         )
-        opp.hypothesisCount = totalHypothesisCountMap[row.id] ?? 0
-        return opp
       })
 
-      // Initialize all as expanded
-      setExpandedIds(new Set(opportunities.map(o => o.id)))
-      setFlatOpportunities(opportunities)
+      setOpportunities(mapped)
       setRecentEvidence(recentEvidenceMap)
-      setHypothesesSummary(hypothesesSummaryMap)
+      setSolutionsSummary(solutionsSummaryMap)
+      setExperimentsSummary(experimentsSummaryMap)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando el árbol')
+      setError(err instanceof Error ? err.message : 'Error cargando oportunidades')
     } finally {
       setLoading(false)
     }
@@ -212,28 +249,15 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     fetchData()
   }, [fetchData])
 
-  useRealtimeProject({
-    projectId,
-    onEvent: fetchData,
-  })
-
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
+  useRealtimeProject({ projectId, onEvent: fetchData })
 
   const createOpportunity = useCallback(async (data: {
     name: string
     description?: string
-    parentId?: string | null
   }) => {
     const { error } = await supabase.from('opportunities').insert({
       project_id: projectId,
-      parent_id: data.parentId ?? null,
+      parent_id: null,
       name: data.name,
       description: data.description ?? null,
     })
@@ -250,6 +274,16 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     await fetchData()
   }, [fetchData])
 
+  const renameOpportunity = useCallback(async (id: string, name: string) => {
+    if (!name.trim()) return
+    const { error } = await supabase
+      .from('opportunities')
+      .update({ name: name.trim() })
+      .eq('id', id)
+    if (error) throw error
+    await fetchData()
+  }, [fetchData])
+
   const restoreOpportunity = useCallback(async (id: string) => {
     const { error } = await supabase
       .from('opportunities')
@@ -259,20 +293,15 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
     await fetchData()
   }, [fetchData])
 
-  useRealtimeProject({ projectId, onEvent: fetchData })
-
-  const nodes = buildTree(flatOpportunities)
-
   return {
-    nodes,
-    flatOpportunities,
+    opportunities,
     recentEvidence,
-    hypothesesSummary,
+    solutionsSummary,
+    experimentsSummary,
     loading,
     error,
-    expandedIds,
-    toggleExpand,
     createOpportunity,
+    renameOpportunity,
     archiveOpportunity,
     restoreOpportunity,
     refetch: fetchData,

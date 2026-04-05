@@ -2,6 +2,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'Courier New', monospace;
@@ -11,14 +13,12 @@ html {
   font-family: var(--font-sans);
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
 code, kbd, samp, pre,
 [class*='font-mono'],
 [class*='IBM_Plex_Mono'] {
   font-family: var(--font-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
 }

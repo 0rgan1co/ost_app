@@ -1,4 +1,4 @@
-export { OSTNode, EVIDENCE_TYPE_LABELS } from './OSTNode'
+export { OSTNode } from './OSTNode'
 export { OSTListView } from './OSTListView'
 export { OSTTreeViewCanvas } from './OSTTreeView'
 export { OpportunityPanel } from './OpportunityPanel'

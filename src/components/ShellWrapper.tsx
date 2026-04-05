@@ -7,6 +7,9 @@ import type { NavigationItem } from '../shell/components'
 // Project-scoped navigation items (relative paths within /projects/:projectId)
 const PROJECT_NAV_ITEMS: { label: string; path: string }[] = [
   { label: 'OST Tree', path: 'ost-tree' },
+  { label: 'Experimentos', path: 'experiments' },
+  { label: 'Revisiones', path: 'reviews' },
+  { label: 'Evaluar con IA', path: 'ai-evaluation' },
   { label: 'Business Context', path: 'business-context' },
   { label: 'Settings', path: 'settings' },
 ]

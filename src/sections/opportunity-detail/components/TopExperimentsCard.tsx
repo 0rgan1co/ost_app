@@ -39,8 +39,8 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
         </div>
         <div className="py-6 text-center">
           <p className="text-slate-500 text-sm font-sans">Sin experimentos registrados</p>
-          <p className="text-slate-600 text-xs mt-1 font-sans">
-            Añade experimentos a tus hipótesis para ver los de mayor prioridad aquí
+          <p className="text-slate-400 text-xs mt-1 font-sans">
+            Agrega experimentos a tus supuestos para ver los de mayor prioridad aqui
           </p>
         </div>
       </section>
@@ -75,12 +75,12 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
                     {badge.label}
                   </span>
                   {/* Type */}
-                  <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-400 bg-slate-700 px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-300 bg-slate-700 px-2 py-0.5 rounded-md">
                     {TYPE_LABELS[exp.type] ?? exp.type}
                   </span>
                 </div>
                 {/* Score */}
-                <span className="flex-shrink-0 text-[13px] font-['IBM_Plex_Mono'] font-bold text-red-400">
+                <span className="flex-shrink-0 text-[13px] font-['IBM_Plex_Mono'] font-bold text-amber-400">
                   {top.priorityScore.toFixed(2)}
                 </span>
               </div>
@@ -91,26 +91,26 @@ export function TopExperimentsCard({ topExperiments }: TopExperimentsCardProps) 
               </p>
 
               {/* Success criterion */}
-              <div className="bg-slate-900/60 border-l-2 border-red-500/40 rounded-r pl-3 py-1.5 mb-3">
+              <div className="bg-slate-900/60 border-l-2 border-amber-500/40 rounded-r pl-3 py-1.5 mb-3">
                 <p className="text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-0.5">Criterio de éxito</p>
                 <p className="text-xs text-slate-300 font-sans">{exp.successCriterion}</p>
               </div>
 
-              {/* Effort / Impact + Hypothesis origin */}
+              {/* Effort / Impact + Solution origin */}
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-600 font-['IBM_Plex_Mono']">Esfuerzo:</span>
+                  <span className="text-[11px] text-slate-400 font-['IBM_Plex_Mono']">Esfuerzo:</span>
                   <span className={`text-[11px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded-md capitalize ${EFFORT_IMPACT_COLORS[exp.effort]}`}>
                     {exp.effort}
                   </span>
-                  <span className="text-[11px] text-slate-600 font-['IBM_Plex_Mono'] ml-1">Impacto:</span>
+                  <span className="text-[11px] text-slate-400 font-['IBM_Plex_Mono'] ml-1">Impacto:</span>
                   <span className={`text-[11px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded-md capitalize ${EFFORT_IMPACT_COLORS[exp.impact]}`}>
                     {exp.impact}
                   </span>
                 </div>
-                {/* Origin hypothesis */}
-                <p className="text-[11px] text-slate-600 font-sans truncate max-w-[200px]" title={top.hypothesisTitle}>
-                  Hipótesis: {top.hypothesisTitle}
+                {/* Origin solution + assumption */}
+                <p className="text-[11px] text-slate-400 font-sans truncate max-w-[200px]" title={`${top.solutionName} — ${top.assumptionDescription}`}>
+                  {top.solutionName}
                 </p>
               </div>
             </div>

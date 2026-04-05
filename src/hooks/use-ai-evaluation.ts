@@ -24,6 +24,58 @@ interface DBMessage {
   created_at: string
 }
 
+interface DBOpportunity {
+  id: string
+  name: string
+  description: string | null
+  outcome: string | null
+}
+
+interface DBEvidence {
+  id: string
+  type: string
+  content: string
+  source: string | null
+}
+
+interface DBSolution {
+  id: string
+  opportunity_id: string
+  name: string
+  description: string | null
+}
+
+interface DBAssumption {
+  id: string
+  solution_id: string
+  description: string
+  category: string
+  status: string
+  result: string | null
+}
+
+interface DBExperiment {
+  id: string
+  assumption_id: string
+  type: string
+  description: string
+  success_criterion: string
+  effort: string
+  impact: string
+  status: string
+  result: string | null
+}
+
+interface DBBusinessContext {
+  content: string // JSON string: { northStar, targetSegment, keyConstraints }
+}
+
+interface ParsedBusinessContext {
+  northStar: string
+  targetSegment: string
+  keyConstraints: string
+}
+
 // ─── Hook return ──────────────────────────────────────────────────────────────
 
 export interface UseAIEvaluationReturn {
@@ -66,12 +118,8 @@ function parseEvaluationText(raw: string, id: string, opportunityId: string, cre
 
 function mapDBMessageToConversation(msg: DBMessage): ConversationMessage {
   // Detect suggestion pattern in assistant messages
-  const hasSuggestion =
-    msg.role === 'assistant' &&
-    (msg.content.toLowerCase().includes('sugerencia') ||
-      msg.content.toLowerCase().includes('te sugiero') ||
-      msg.content.toLowerCase().includes('recomiendo agregar') ||
-      msg.content.toLowerCase().includes('podrías agregar'))
+  // Show "Aplicar" on ALL assistant messages (any response may contain actionable suggestions)
+  const hasSuggestion = msg.role === 'assistant' && msg.content.length > 50
 
   return {
     id: msg.id,
@@ -258,12 +306,13 @@ export function useAIEvaluation(
             case 'add_hypothesis': {
               const desc =
                 (action.data.description as string) ?? action.description
+              // Insert as solution (Torres methodology alignment)
               const { error: insertErr } = await supabase
-                .from('hypotheses')
+                .from('solutions')
                 .insert({
                   opportunity_id: opportunityId,
-                  description: desc,
-                  status: 'to do',
+                  name: desc,
+                  description: '',
                 })
               if (!insertErr) applied++
               break
@@ -297,16 +346,16 @@ export function useAIEvaluation(
             }
 
             case 'suggest_experiment': {
-              // Don't auto-create an experiment; just note it as a hypothesis
+              // Don't auto-create an experiment; just note it as a solution
               // so the user can design the experiment details themselves.
               const desc =
                 (action.data.description as string) ?? action.description
               const { error: insertErr } = await supabase
-                .from('hypotheses')
+                .from('solutions')
                 .insert({
                   opportunity_id: opportunityId,
-                  description: `[Experimento sugerido] ${desc}`,
-                  status: 'to do',
+                  name: `[Experimento sugerido] ${desc}`,
+                  description: '',
                 })
               if (!insertErr) applied++
               break

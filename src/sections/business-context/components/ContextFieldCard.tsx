@@ -111,7 +111,7 @@ export function ContextFieldCard({
         {/* Timestamp */}
         {field.updatedAt && !isEditing && (
           <span
-            className="shrink-0 text-xs text-slate-600 mt-0.5"
+            className="shrink-0 text-xs text-slate-400 mt-0.5"
             style={{ fontFamily: 'IBM Plex Mono, monospace' }}
           >
             {formatRelativeTime(field.updatedAt)}
@@ -130,10 +130,10 @@ export function ContextFieldCard({
               onKeyDown={handleKeyDown}
               rows={4}
               placeholder={placeholder}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-colors duration-150"
+              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-colors duration-150"
               style={{ fontFamily: 'Nunito Sans, sans-serif' }}
             />
-            <p className="mt-1.5 text-xs text-slate-600" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>
+            <p className="mt-1.5 text-xs text-slate-400" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>
               Cmd+Enter para guardar · Esc para cancelar
             </p>
 
@@ -166,7 +166,7 @@ export function ContextFieldCard({
                 Cancelar
               </button>
               {!hasChanged && (
-                <span className="ml-1 text-xs text-slate-600" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>
+                <span className="ml-1 text-xs text-slate-400" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>
                   Sin cambios
                 </span>
               )}
@@ -180,7 +180,7 @@ export function ContextFieldCard({
           >
             {isEmpty ? (
               <span
-                className="block rounded-lg border border-dashed border-slate-800 px-3.5 py-3 text-sm text-slate-600 transition-colors group-hover:border-slate-700 group-hover:text-slate-500"
+                className="block rounded-lg border border-dashed border-slate-800 px-3.5 py-3 text-sm text-slate-400 transition-colors group-hover:border-slate-700 group-hover:text-slate-500"
                 style={{ fontFamily: 'Nunito Sans, sans-serif' }}
               >
                 {placeholder}

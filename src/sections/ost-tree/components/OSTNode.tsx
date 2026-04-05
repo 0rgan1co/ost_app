@@ -2,45 +2,29 @@ import type { Opportunity } from '../../../types'
 
 interface OSTNodeProps {
   opportunity: Opportunity
-  isExpanded: boolean
   isSelected: boolean
-  hasChildren: boolean
-  onToggleExpand: (id: string) => void
   onSelect: (id: string) => void
   onArchive: (id: string) => void
   onRestore: (id: string) => void
-  onCreateChild: (parentId: string) => void
-  depth?: number
   viewMode?: 'list' | 'tree'
-}
-
-const EVIDENCE_TYPE_LABELS: Record<string, string> = {
-  cita: 'Cita',
-  hecho: 'Hecho',
-  observacion: 'Obs.',
 }
 
 export function OSTNode({
   opportunity,
-  isExpanded,
   isSelected,
-  hasChildren,
-  onToggleExpand,
   onSelect,
   onArchive,
   onRestore,
-  onCreateChild,
-  depth = 0,
   viewMode = 'list',
 }: OSTNodeProps) {
   const isArchived = opportunity.isArchived
 
   const statusBadge = isArchived ? (
-    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">
+    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
       Descartada
     </span>
   ) : (
-    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
+    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20">
       Activa
     </span>
   )
@@ -49,15 +33,15 @@ export function OSTNode({
     <div className="flex items-center gap-2 font-[IBM_Plex_Mono] text-[11px] text-slate-500">
       {opportunity.evidenceCount > 0 && (
         <span className="flex items-center gap-1">
-          <span className="text-slate-600">ev</span>
+          <span className="text-slate-400">ev</span>
           <span className="text-slate-400">{opportunity.evidenceCount}</span>
         </span>
       )}
-      {opportunity.hypothesisCount > 0 && (
+      {opportunity.solutionCount > 0 && (
         <span className="flex items-center gap-1">
-          <span className="text-slate-600">hip</span>
-          <span className={opportunity.activeHypothesisCount > 0 ? 'text-red-400' : 'text-slate-400'}>
-            {opportunity.activeHypothesisCount}/{opportunity.hypothesisCount}
+          <span className="text-slate-400">sol</span>
+          <span className="text-slate-400">
+            {opportunity.solutionCount}
           </span>
         </span>
       )}
@@ -69,16 +53,6 @@ export function OSTNode({
       className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
       onClick={e => e.stopPropagation()}
     >
-      <button
-        onClick={() => onCreateChild(opportunity.id)}
-        title="Agregar oportunidad hija"
-        className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
       {isArchived ? (
         <button
           onClick={() => onRestore(opportunity.id)}
@@ -112,11 +86,11 @@ export function OSTNode({
         className={`
           group relative cursor-pointer select-none
           rounded-xl border transition-all duration-200
-          px-4 py-3 w-56
+          px-3 py-2.5 sm:px-4 sm:py-3 w-full
           ${isArchived
             ? 'bg-slate-900/50 border-slate-800/50 opacity-60'
             : isSelected
-              ? 'bg-slate-900 border-red-500/60 shadow-lg shadow-red-500/10'
+              ? 'bg-slate-900 border-orange-500/60 shadow-lg shadow-orange-500/10'
               : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-md hover:shadow-black/20'
           }
         `}
@@ -139,25 +113,6 @@ export function OSTNode({
           {statusBadge}
           {counters}
         </div>
-
-        {hasChildren && (
-          <button
-            onClick={e => { e.stopPropagation(); onToggleExpand(opportunity.id) }}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-all z-10"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-        )}
       </div>
     )
   }
@@ -175,32 +130,9 @@ export function OSTNode({
         }
       `}
       onClick={() => onSelect(opportunity.id)}
-      style={{ paddingLeft: `${12 + depth * 24}px` }}
     >
-      {/* Expand toggle */}
-      <button
-        onClick={e => { e.stopPropagation(); if (hasChildren) onToggleExpand(opportunity.id) }}
-        className={`
-          mt-0.5 w-4 h-4 flex items-center justify-center text-slate-600 flex-shrink-0
-          ${hasChildren ? 'hover:text-slate-400 transition-colors' : 'cursor-default'}
-        `}
-      >
-        {hasChildren ? (
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        ) : (
-          <span className="w-1 h-1 rounded-full bg-slate-700" />
-        )}
-      </button>
+      {/* Bullet */}
+      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500/60 flex-shrink-0" />
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -222,6 +154,3 @@ export function OSTNode({
     </div>
   )
 }
-
-// Re-export for usage in evidence labels
-export { EVIDENCE_TYPE_LABELS }

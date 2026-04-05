@@ -1,10 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 import { useOSTTree } from '../../hooks/use-ost-tree'
+import { useBusinessContext } from '../../hooks/use-business-context'
 import { OSTListView } from './components/OSTListView'
 import { OSTTreeViewCanvas } from './components/OSTTreeView'
 import { OpportunityPanel } from './components/OpportunityPanel'
 import { CreateOpportunityModal } from './components/CreateOpportunityModal'
+import { WorkflowGuide } from './components/WorkflowGuide'
+import { AgentGuide } from './components/AgentGuide'
+import { ExperimentSeedModal } from '../../components/ExperimentSeedModal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { Project } from '../../types'
 
@@ -99,7 +104,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <p className="text-slate-300 font-[Nunito_Sans] text-sm font-semibold mb-1">Error al cargar el árbol</p>
+      <p className="text-slate-300 font-[Nunito_Sans] text-sm font-semibold mb-1">Error al cargar oportunidades</p>
       <p className="text-slate-500 font-[Nunito_Sans] text-xs mb-4">{message}</p>
       <button
         onClick={onRetry}
@@ -117,37 +122,116 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   const navigate = useNavigate()
 
   const {
-    nodes,
-    flatOpportunities,
+    opportunities,
     recentEvidence,
-    hypothesesSummary,
+    solutionsSummary,
+    experimentsSummary,
     loading,
     error,
-    expandedIds,
-    toggleExpand,
     createOpportunity,
+    renameOpportunity,
     archiveOpportunity,
     restoreOpportunity,
     refetch,
   } = useOSTTree(project.id)
 
+  const { context: bizContext } = useBusinessContext(project.id)
+
+  const businessContextSummary = (bizContext.northStar.value || bizContext.targetSegment.value)
+    ? {
+        northStar: bizContext.northStar.value,
+        targetSegment: bizContext.targetSegment.value,
+        keyConstraints: bizContext.keyConstraints.value,
+      }
+    : null
+
   // ── Local UI state ──────────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [viewMode, setViewMode] = useState<ViewMode>('tree')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null)
+  const [openExpId, setOpenExpId] = useState<string | null>(null)
+  const [openExpData, setOpenExpData] = useState<any>(null)
+  const [assignedMap, setAssignedMap] = useState<Record<string, string | null>>({})
 
-  // Create modal state: stores the parentId to pre-fill ("" = root)
-  const [createParentId, setCreateParentId] = useState<string | null | undefined>(undefined)
-  const isModalOpen = createParentId !== undefined
+  // Load assigned_to for all items
+  useEffect(() => {
+    async function loadAssigned() {
+      const solIds = Object.values(solutionsSummary).flat().map(s => s.id)
+      const [{ data: opps }, { data: sols }, { data: exps }] = await Promise.all([
+        supabase.from('opportunities').select('id, assigned_to').eq('project_id', project.id),
+        supabase.from('solutions').select('id, assigned_to').in('opportunity_id', opportunities.map(o => o.id)),
+        solIds.length > 0
+          ? supabase.from('assumptions').select('id').in('solution_id', solIds).then(({ data: assumptions }) => {
+              const assIds = (assumptions ?? []).map((a: any) => a.id)
+              return assIds.length > 0
+                ? supabase.from('experiments').select('id, assigned_to').in('assumption_id', assIds)
+                : { data: [] }
+            })
+          : Promise.resolve({ data: [] }),
+      ])
+      const map: Record<string, string | null> = {}
+      for (const o of (opps ?? []) as any[]) if (o.assigned_to) map[o.id] = o.assigned_to
+      for (const s of (sols ?? []) as any[]) if (s.assigned_to) map[s.id] = s.assigned_to
+      for (const e of (exps ?? []) as any[]) if (e.assigned_to) map[e.id] = e.assigned_to
+      setAssignedMap(map)
+    }
+    if (opportunities.length > 0) loadAssigned()
+  }, [project.id, opportunities, solutionsSummary])
+
+  const handleAssign = useCallback(async (type: 'opportunity' | 'solution' | 'experiment', id: string, userId: string | null) => {
+    const table = type === 'opportunity' ? 'opportunities' : type === 'solution' ? 'solutions' : 'experiments'
+    await supabase.from(table).update({ assigned_to: userId }).eq('id', id)
+    setAssignedMap(prev => ({ ...prev, [id]: userId }))
+  }, [])
+
+  const treeMembers = project.members.map(m => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl }))
+
+  const handleOpenExperiment = useCallback(async (expId: string) => {
+    const { data: exp } = await supabase.from('experiments').select('*').eq('id', expId).single()
+    if (!exp) return
+    // Navigate: experiment -> assumption -> solution -> opportunity
+    const { data: assumption } = await supabase.from('assumptions').select('id, description, solution_id').eq('id', exp.assumption_id).single()
+    let oppName = ''
+    let solutionName = ''
+    if (assumption) {
+      const { data: sol } = await supabase.from('solutions').select('id, name, opportunity_id').eq('id', assumption.solution_id).single()
+      if (sol) {
+        solutionName = sol.name
+        oppName = opportunities.find(o => o.id === sol.opportunity_id)?.title ?? ''
+      }
+    }
+    setOpenExpData({
+      id: exp.id, description: exp.description, type: exp.type,
+      successCriterion: exp.success_criterion, effort: exp.effort, impact: exp.impact,
+      status: exp.status, result: exp.result,
+      objective: exp.objective ?? '', who: exp.who ?? '', actions: exp.actions ?? '',
+      startDate: exp.start_date, endDate: exp.end_date, reviewCycle: exp.review_cycle ?? '',
+      projectName: project.name, opportunityName: oppName,
+      assumptionDescription: assumption?.description ?? '',
+      solutionName,
+    })
+    setOpenExpId(expId)
+  }, [opportunities, project.name])
+
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('ost-starred') ?? '[]')) } catch { return new Set() }
+  })
+
+  const toggleStar = useCallback((id: string) => {
+    setStarredIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem('ost-starred', JSON.stringify([...next]))
+      return next
+    })
+  }, [])
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const selectedOpportunity = selectedId
-    ? (flatOpportunities.find(o => o.id === selectedId) ?? null)
-    : null
-
-  const parentOpportunity = isModalOpen && createParentId
-    ? flatOpportunities.find(o => o.id === createParentId)
+    ? (opportunities.find(o => o.id === selectedId) ?? null)
     : null
 
   // ── Handlers ────────────────────────────────────────────────────────────────
@@ -158,30 +242,30 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   const handleClosePanel = useCallback(() => {
     setIsPanelOpen(false)
-    // Keep selectedId so it stays highlighted; clear after animation
     setTimeout(() => setSelectedId(null), 300)
-  }, [])
-
-  const handleOpenCreateRoot = useCallback(() => {
-    setCreateParentId(null)
-  }, [])
-
-  const handleOpenCreateChild = useCallback((parentId: string) => {
-    setCreateParentId(parentId)
-  }, [])
-
-  const handleCloseModal = useCallback(() => {
-    setCreateParentId(undefined)
   }, [])
 
   const handleConfirmCreate = useCallback(async (data: { name: string; description: string }) => {
     await createOpportunity({
       name: data.name,
       description: data.description || undefined,
-      parentId: createParentId ?? null,
     })
-    setCreateParentId(undefined)
-  }, [createOpportunity, createParentId])
+    setIsModalOpen(false)
+  }, [createOpportunity])
+
+  const handleConfirmMultiple = useCallback(async (items: { name: string; description: string }[]) => {
+    for (const item of items) {
+      await createOpportunity({
+        name: item.name,
+        description: item.description || undefined,
+      })
+    }
+    setIsModalOpen(false)
+  }, [createOpportunity])
+
+  const handleNavigateToDetail = useCallback((id: string) => {
+    navigate(`/projects/${project.id}/opportunity/${id}`)
+  }, [navigate, project.id])
 
   const handleArchiveRequest = useCallback((id: string) => {
     setArchiveTarget(id)
@@ -198,24 +282,103 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     setArchiveTarget(null)
   }, [])
 
-  const handleNavigateToDetail = useCallback((id: string) => {
-    navigate(`/projects/${project.id}/opportunity/${id}`)
-  }, [navigate, project.id])
+  // Edit outcome (saves to business context northStar)
+  const handleEditOutcome = useCallback(async (text: string) => {
+    if (!text.trim()) return
+    const { data: existing } = await supabase.from('business_context').select('id, content').eq('project_id', project.id).maybeSingle()
+    const now = new Date().toISOString()
+    let prev: any = {}
+    if (existing?.content) {
+      try { prev = typeof existing.content === 'string' ? JSON.parse(existing.content) : existing.content } catch {}
+    }
+    const content = JSON.stringify({ ...prev, northStar: { value: text.trim(), updatedAt: now } })
+    if (existing) {
+      await supabase.from('business_context').update({ content }).eq('id', existing.id)
+    } else {
+      await supabase.from('business_context').insert({ project_id: project.id, content })
+    }
+  }, [project.id])
 
-  // ── Shared event props (passed to both views) ───────────────────────────────
+  // Rename solution
+  const handleRenameSolution = useCallback(async (id: string, text: string) => {
+    if (!text.trim()) return
+    await supabase.from('solutions').update({ name: text.trim() }).eq('id', id)
+    refetch()
+  }, [refetch])
+
+  // Rename experiment
+  const handleRenameExperiment = useCallback(async (id: string, text: string) => {
+    if (!text.trim()) return
+    await supabase.from('experiments').update({ description: text.trim() }).eq('id', id)
+    refetch()
+  }, [refetch])
+
+  // Delete solution (cascade: delete experiments -> assumptions -> solution)
+  const handleDeleteSolution = useCallback(async (id: string) => {
+    // Get all assumptions for this solution
+    const { data: assumptions } = await supabase.from('assumptions').select('id').eq('solution_id', id)
+    const assIds = (assumptions ?? []).map((a: any) => a.id)
+    // Delete experiments linked to those assumptions
+    if (assIds.length > 0) {
+      await supabase.from('experiments').delete().in('assumption_id', assIds)
+    }
+    // Delete assumptions
+    await supabase.from('assumptions').delete().eq('solution_id', id)
+    // Delete solution
+    await supabase.from('solutions').delete().eq('id', id)
+    refetch()
+  }, [refetch])
+
+  // Delete experiment
+  const handleDeleteExperiment = useCallback(async (id: string) => {
+    await supabase.from('experiments').delete().eq('id', id)
+    refetch()
+  }, [refetch])
+
+  // Quick-add solution from tree
+  const handleQuickAddSolution = useCallback(async (opportunityId: string) => {
+    const name = prompt('Escribí la solución (hipótesis): "Si hacemos [acción], vamos a obtener [resultado]"')
+    if (!name?.trim()) return
+    await supabase.from('solutions').insert({
+      opportunity_id: opportunityId,
+      name: name.trim(),
+      description: '',
+    })
+    refetch()
+  }, [refetch])
+
+  // Quick-add experiment from tree (assumes the id passed is an assumption_id)
+  const handleQuickAddExperiment = useCallback(async (assumptionId: string) => {
+    const name = prompt('Descripción del experimento:')
+    if (!name?.trim()) return
+    await supabase.from('experiments').insert({
+      assumption_id: assumptionId,
+      type: 'otro',
+      description: name.trim(),
+      success_criterion: 'Por definir',
+      effort: 'medio',
+      impact: 'medio',
+      status: 'to do',
+    })
+    refetch()
+  }, [refetch])
+
+  // ── Shared view props ───────────────────────────────────────────────────────
   const sharedViewProps = {
-    expandedIds,
     selectedId,
-    onToggleExpand: toggleExpand,
     onSelect: handleSelect,
     onArchive: handleArchiveRequest,
     onRestore: restoreOpportunity,
-    onCreateChild: handleOpenCreateChild,
   }
+
+  const activeOpps = opportunities.filter(o => !o.isArchived)
+  const activeCount = activeOpps.length
+  const totalSolutions = Object.values(solutionsSummary).reduce((sum, arr) => sum + arr.length, 0)
+  const totalExperiments = Object.values(experimentsSummary).reduce((sum, arr) => sum + arr.length, 0)
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="dark flex flex-col h-full min-h-0 bg-slate-950">
 
       {/* ── Header bar ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800 flex-shrink-0">
@@ -225,33 +388,37 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
           </h1>
           {!loading && (
             <span className="font-[IBM_Plex_Mono] text-[11px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-500 flex-shrink-0">
-              {flatOpportunities.filter(o => !o.isArchived).length} activas
+              {activeCount} {activeCount === 1 ? 'oportunidad' : 'oportunidades'}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
           <ViewToggle mode={viewMode} onChange={setViewMode} />
-          <button
-            onClick={handleOpenCreateRoot}
-            className="
-              flex items-center gap-2 px-4 py-2 rounded-xl
-              bg-red-600 hover:bg-red-500 text-white
-              font-[Nunito_Sans] font-semibold text-sm
-              transition-colors shadow-sm shadow-red-900/30
-            "
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Nueva oportunidad
-          </button>
+          <span className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 font-[Nunito_Sans] text-xs">
+            Gael o Rick ¿pueden tomarlo?
+          </span>
         </div>
       </div>
 
       {/* ── Content area ───────────────────────────────────────────────────── */}
       <div className={`flex-1 min-h-0 ${viewMode === 'list' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+        {/* Workflow guide */}
+        {!loading && !error && (
+          <div className="px-6 pt-4">
+            <WorkflowGuide
+              hasOutcome={!!bizContext.northStar.value}
+              opportunityCount={activeCount}
+              solutionCount={totalSolutions}
+              experimentCount={totalExperiments}
+              onGoToContext={() => navigate('/business-context')}
+              onCreateOpportunity={() => setIsModalOpen(true)}
+              onGoToDetail={() => {
+                if (activeOpps[0]) navigate(`/opportunity/${activeOpps[0].id}`)
+              }}
+            />
+          </div>
+        )}
         {loading ? (
           <div className="px-6 py-6">
             <LoadingSkeleton />
@@ -262,11 +429,36 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
           </div>
         ) : viewMode === 'list' ? (
           <div className="px-6 py-4">
-            <OSTListView nodes={nodes} {...sharedViewProps} />
+            <OSTListView opportunities={opportunities} {...sharedViewProps} />
           </div>
         ) : (
           <div className="w-full h-full overflow-auto p-6">
-            <OSTTreeViewCanvas nodes={nodes} {...sharedViewProps} />
+            <OSTTreeViewCanvas
+              projectName={project.name}
+              outcome={bizContext.northStar.value}
+              opportunities={opportunities}
+              solutionsSummary={solutionsSummary}
+              experimentsSummary={experimentsSummary}
+              selectedId={selectedId}
+              onSelect={handleSelect}
+              onNavigateToDetail={handleNavigateToDetail}
+              onRenameOpportunity={renameOpportunity}
+              onAddOpportunity={() => setIsModalOpen(true)}
+              onAddSolution={handleQuickAddSolution}
+              onAddExperiment={handleQuickAddExperiment}
+              onRenameSolution={handleRenameSolution}
+              onRenameExperiment={handleRenameExperiment}
+              onEditOutcome={handleEditOutcome}
+              starredIds={starredIds}
+              onToggleStar={toggleStar}
+              onDeleteOpportunity={archiveOpportunity}
+              onDeleteSolution={handleDeleteSolution}
+              onDeleteExperiment={handleDeleteExperiment}
+              onOpenExperiment={handleOpenExperiment}
+              members={treeMembers}
+              assignedMap={assignedMap}
+              onAssign={handleAssign}
+            />
           </div>
         )}
       </div>
@@ -275,21 +467,41 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       <OpportunityPanel
         opportunity={selectedOpportunity}
         recentEvidence={selectedId ? (recentEvidence[selectedId] ?? []) : []}
-        hypothesesSummary={selectedId ? (hypothesesSummary[selectedId] ?? []) : []}
+        solutionsSummary={selectedId ? (solutionsSummary[selectedId] ?? []) : []}
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         onNavigateToDetail={handleNavigateToDetail}
-        onArchive={handleArchiveRequest}
+        onArchive={archiveOpportunity}
         onRestore={restoreOpportunity}
-        onCreateChild={handleOpenCreateChild}
       />
 
       {/* ── Create modal ────────────────────────────────────────────────────── */}
       <CreateOpportunityModal
         isOpen={isModalOpen}
-        parentName={parentOpportunity?.title ?? null}
+        parentName={null}
+        businessContext={businessContextSummary}
         onConfirm={handleConfirmCreate}
-        onClose={handleCloseModal}
+        onConfirmMultiple={handleConfirmMultiple}
+        onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Experiment Seed Modal */}
+      {openExpId && openExpData && (
+        <ExperimentSeedModal
+          experiment={openExpData}
+          onClose={() => { setOpenExpId(null); setOpenExpData(null) }}
+          onRefresh={refetch}
+        />
+      )}
+
+      {/* Agent Guide — floating chat for incomplete projects */}
+      <AgentGuide
+        projectId={project.id}
+        projectName={project.name}
+        hasOutcome={!!bizContext.northStar.value}
+        opportunityCount={activeCount}
+        solutionCount={totalSolutions}
+        experimentCount={totalExperiments}
       />
 
       {/* ── Archive confirmation ────────────────────────────────────────────── */}

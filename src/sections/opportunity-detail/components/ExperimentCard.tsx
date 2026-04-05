@@ -11,7 +11,7 @@ const EFFORT_IMPACT_COLORS: Record<EffortImpact, string> = {
 }
 
 const STATUS_CONFIG: Record<ExperimentStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  'to do':    { label: 'Pendiente',  color: 'text-slate-400 bg-slate-700',   icon: <Clock size={11} /> },
+  'to do':    { label: 'Pendiente',  color: 'text-slate-300 bg-slate-700',   icon: <Clock size={11} /> },
   'en curso': { label: 'En curso',   color: 'text-amber-400 bg-amber-500/15', icon: <PlayCircle size={11} /> },
   'terminada':{ label: 'Terminada',  color: 'text-green-400 bg-green-500/15', icon: <CheckCircle2 size={11} /> },
 }
@@ -47,7 +47,7 @@ function ResultModal({ label, onConfirm, onCancel }: ResultModalProps) {
         rows={3}
         className="
           w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2
-          text-sm text-slate-200 placeholder:text-slate-500
+          text-sm text-slate-200 placeholder:text-slate-400
           focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30
           resize-none font-sans
         "
@@ -109,7 +109,7 @@ export function ExperimentCard({ experiment, onChangeStatus }: ExperimentCardPro
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {/* Type badge */}
-          <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-400 bg-slate-700 px-2 py-0.5 rounded-md">
+          <span className="text-[11px] font-['IBM_Plex_Mono'] text-slate-300 bg-slate-700 px-2 py-0.5 rounded-md">
             {TYPE_LABELS[experiment.type]}
           </span>
           {/* Status badge */}
@@ -130,7 +130,7 @@ export function ExperimentCard({ experiment, onChangeStatus }: ExperimentCardPro
       </p>
 
       {/* Success criterion */}
-      <div className="bg-slate-900/60 border-l-2 border-red-500/50 rounded-r-lg pl-3 pr-3 py-2">
+      <div className="bg-slate-900/60 border-l-2 border-amber-500/50 rounded-r-lg pl-3 pr-3 py-2">
         <p className="text-[11px] font-['IBM_Plex_Mono'] text-slate-500 mb-0.5">Criterio de éxito</p>
         <p className="text-sm text-slate-300 font-sans">{experiment.successCriterion}</p>
       </div>

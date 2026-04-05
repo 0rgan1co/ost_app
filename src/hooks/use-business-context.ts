@@ -13,29 +13,35 @@ interface BusinessContextRow {
 
 // ─── Content JSON stored in the `content` column ─────────────────────────────
 
-interface ContentJson {
-  northStar: ContextField
-  targetSegment: ContextField
-  keyConstraints: ContextField
-}
-
 // ─── Default / empty context ──────────────────────────────────────────────────
 
 function emptyContext(): BusinessContext {
   return {
+    strategicChallenge: { value: '', updatedAt: null },
     northStar: { value: '', updatedAt: null },
     targetSegment: { value: '', updatedAt: null },
     keyConstraints: { value: '', updatedAt: null },
   }
 }
 
+function toContextField(val: unknown): ContextField {
+  if (!val) return { value: '', updatedAt: null }
+  if (typeof val === 'string') return { value: val, updatedAt: null }
+  if (typeof val === 'object' && val !== null && 'value' in val) {
+    return { value: String((val as any).value ?? ''), updatedAt: (val as any).updatedAt ?? null }
+  }
+  return { value: '', updatedAt: null }
+}
+
 function parseContent(raw: string): BusinessContext {
   try {
-    const parsed = JSON.parse(raw) as Partial<ContentJson>
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return emptyContext()
     return {
-      northStar: parsed.northStar ?? { value: '', updatedAt: null },
-      targetSegment: parsed.targetSegment ?? { value: '', updatedAt: null },
-      keyConstraints: parsed.keyConstraints ?? { value: '', updatedAt: null },
+      strategicChallenge: toContextField(parsed.strategicChallenge),
+      northStar: toContextField(parsed.northStar),
+      targetSegment: toContextField(parsed.targetSegment),
+      keyConstraints: toContextField(parsed.keyConstraints),
     }
   } catch {
     return emptyContext()

@@ -3,14 +3,18 @@ import { Plus, GitBranch, X, Check } from 'lucide-react'
 import type { ProjectsProps, Project } from '../../../types'
 import { ProjectCard } from './ProjectCard'
 import { MembersDrawer } from './MembersDrawer'
+import { OSTWizardModal } from './OSTWizardModal'
 
 export function ProjectList({
   projects,
   roleOptions,
-  inviteState,
+  availableUsers,
   onSelectProject,
   onCreateProject,
-  onInviteMember,
+  onDeleteProject,
+  onToggleVisibility,
+  onAddMember,
+  onInviteViewer,
   onChangeMemberRole,
   onRemoveMember,
 }: ProjectsProps) {
@@ -19,16 +23,19 @@ export function ProjectList({
   const [saving, setSaving] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
+  const [wizardProject, setWizardProject] = useState<{ id: string; name: string } | null>(null)
 
   const handleSaveNew = async () => {
     if (!newName.trim() || saving) return
     setSaving(true)
-    const ok = await onCreateProject({ name: newName.trim(), description: newDesc.trim() })
+    const result = await onCreateProject({ name: newName.trim(), description: newDesc.trim() })
     setSaving(false)
-    if (ok !== false) {
+    if (typeof result === 'string') {
+      const name = newName.trim()
       setCreating(false)
       setNewName('')
       setNewDesc('')
+      setWizardProject({ id: result, name })
     }
   }
 
@@ -137,6 +144,8 @@ export function ProjectList({
                 project={project}
                 onSelect={() => onSelectProject(project.id)}
                 onOpenMembers={() => setActiveProject(project)}
+                onDelete={() => onDeleteProject(project.id)}
+                onToggleVisibility={(isPublic) => onToggleVisibility(project.id, isPublic)}
               />
             ))}
           </div>
@@ -146,13 +155,24 @@ export function ProjectList({
       {/* Members drawer */}
       <MembersDrawer
         project={activeProject}
-        inviteState={inviteState}
+        availableUsers={availableUsers}
         roleOptions={roleOptions}
         onClose={() => setActiveProject(null)}
-        onInviteMember={onInviteMember}
+        onAddMember={onAddMember}
+        onInviteViewer={onInviteViewer}
         onChangeMemberRole={onChangeMemberRole}
         onRemoveMember={onRemoveMember}
       />
+
+      {/* OST Wizard */}
+      {wizardProject && (
+        <OSTWizardModal
+          isOpen={true}
+          projectId={wizardProject.id}
+          projectName={wizardProject.name}
+          onClose={() => setWizardProject(null)}
+        />
+      )}
     </div>
   )
 }

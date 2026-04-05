@@ -1,4 +1,4 @@
-import { GitBranch, Layers, Sparkles, BookOpen, Settings, HelpCircle } from 'lucide-react'
+import { GitBranch, Layers, Sparkles, BookOpen, Settings, HelpCircle, FlaskConical, ClipboardCheck } from 'lucide-react'
 
 export interface NavItem {
   label: string
@@ -13,6 +13,8 @@ interface MainNavProps {
 
 const iconMap: Record<string, React.ReactNode> = {
   '/ost-tree':          <GitBranch size={18} />,
+  '/experiments':       <FlaskConical size={18} />,
+  '/reviews':           <ClipboardCheck size={18} />,
   '/opportunity':       <Layers size={18} />,
   '/ai-evaluation':     <Sparkles size={18} />,
   '/business-context':  <BookOpen size={18} />,
@@ -46,7 +48,7 @@ export function MainNav({ items, onNavigate }: MainNavProps) {
       </span>
       <span className="truncate hidden lg:inline">{item.label}</span>
       {item.isActive && (
-        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 hidden lg:inline-block" />
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 hidden md:inline-block" />
       )}
     </button>
   )
