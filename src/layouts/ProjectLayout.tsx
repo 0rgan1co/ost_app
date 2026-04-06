@@ -46,7 +46,7 @@ export function ProjectLayout() {
       // 2. Fetch project data
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
-        .select('id, name, description, is_public, tags, last_activity_at, created_at')
+        .select('id, name, description, is_public, tags, updated_at, created_at')
         .eq('id', projectId)
         .single()
 
@@ -65,7 +65,7 @@ export function ProjectLayout() {
         isPublic: projectData.is_public ?? false,
         currentUserRole: membership.role as ProjectRole,
         opportunityCount: 0,
-        lastActivityAt: projectData.last_activity_at ?? projectData.created_at,
+        lastActivityAt: projectData.updated_at ?? projectData.created_at,
         members: [],
         tags: Array.isArray(projectData.tags) ? projectData.tags : [],
       }
