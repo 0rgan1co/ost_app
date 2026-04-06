@@ -101,7 +101,7 @@ export function AIEvaluationView({
   const hasEvaluation = evaluations.length > 0
 
   return (
-    <div className="dark min-h-screen bg-slate-950 px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-3 sm:px-4 md:px-6 py-4 sm:py-6">
       {/* Toast */}
       {toast && (
         <div
@@ -119,7 +119,7 @@ export function AIEvaluationView({
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto mb-4">
         <nav className="flex items-center gap-1.5 text-sm text-slate-500">
-          <button onClick={onNavigateBack} className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+          <button onClick={onNavigateBack} className="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
             <ArrowLeft size={14} />
             <span>{project.name}</span>
           </button>
@@ -138,9 +138,9 @@ export function AIEvaluationView({
           <div className="sticky top-6 space-y-4">
 
             {/* Opportunity card */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
               <p className="text-[10px] font-['IBM_Plex_Mono'] text-orange-400 uppercase tracking-wider mb-2">Oportunidad</p>
-              <h3 className="font-[Nunito_Sans] font-bold text-slate-100 text-sm leading-snug mb-3">
+              <h3 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug mb-3">
                 {opportunity.title}
               </h3>
               <div className="flex items-center gap-3 text-[11px] font-['IBM_Plex_Mono'] text-slate-400">
@@ -157,7 +157,7 @@ export function AIEvaluationView({
 
             {/* Solutions list */}
             {ostSummary && ostSummary.solutions.length > 0 && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
                 <p className="text-[10px] font-['IBM_Plex_Mono'] text-indigo-400 uppercase tracking-wider mb-3">Soluciones</p>
                 <div className="space-y-2.5">
                   {ostSummary.solutions.map((s, i) => (
@@ -182,7 +182,7 @@ export function AIEvaluationView({
 
             {/* Top experiments */}
             {ostSummary && ostSummary.topExperiments.length > 0 && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
                 <div className="flex items-center gap-1.5 mb-3">
                   <Trophy size={12} className="text-amber-400" />
                   <p className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider">Top Experimentos</p>
@@ -241,9 +241,9 @@ export function AIEvaluationView({
 
           {/* Empty state */}
           {!isEvaluating && !hasEvaluation && (
-            <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900/50 p-8 text-center">
-              <Sparkles size={28} className="mx-auto mb-3 text-slate-700" />
-              <p className="text-sm text-slate-400 font-[Nunito_Sans]">
+            <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/50 p-8 text-center">
+              <Sparkles size={28} className="mx-auto mb-3 text-slate-400 dark:text-slate-700" />
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-[Nunito_Sans]">
                 Aún no hay evaluaciones para esta oportunidad.
               </p>
               <p className="text-xs text-slate-500 mt-1 font-[Nunito_Sans]">

@@ -46,7 +46,7 @@ const FIELD_DEFINITIONS: FieldDefinition[] = [
 
 function InfoBanner() {
   return (
-    <div className="flex items-start gap-3 rounded-lg border-l-2 border-red-500 bg-slate-800 px-4 py-3">
+    <div className="flex items-start gap-3 rounded-lg border-l-2 border-red-500 bg-slate-200 dark:bg-slate-800 px-4 py-3">
       {/* Info icon */}
       <svg
         className="mt-0.5 size-4 shrink-0 text-slate-400"
@@ -80,7 +80,7 @@ export function BusinessContextView({
   onSaveField,
 }: BusinessContextProps) {
   return (
-    <div className="dark min-h-screen bg-slate-950 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl">
 
         {/* ── Page header ──────────────────────────────────────────────────── */}
@@ -94,7 +94,7 @@ export function BusinessContextView({
                 {project.name}
               </p>
               <h1
-                className="mt-1 text-2xl font-bold text-slate-100 sm:text-3xl"
+                className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl"
                 style={{ fontFamily: 'Nunito Sans, sans-serif' }}
               >
                 Contexto de negocio

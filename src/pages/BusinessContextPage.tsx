@@ -109,36 +109,36 @@ Respondé SOLO con el texto mejorado, sin explicaciones ni comillas.`
   const filledCount = (ctx: ProjectContext) => FIELDS.filter(f => (ctx as any)[f.key]).length
 
   return (
-    <div className="dark min-h-screen bg-slate-950 px-4 py-8 sm:px-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-8 sm:px-6">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-slate-100 font-[Nunito_Sans] mb-1">Contexto de negocio</h1>
-        <p className="text-sm text-slate-400 font-[Nunito_Sans] mb-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-[Nunito_Sans] mb-1">Contexto de negocio</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400 font-[Nunito_Sans] mb-8">
           Resumen del contexto estratégico de cada proyecto
         </p>
 
         {loading ? (
           <p className="text-slate-500 text-sm font-['IBM_Plex_Mono']">Cargando...</p>
         ) : contexts.length === 0 ? (
-          <p className="text-slate-400 text-sm font-[Nunito_Sans]">No hay proyectos aún.</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm font-[Nunito_Sans]">No hay proyectos aún.</p>
         ) : (
           <div className="space-y-3">
             {contexts.map(ctx => {
               const isExpanded = expandedId === ctx.projectId
               const filled = filledCount(ctx)
               return (
-                <div key={ctx.projectId} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div key={ctx.projectId} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                   {/* Project header */}
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : ctx.projectId)}
-                    className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-800/50 transition-colors"
+                    className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <span className="text-slate-500 flex-shrink-0">
                       {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-[Nunito_Sans] font-bold text-slate-100 text-sm">{ctx.projectName}</p>
+                      <p className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-sm">{ctx.projectName}</p>
                       {!isExpanded && ctx.northStar && (
-                        <p className="text-xs text-slate-400 font-[Nunito_Sans] truncate mt-0.5">{ctx.northStar}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-[Nunito_Sans] truncate mt-0.5">{ctx.northStar}</p>
                       )}
                     </div>
                     <span className={`text-[10px] font-['IBM_Plex_Mono'] px-2 py-0.5 rounded-full ${
@@ -150,7 +150,7 @@ Respondé SOLO con el texto mejorado, sin explicaciones ni comillas.`
 
                   {/* Expanded fields */}
                   {isExpanded && (
-                    <div className="px-5 pb-5 space-y-3 border-t border-slate-800 pt-4">
+                    <div className="px-5 pb-5 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
                       {FIELDS.map(f => {
                         const value = (ctx as any)[f.key] as string
                         const isEditing = editingField?.projectId === ctx.projectId && editingField?.field === f.key
@@ -194,18 +194,18 @@ Respondé SOLO con el texto mejorado, sin explicaciones ni comillas.`
                                     if (e.key === 'Escape') setEditingField(null)
                                   }}
                                   rows={3}
-                                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 font-[Nunito_Sans] focus:outline-none focus:border-red-500/50 resize-y min-h-[2.5rem] placeholder:text-slate-500"
+                                  className="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 font-[Nunito_Sans] focus:outline-none focus:border-red-500/50 resize-y min-h-[2.5rem] placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                   placeholder={`Escribí el ${f.label.toLowerCase()}...`}
                                 />
                                 <button onClick={() => { saveField(ctx.projectId, f.key, editText); setEditingField(null) }}
                                   className="text-green-400 hover:text-green-300 flex-shrink-0 mt-2"><Check size={14} /></button>
                               </div>
                             ) : value ? (
-                              <p className="text-sm text-slate-300 font-[Nunito_Sans] leading-relaxed">{value}</p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300 font-[Nunito_Sans] leading-relaxed">{value}</p>
                             ) : (
                               <button
                                 onClick={() => { setEditingField({ projectId: ctx.projectId, field: f.key }); setEditText('') }}
-                                className="text-xs text-slate-600 hover:text-slate-400 font-[Nunito_Sans] italic transition-colors"
+                                className="text-xs text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400 font-[Nunito_Sans] italic transition-colors"
                               >
                                 + Agregar {f.label.toLowerCase()}
                               </button>

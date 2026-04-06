@@ -34,6 +34,18 @@ export function useRealtimeProject({ projectId, onEvent, enabled = true }: UseRe
         { event: '*', schema: 'public', table: 'experiments' },
         () => onEventRef.current()
       )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'solutions' },
+        () => onEventRef.current()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'assumptions' },
+        () => onEventRef.current()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'project_members', filter: `project_id=eq.${projectId}` },
+        () => onEventRef.current()
+      )
       .subscribe()
 
     channelRef.current = channel

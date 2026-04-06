@@ -46,6 +46,11 @@ export interface ProjectMember extends User {
   role: ProjectRole
 }
 
+export interface ProjectTag {
+  name: string
+  color: string // tailwind color key: red, blue, green, amber, purple, pink, cyan, slate
+}
+
 export interface Project {
   id: string
   name: string
@@ -55,6 +60,7 @@ export interface Project {
   opportunityCount: number
   lastActivityAt: string // ISO date string
   members: ProjectMember[]
+  tags: ProjectTag[]
 }
 
 export interface InviteState {
@@ -104,6 +110,9 @@ export interface ProjectsProps {
 
   /** Remove a member from a project (admin only) */
   onRemoveMember: (projectId: string, memberId: string) => void
+
+  /** Update tags on a project (admin only) */
+  onUpdateTags: (projectId: string, tags: ProjectTag[]) => void
 }
 
 // ─── OST Tree Section ─────────────────────────────────────────────────────────

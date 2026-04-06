@@ -185,11 +185,11 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 pointer-events-none">
         <div
-          className="w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col"
+          className="w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-start justify-between gap-3 p-4 sm:p-6 border-b border-slate-800 flex-shrink-0">
+          <div className="flex items-start justify-between gap-3 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
             <div>
               <h2 className="font-[Nunito_Sans] font-bold text-slate-100 text-base">
                 Nueva oportunidad
@@ -215,15 +215,15 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             {/* Business context card */}
             {hasContext && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
+              <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-2">
                 <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 uppercase tracking-wider">Contexto del proyecto</p>
                 {businessContext!.northStar && (
-                  <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-sans leading-relaxed">
                     <span className="text-slate-500">Desafío:</span> {businessContext!.northStar}
                   </p>
                 )}
                 {businessContext!.targetSegment && (
-                  <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-sans leading-relaxed">
                     <span className="text-slate-500">Target:</span> {businessContext!.targetSegment}
                   </p>
                 )}
@@ -266,7 +266,7 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
                   onChange={e => setContextText(e.target.value)}
                   rows={5}
                   placeholder="Pegar transcript, notas, o contexto aquí..."
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 font-[Nunito_Sans] text-sm placeholder:text-slate-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 resize-none"
+                  className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-[Nunito_Sans] text-sm placeholder:text-slate-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 resize-none"
                 />
                 <button
                   onClick={handleExtractFromContext}
@@ -306,7 +306,7 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-100 font-[Nunito_Sans]">{s.name}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-[Nunito_Sans]">{s.name}</p>
                         <p className="text-xs text-slate-400 font-[Nunito_Sans] mt-0.5 leading-relaxed">{s.description}</p>
                       </div>
                     </div>
@@ -341,7 +341,7 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="¿Cuál es la oportunidad?"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 font-[Nunito_Sans] text-sm placeholder:text-slate-400 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-[Nunito_Sans] text-sm placeholder:text-slate-400 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-colors"
                   />
                 </div>
 
@@ -355,7 +355,7 @@ FORMATO: Respondé SOLO con un JSON array, sin texto adicional:
                     onChange={e => setDescription(e.target.value)}
                     placeholder="Contexto adicional..."
                     rows={2}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 font-[Nunito_Sans] text-sm placeholder:text-slate-400 resize-none focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-[Nunito_Sans] text-sm placeholder:text-slate-400 resize-none focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-colors"
                   />
                 </div>
 

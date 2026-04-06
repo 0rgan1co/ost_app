@@ -21,12 +21,13 @@ export function ProjectsPage() {
     inviteViewer,
     updateMemberRole,
     removeMember,
+    updateTags,
   } = useProjects(user!.id)
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando proyectos...</div>
+        <div className="text-slate-500 dark:text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando proyectos...</div>
       </div>
     )
   }
@@ -55,6 +56,7 @@ export function ProjectsPage() {
       onInviteViewer={inviteViewer}
       onChangeMemberRole={updateMemberRole}
       onRemoveMember={removeMember}
+      onUpdateTags={updateTags}
     />
   )
 }

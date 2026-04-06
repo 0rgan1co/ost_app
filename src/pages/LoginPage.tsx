@@ -10,18 +10,18 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center">
             <GitBranch size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white">OST App</h1>
-            <p className="text-xs text-slate-400">Product discovery</p>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">OST App</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Product discovery</p>
           </div>
         </div>
-        <p className="text-sm text-slate-400 leading-relaxed">
+        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           Gestiona tu Opportunity Solution Tree con evaluación IA y colaboración en tiempo real.
         </p>
         <button

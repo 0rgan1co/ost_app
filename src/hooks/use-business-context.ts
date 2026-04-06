@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { BusinessContextFieldSchema } from '../lib/schemas'
 import type { BusinessContext, ContextField } from '../types'
 
 // ─── Internal Supabase row shape ──────────────────────────────────────────────
@@ -107,6 +108,12 @@ export function useBusinessContext(projectId: string) {
 
   const saveField = useCallback(
     async (field: keyof BusinessContext, value: string) => {
+      const validation = BusinessContextFieldSchema.safeParse({ field, value })
+      if (!validation.success) {
+        console.error('[saveField] Validation failed:', validation.error.format())
+        return
+      }
+
       setIsSaving(true)
 
       // Build updated context merging the new field value + timestamp
@@ -147,23 +154,6 @@ export function useBusinessContext(projectId: string) {
     },
     [context, projectId, rowId]
   )
-
-  // ── Realtime subscription ────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!projectId) return
-
-    const channel = supabase
-      .channel(`biz-ctx-${projectId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'business_context', filter: `project_id=eq.${projectId}` },
-        () => fetchContext()
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [projectId, fetchContext])
 
   return {
     context,

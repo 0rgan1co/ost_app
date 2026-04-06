@@ -95,7 +95,7 @@ function ViewToggle({
   onChange: (m: ViewMode) => void
 }) {
   return (
-    <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1">
+    <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl p-1">
       <button
         onClick={() => onChange('list')}
         title="Vista lista"
@@ -103,8 +103,8 @@ function ViewToggle({
           flex items-center gap-1.5 px-3 py-1.5 rounded-lg
           font-[Nunito_Sans] text-xs font-semibold transition-all duration-150
           ${mode === 'list'
-            ? 'bg-slate-800 text-slate-100 shadow-sm'
-            : 'text-slate-500 hover:text-slate-300'
+            ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }
         `}
       >
@@ -125,8 +125,8 @@ function ViewToggle({
           flex items-center gap-1.5 px-3 py-1.5 rounded-lg
           font-[Nunito_Sans] text-xs font-semibold transition-all duration-150
           ${mode === 'tree'
-            ? 'bg-slate-800 text-slate-100 shadow-sm'
-            : 'text-slate-500 hover:text-slate-300'
+            ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }
         `}
       >
@@ -150,7 +150,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-2 animate-pulse">
       {[1, 2, 3, 4].map(i => (
-        <div key={i} className="h-12 rounded-xl bg-slate-900 border border-slate-800" style={{ opacity: 1 - i * 0.15 }} />
+        <div key={i} className="h-12 rounded-xl bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800" style={{ opacity: 1 - i * 0.15 }} />
       ))}
     </div>
   )
@@ -168,11 +168,11 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <p className="text-slate-300 font-[Nunito_Sans] text-sm font-semibold mb-1">Error al cargar oportunidades</p>
+      <p className="text-slate-700 dark:text-slate-300 font-[Nunito_Sans] text-sm font-semibold mb-1">Error al cargar oportunidades</p>
       <p className="text-slate-500 font-[Nunito_Sans] text-xs mb-4">{message}</p>
       <button
         onClick={onRetry}
-        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-slate-100 font-[Nunito_Sans] text-sm transition-colors"
+        className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-[Nunito_Sans] text-sm transition-colors"
       >
         Reintentar
       </button>
@@ -444,7 +444,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="dark flex flex-col h-full min-h-0 bg-slate-950 relative">
+    <div className="flex flex-col h-full min-h-0 bg-slate-50 dark:bg-slate-950 relative">
 
       {/* Toast */}
       {evalToast && (
@@ -454,13 +454,13 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       )}
 
       {/* ── Header bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800 flex-shrink-0">
+      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <h1 className="font-[Nunito_Sans] font-bold text-slate-100 text-lg truncate">
+          <h1 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-lg truncate">
             {project.name}
           </h1>
           {!loading && (
-            <span className="font-[IBM_Plex_Mono] text-[11px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-500 flex-shrink-0">
+            <span className="font-[IBM_Plex_Mono] text-[11px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-500 flex-shrink-0">
               {activeCount} {activeCount === 1 ? 'oportunidad' : 'oportunidades'}
             </span>
           )}

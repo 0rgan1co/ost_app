@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useRealtimeProject } from './use-realtime-project'
+import { OpportunityEvidenceSchema, ExperimentCreateSchema } from '../lib/schemas'
 import type {
   OpportunityDetail,
   Evidence,
@@ -328,6 +329,11 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
 
   const addEvidence = useCallback(
     async (data: Omit<Evidence, 'id' | 'createdAt'>) => {
+      const validation = OpportunityEvidenceSchema.safeParse(data)
+      if (!validation.success) {
+        console.error('[addEvidence] Validation failed:', validation.error.format())
+        return
+      }
       await supabase.from('opportunity_evidence').insert({
         opportunity_id: opportunityId,
         type: data.type,
@@ -405,6 +411,11 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
       assumptionId: string,
       data: Omit<Experiment, 'id' | 'assumptionId' | 'priorityScore' | 'result' | 'status'>
     ) => {
+      const validation = ExperimentCreateSchema.safeParse(data)
+      if (!validation.success) {
+        console.error('[addExperiment] Validation failed:', validation.error.format())
+        return
+      }
       await supabase.from('experiments').insert({
         assumption_id: assumptionId,
         type: data.type,

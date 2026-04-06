@@ -93,14 +93,14 @@ export function ContextFieldCard({
 
   return (
     <div
-      className={`rounded-xl border bg-slate-900 transition-colors duration-150 ${
-        isEditing ? 'border-red-500/50' : 'border-slate-800'
+      className={`rounded-xl border bg-white dark:bg-slate-900 transition-colors duration-150 ${
+        isEditing ? 'border-red-500/50' : 'border-slate-200 dark:border-slate-800'
       }`}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 px-5 pt-5">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-100" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>
             {label}
           </p>
           <p className="mt-0.5 text-xs text-slate-500" style={{ fontFamily: 'Nunito Sans, sans-serif' }}>
@@ -130,7 +130,7 @@ export function ContextFieldCard({
               onKeyDown={handleKeyDown}
               rows={4}
               placeholder={placeholder}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-colors duration-150"
+              className="w-full resize-none rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-colors duration-150"
               style={{ fontFamily: 'Nunito Sans, sans-serif' }}
             />
             <p className="mt-1.5 text-xs text-slate-400" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>
@@ -160,7 +160,7 @@ export function ContextFieldCard({
               <button
                 onClick={handleCancel}
                 disabled={isSaving}
-                className="inline-flex items-center rounded-lg border border-slate-700 px-4 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 transition-colors hover:border-slate-400 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontFamily: 'Nunito Sans, sans-serif' }}
               >
                 Cancelar
@@ -180,14 +180,14 @@ export function ContextFieldCard({
           >
             {isEmpty ? (
               <span
-                className="block rounded-lg border border-dashed border-slate-800 px-3.5 py-3 text-sm text-slate-400 transition-colors group-hover:border-slate-700 group-hover:text-slate-500"
+                className="block rounded-lg border border-dashed border-slate-300 dark:border-slate-800 px-3.5 py-3 text-sm text-slate-400 transition-colors group-hover:border-slate-400 dark:group-hover:border-slate-700 group-hover:text-slate-500"
                 style={{ fontFamily: 'Nunito Sans, sans-serif' }}
               >
                 {placeholder}
               </span>
             ) : (
               <span
-                className="block rounded-lg border border-transparent px-3.5 py-3 text-sm leading-relaxed text-slate-300 transition-colors group-hover:border-slate-800 group-hover:bg-slate-800/40"
+                className="block rounded-lg border border-transparent px-3.5 py-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300 transition-colors group-hover:border-slate-200 dark:group-hover:border-slate-800 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/40"
                 style={{ fontFamily: 'Nunito Sans, sans-serif' }}
               >
                 {field.value}

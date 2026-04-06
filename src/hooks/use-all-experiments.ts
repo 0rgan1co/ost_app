@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface KanbanExperiment {
@@ -34,7 +34,7 @@ export function useAllExperiments(projectId: string | undefined) {
   const [experiments, setExperiments] = useState<KanbanExperiment[]>([])
   const [loading, setLoading] = useState(false)
 
-  async function fetchAll() {
+  const fetchAll = useCallback(async () => {
     if (!projectId) { setExperiments([]); return }
     setLoading(true)
 
@@ -114,9 +114,36 @@ export function useAllExperiments(projectId: string | undefined) {
 
     setExperiments(mapped)
     setLoading(false)
-  }
+  }, [projectId])
 
-  useEffect(() => { fetchAll() }, [projectId])
+  useEffect(() => { fetchAll() }, [fetchAll])
+
+  // Realtime subscription for experiments and related tables
+  useEffect(() => {
+    if (!projectId) return
+
+    const channel = supabase
+      .channel(`all-experiments-${projectId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'experiments' },
+        () => fetchAll()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'assumptions' },
+        () => fetchAll()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'solutions' },
+        () => fetchAll()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'opportunities', filter: `project_id=eq.${projectId}` },
+        () => fetchAll()
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [projectId, fetchAll])
 
   async function changeStatus(id: string, status: string, result?: string) {
     const update: any = { status }

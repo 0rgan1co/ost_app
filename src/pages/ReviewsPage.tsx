@@ -14,17 +14,17 @@ function ReviewForm({ onSubmit, onCancel }: { onSubmit: (data: any) => void; onC
   const [learnings, setLearnings] = useState('')
   const [nextSteps, setNextSteps] = useState('')
 
-  const fieldClass = "w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 resize-none font-[Nunito_Sans]"
+  const fieldClass = "w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 resize-none font-[Nunito_Sans]"
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-[Nunito_Sans] font-bold text-slate-100 text-base">Nueva revisión</h3>
-        <button onClick={onCancel} className="text-slate-500 hover:text-slate-300"><X size={16} /></button>
+        <h3 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-base">Nueva revisión</h3>
+        <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"><X size={16} /></button>
       </div>
 
       <div>
-        <label className="text-[11px] font-['IBM_Plex_Mono'] text-slate-400 uppercase tracking-wider mb-1 block">Nombre del ciclo</label>
+        <label className="text-[11px] font-['IBM_Plex_Mono'] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Nombre del ciclo</label>
         <input value={cycleName} onChange={e => setCycleName(e.target.value)} className={fieldClass} placeholder="Ej: Sprint 12, Semana 2024-03-15" />
       </div>
 
@@ -60,7 +60,7 @@ function ReviewForm({ onSubmit, onCancel }: { onSubmit: (data: any) => void; onC
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 font-[Nunito_Sans]">Cancelar</button>
+        <button onClick={onCancel} className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-[Nunito_Sans]">Cancelar</button>
         <button
           onClick={() => onSubmit({ cycleName, achievements, obstacles, learnings, nextSteps })}
           disabled={!cycleName.trim()}
@@ -84,10 +84,10 @@ function ReviewCard({ review, onDelete }: { review: OutcomeReview; onDelete: () 
   ]
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 review-card">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 review-card">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-[Nunito_Sans] font-bold text-slate-100 text-sm">{review.cycleName}</h3>
+          <h3 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-sm">{review.cycleName}</h3>
           <p className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 mt-0.5">
             {new Date(review.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
@@ -103,8 +103,8 @@ function ReviewCard({ review, onDelete }: { review: OutcomeReview; onDelete: () 
             <p className={`text-[10px] font-['IBM_Plex_Mono'] uppercase tracking-wider mb-1 flex items-center gap-1 ${s.color.split(' ')[0]}`}>
               {s.icon} {s.label}
             </p>
-            <p className="text-xs text-slate-300 font-[Nunito_Sans] leading-relaxed whitespace-pre-line">
-              {s.content || <span className="text-slate-600 italic">Sin completar</span>}
+            <p className="text-xs text-slate-700 dark:text-slate-300 font-[Nunito_Sans] leading-relaxed whitespace-pre-line">
+              {s.content || <span className="text-slate-400 dark:text-slate-600 italic">Sin completar</span>}
             </p>
           </div>
         ))}
@@ -195,13 +195,13 @@ export function ReviewsPage() {
   const outcome = context.northStar.value || context.strategicChallenge.value || currentProject.name
 
   return (
-    <div className="dark min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="px-4 sm:px-6 py-4 sm:py-6 max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-slate-100 font-[Nunito_Sans]">Revisión de Outcomes</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-[Nunito_Sans]">Revisión de Outcomes</h1>
             <p className="text-xs text-slate-500 font-['IBM_Plex_Mono'] mt-0.5">
               {currentProject.name} · LOAP en ciclos cortos
             </p>
@@ -210,7 +210,7 @@ export function ReviewsPage() {
             {reviews.length > 0 && (
               <button
                 onClick={() => generatePDF(reviews, currentProject.name, outcome)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 text-sm font-[Nunito_Sans] font-semibold transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-slate-600 text-sm font-[Nunito_Sans] font-semibold transition-colors"
               >
                 <Download size={14} />
                 Exportar PDF
@@ -229,7 +229,7 @@ export function ReviewsPage() {
         {/* Outcome context */}
         <div className="bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 mb-6">
           <p className="text-[10px] font-['IBM_Plex_Mono'] text-red-400 uppercase tracking-wider mb-1">Outcome del proyecto</p>
-          <p className="text-sm text-slate-200 font-[Nunito_Sans]">{outcome}</p>
+          <p className="text-sm text-slate-800 dark:text-slate-200 font-[Nunito_Sans]">{outcome}</p>
         </div>
 
         {/* New review form */}
@@ -244,11 +244,11 @@ export function ReviewsPage() {
 
         {/* Reviews list */}
         {loading ? (
-          <p className="text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando...</p>
         ) : reviews.length === 0 && !showForm ? (
           <div className="text-center py-16">
-            <FileText size={28} className="mx-auto mb-3 text-slate-700" />
-            <p className="text-sm text-slate-400 font-[Nunito_Sans]">Sin revisiones aún</p>
+            <FileText size={28} className="mx-auto mb-3 text-slate-400 dark:text-slate-700" />
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-[Nunito_Sans]">Sin revisiones aún</p>
             <p className="text-xs text-slate-500 font-[Nunito_Sans] mt-1">
               Creá tu primera revisión LOAP para documentar el progreso hacia el outcome
             </p>

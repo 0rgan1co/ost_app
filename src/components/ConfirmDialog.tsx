@@ -47,7 +47,7 @@ export function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+      <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
         <div className="flex items-start gap-3 mb-4">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
             variant === 'danger' ? 'bg-red-500/15' : 'bg-amber-500/15'
@@ -57,10 +57,10 @@ export function ConfirmDialog({
             } />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-100 font-[Nunito_Sans]">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-[Nunito_Sans]">
               {title}
             </h3>
-            <p className="text-sm text-slate-400 mt-1 font-[Nunito_Sans] leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 font-[Nunito_Sans] leading-relaxed">
               {message}
             </p>
           </div>
@@ -69,7 +69,7 @@ export function ConfirmDialog({
           <button
             ref={cancelRef}
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 rounded-lg transition-colors font-[Nunito_Sans]"
+            className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors font-[Nunito_Sans]"
           >
             {cancelLabel}
           </button>

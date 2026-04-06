@@ -124,15 +124,15 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[500px] max-h-[70vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] h-[500px] max-h-[70vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-red-500/15 flex items-center justify-center">
                 <Sparkles size={14} className="text-red-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-100 font-[Nunito_Sans]">Agente Guía</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 font-[Nunito_Sans]">Agente Guía</p>
                 <p className="text-[10px] text-slate-500 font-['IBM_Plex_Mono']">Completá tu OST paso a paso</p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
                 <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm font-[Nunito_Sans] leading-relaxed ${
                   m.role === 'user'
                     ? 'bg-red-500 text-white rounded-br-md'
-                    : 'bg-slate-800 text-slate-200 rounded-bl-md'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-md'
                 }`}>
                   {m.content}
                 </div>
@@ -165,7 +165,7 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
           </div>
 
           {/* Input */}
-          <div className="px-4 py-3 border-t border-slate-800">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800">
             <div className="flex items-end gap-2">
               <textarea
                 value={input}
@@ -174,7 +174,7 @@ export function AgentGuide({ projectId, projectName, hasOutcome, opportunityCoun
                 placeholder="Escribí tu respuesta..."
                 rows={1}
                 disabled={sending}
-                className="flex-1 resize-none px-3 py-2 text-sm bg-slate-900 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-red-500/50 font-[Nunito_Sans] disabled:opacity-50"
+                className="flex-1 resize-none px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-red-500/50 font-[Nunito_Sans] disabled:opacity-50"
               />
               <button onClick={handleSend} disabled={!input.trim() || sending}
                 className="w-9 h-9 flex items-center justify-center bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white rounded-xl flex-shrink-0">

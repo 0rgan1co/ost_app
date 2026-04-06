@@ -46,7 +46,7 @@ export function ProjectLayout() {
       // 2. Fetch project data
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
-        .select('id, name, description, last_activity_at, created_at')
+        .select('id, name, description, is_public, tags, last_activity_at, created_at')
         .eq('id', projectId)
         .single()
 
@@ -62,10 +62,12 @@ export function ProjectLayout() {
         id: projectData.id,
         name: projectData.name,
         description: projectData.description ?? '',
+        isPublic: projectData.is_public ?? false,
         currentUserRole: membership.role as ProjectRole,
         opportunityCount: 0,
         lastActivityAt: projectData.last_activity_at ?? projectData.created_at,
         members: [],
+        tags: Array.isArray(projectData.tags) ? projectData.tags : [],
       }
 
       setProject(built)
@@ -82,8 +84,8 @@ export function ProjectLayout() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando proyecto...</div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="text-slate-500 dark:text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando proyecto...</div>
       </div>
     )
   }
@@ -91,15 +93,15 @@ export function ProjectLayout() {
   // Unauthorized
   if (unauthorized) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center mx-auto">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-red-400">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <p className="text-slate-300 font-[Nunito_Sans] font-semibold text-sm">
+          <p className="text-slate-700 dark:text-slate-300 font-[Nunito_Sans] font-semibold text-sm">
             No tienes acceso a este proyecto
           </p>
           <Link
@@ -116,9 +118,9 @@ export function ProjectLayout() {
   // Not found
   if (notFound || !project) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-slate-300 font-[Nunito_Sans] font-semibold text-sm">
+          <p className="text-slate-700 dark:text-slate-300 font-[Nunito_Sans] font-semibold text-sm">
             Proyecto no encontrado
           </p>
           <Link

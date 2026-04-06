@@ -115,7 +115,7 @@ Respondé en JSON exacto (sin texto adicional):
     setGenerating(false)
   }
 
-  const fieldClass = "w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 resize-none font-[Nunito_Sans]"
+  const fieldClass = "w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 resize-none font-[Nunito_Sans]"
 
   const allEmpty = !objective && !criterion && !who && !action1 && !action2 && !action3
 
@@ -123,10 +123,10 @@ Respondé en JSON exacto (sin texto adicional):
     <>
       <div className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 pointer-events-none">
-        <div className="w-full max-w-3xl max-h-[90vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="w-full max-w-3xl max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
 
           {/* Header */}
-          <div className="flex items-start justify-between p-5 border-b border-slate-800">
+          <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-800">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded">Experimento Semilla</span>
@@ -146,7 +146,7 @@ Respondé en JSON exacto (sin texto adicional):
                 </select>
                 <span className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">×{exp.score.toFixed(1)}</span>
               </div>
-              <h2 className="font-[Nunito_Sans] font-bold text-slate-100 text-base leading-snug">{exp.description}</h2>
+              <h2 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-base leading-snug">{exp.description}</h2>
               <div className="flex items-center gap-1 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
                 <span className="text-red-400">{exp.projectName}</span>
                 <ChevronRight size={8} />
@@ -155,7 +155,7 @@ Respondé en JSON exacto (sin texto adicional):
                 <span className="text-indigo-400 truncate max-w-[120px]">{exp.assumptionDescription}</span>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 flex-shrink-0 ml-3">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0 ml-3">
               <X size={16} />
             </button>
           </div>
@@ -256,24 +256,24 @@ Respondé en JSON exacto (sin texto adicional):
             </div>
 
             {/* Effort / Impact / Type */}
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
               <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500">Esfuerzo:</span>
               <span className={`text-xs font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.effort]}`}>{exp.effort}</span>
               <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 ml-2">Impacto:</span>
               <span className={`text-xs font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.impact]}`}>{exp.impact}</span>
               <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 ml-2">Tipo:</span>
-              <span className="text-xs font-['IBM_Plex_Mono'] text-slate-300">{TYPE_LABEL[exp.type] ?? exp.type}</span>
+              <span className="text-xs font-['IBM_Plex_Mono'] text-slate-700 dark:text-slate-300">{TYPE_LABEL[exp.type] ?? exp.type}</span>
             </div>
           </div>
 
           {/* Result confirmation when marking as done */}
           {showResult && (
-            <div className="p-5 border-t border-slate-800 space-y-2">
-              <p className="text-xs text-slate-400 font-[Nunito_Sans]">Registrá el resultado antes de cerrar:</p>
+            <div className="p-5 border-t border-slate-200 dark:border-slate-800 space-y-2">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-[Nunito_Sans]">Registrá el resultado antes de cerrar:</p>
               <textarea autoFocus value={resultText} onChange={e => setResultText(e.target.value)}
                 placeholder="¿Qué aprendiste? ¿Se cumplió el criterio?" rows={3} className={fieldClass} />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setShowResult(false)} className="text-xs text-slate-400 px-3 py-1.5">Cancelar</button>
+                <button onClick={() => setShowResult(false)} className="text-xs text-slate-500 dark:text-slate-400 px-3 py-1.5">Cancelar</button>
                 <button disabled={!resultText.trim()}
                   onClick={() => { onChangeStatus(exp.id, 'terminada', resultText.trim()); onClose() }}
                   className="text-xs bg-green-600 disabled:opacity-40 text-white font-semibold px-4 py-1.5 rounded-lg">
@@ -300,19 +300,19 @@ function KanbanCard({ exp, onClick }: { exp: KanbanExperiment; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-3 transition-all group"
+      className="w-full text-left bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-xl p-3 transition-all group"
     >
-      <p className="text-xs text-slate-200 font-[Nunito_Sans] font-semibold line-clamp-2 leading-snug group-hover:text-red-400 transition-colors">
+      <p className="text-xs text-slate-800 dark:text-slate-200 font-[Nunito_Sans] font-semibold line-clamp-2 leading-snug group-hover:text-red-400 transition-colors">
         {exp.description}
       </p>
       <div className="flex items-center gap-2 mt-2 flex-wrap">
-        <span className="text-[9px] font-['IBM_Plex_Mono'] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
+        <span className="text-[9px] font-['IBM_Plex_Mono'] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
           {TYPE_LABEL[exp.type] ?? exp.type}
         </span>
         <span className="text-[9px] font-['IBM_Plex_Mono'] text-amber-400 font-bold">{exp.score.toFixed(1)}</span>
       </div>
       {/* Traceability breadcrumb */}
-      <p className="text-[9px] text-slate-600 font-[Nunito_Sans] mt-2 truncate">
+      <p className="text-[9px] text-slate-400 dark:text-slate-600 font-[Nunito_Sans] mt-2 truncate">
         {exp.opportunityName}
       </p>
     </button>
@@ -333,25 +333,25 @@ export function ExperimentsPage() {
   const byStatus = (status: string) => experiments.filter(e => e.status === status)
 
   return (
-    <div className="dark min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="px-4 sm:px-6 py-4 sm:py-6">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-slate-100 font-[Nunito_Sans]">Experimentos</h1>
-            <p className="text-xs text-slate-500 font-['IBM_Plex_Mono'] mt-0.5">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-[Nunito_Sans]">Experimentos</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-500 font-['IBM_Plex_Mono'] mt-0.5">
               {currentProject.name} · {experiments.length} experimentos
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando...</div>
+          <div className="text-slate-500 dark:text-slate-400 text-sm font-['IBM_Plex_Mono']">Cargando...</div>
         ) : experiments.length === 0 ? (
           <div className="text-center py-16">
-            <FlaskConical size={28} className="mx-auto mb-3 text-slate-700" />
-            <p className="text-sm text-slate-400 font-[Nunito_Sans]">Sin experimentos aún</p>
+            <FlaskConical size={28} className="mx-auto mb-3 text-slate-400 dark:text-slate-700" />
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-[Nunito_Sans]">Sin experimentos aún</p>
             <p className="text-xs text-slate-500 font-[Nunito_Sans] mt-1">Creá soluciones y experimentos desde el detalle de una oportunidad</p>
           </div>
         ) : (
@@ -362,11 +362,11 @@ export function ExperimentsPage() {
               return (
                 <div key={col.key} className={`border-t-2 ${col.accent} pt-3`}>
                   <div className="flex items-center gap-2 mb-3 px-1">
-                    <span className="text-slate-400">{col.icon}</span>
-                    <span className="text-xs font-bold text-slate-300 font-[Nunito_Sans] uppercase tracking-wider">
+                    <span className="text-slate-500 dark:text-slate-400">{col.icon}</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-[Nunito_Sans] uppercase tracking-wider">
                       {col.label}
                     </span>
-                    <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 dark:text-slate-600 bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
                       {items.length}
                     </span>
                   </div>
@@ -375,7 +375,7 @@ export function ExperimentsPage() {
                       <KanbanCard key={exp.id} exp={exp} onClick={() => setSelectedExp(exp)} />
                     ))}
                     {items.length === 0 && (
-                      <p className="text-xs text-slate-600 font-[Nunito_Sans] px-1 py-4 text-center italic">
+                      <p className="text-xs text-slate-400 dark:text-slate-600 font-[Nunito_Sans] px-1 py-4 text-center italic">
                         Sin experimentos
                       </p>
                     )}

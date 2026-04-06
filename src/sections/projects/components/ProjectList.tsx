@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { Plus, GitBranch, X, Check } from 'lucide-react'
-import type { ProjectsProps, Project } from '../../../types'
+import { useState, useMemo } from 'react'
+import { Plus, GitBranch, X, Check, Search, Filter, ChevronDown } from 'lucide-react'
+import type { ProjectsProps, Project, ProjectRole } from '../../../types'
 import { ProjectCard } from './ProjectCard'
 import { MembersDrawer } from './MembersDrawer'
 import { OSTWizardModal } from './OSTWizardModal'
+
+type VisibilityFilter = 'all' | 'public' | 'private'
+type RoleFilter = 'all' | ProjectRole
 
 export function ProjectList({
   currentUser,
@@ -19,15 +22,47 @@ export function ProjectList({
   onInviteViewer,
   onChangeMemberRole,
   onRemoveMember,
+  onUpdateTags,
 }: ProjectsProps) {
-  const myProjects = projects.filter(p => p.currentUserRole === 'admin')
-  const sharedProjects = projects.filter(p => p.currentUserRole !== 'admin')
   const [activeProject, setActiveProject] = useState<Project | null>(null)
   const [creating, setCreating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [wizardProject, setWizardProject] = useState<{ id: string; name: string } | null>(null)
+
+  // Filters
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all')
+  const [tagFilter, setTagFilter] = useState<string>('all')
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Collect all unique tags across projects
+  const allTags = useMemo(() => {
+    const tagMap = new Map<string, string>() // name → color
+    for (const p of projects) {
+      for (const t of p.tags) tagMap.set(t.name, t.color)
+    }
+    return Array.from(tagMap.entries()).map(([name, color]) => ({ name, color }))
+  }, [projects])
+
+  const hasActiveFilters = search || roleFilter !== 'all' || visibilityFilter !== 'all' || tagFilter !== 'all'
+
+  // Apply filters
+  const filtered = useMemo(() => {
+    return projects.filter(p => {
+      if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.description.toLowerCase().includes(search.toLowerCase())) return false
+      if (roleFilter !== 'all' && p.currentUserRole !== roleFilter) return false
+      if (visibilityFilter === 'public' && !p.isPublic) return false
+      if (visibilityFilter === 'private' && p.isPublic) return false
+      if (tagFilter !== 'all' && !p.tags.some(t => t.name === tagFilter)) return false
+      return true
+    })
+  }, [projects, search, roleFilter, visibilityFilter, tagFilter])
+
+  const myProjects = filtered.filter(p => p.currentUserRole === 'admin')
+  const sharedProjects = filtered.filter(p => p.currentUserRole !== 'admin')
 
   const handleSaveNew = async () => {
     if (!newName.trim() || saving) return
@@ -49,12 +84,32 @@ export function ProjectList({
     setNewDesc('')
   }
 
+  const clearFilters = () => {
+    setSearch('')
+    setRoleFilter('all')
+    setVisibilityFilter('all')
+    setTagFilter('all')
+  }
+
+  const renderProjectCard = (project: Project) => (
+    <ProjectCard
+      key={project.id}
+      project={project}
+      onSelect={() => onSelectProject(project.id)}
+      onOpenMembers={() => setActiveProject(project)}
+      onDelete={() => onDeleteProject(project.id)}
+      onToggleVisibility={(isPublic) => onToggleVisibility(project.id, isPublic)}
+      onRename={(name) => onRenameProject?.(project.id, name)}
+      onUpdateTags={(tags) => onUpdateTags(project.id, tags)}
+    />
+  )
+
   return (
     <div className="min-h-full bg-slate-50 dark:bg-slate-950 font-sans">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
 
         {/* Page header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             {currentUser.avatarUrl ? (
               <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-200 dark:ring-slate-700" />
@@ -68,7 +123,10 @@ export function ProjectList({
                 Proyectos
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                {projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'} activos
+                {filtered.length === projects.length
+                  ? `${projects.length} ${projects.length === 1 ? 'proyecto' : 'proyectos'} activos`
+                  : `${filtered.length} de ${projects.length} proyectos`
+                }
               </p>
             </div>
           </div>
@@ -81,6 +139,100 @@ export function ProjectList({
             <span className="sm:hidden">Nuevo</span>
           </button>
         </div>
+
+        {/* Filter bar */}
+        {projects.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {/* Search + filter toggle */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar proyectos..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                />
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors font-sans ${
+                  showFilters || hasActiveFilters
+                    ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                <Filter size={14} />
+                Filtros
+                {hasActiveFilters && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                )}
+              </button>
+            </div>
+
+            {/* Expanded filters */}
+            {showFilters && (
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+                {/* Role filter */}
+                <div className="relative">
+                  <select
+                    value={roleFilter}
+                    onChange={e => setRoleFilter(e.target.value as RoleFilter)}
+                    className="appearance-none text-xs font-medium pl-2.5 pr-6 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                  >
+                    <option value="all">Todos los roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="usuario">Usuario</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                  <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                </div>
+
+                {/* Visibility filter */}
+                <div className="relative">
+                  <select
+                    value={visibilityFilter}
+                    onChange={e => setVisibilityFilter(e.target.value as VisibilityFilter)}
+                    className="appearance-none text-xs font-medium pl-2.5 pr-6 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                  >
+                    <option value="all">Visibilidad</option>
+                    <option value="public">Público</option>
+                    <option value="private">Privado</option>
+                  </select>
+                  <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                </div>
+
+                {/* Tag filter */}
+                {allTags.length > 0 && (
+                  <div className="relative">
+                    <select
+                      value={tagFilter}
+                      onChange={e => setTagFilter(e.target.value)}
+                      className="appearance-none text-xs font-medium pl-2.5 pr-6 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                    >
+                      <option value="all">Tags</option>
+                      {allTags.map(t => (
+                        <option key={t.name} value={t.name}>{t.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                  </div>
+                )}
+
+                {/* Clear filters */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-medium ml-1 font-sans"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Empty state */}
         {projects.length === 0 && !creating && (
@@ -100,6 +252,22 @@ export function ProjectList({
             >
               <Plus size={16} />
               Crear proyecto
+            </button>
+          </div>
+        )}
+
+        {/* No results after filter */}
+        {projects.length > 0 && filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Search size={24} className="text-slate-300 dark:text-slate-600 mb-3" />
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+              No se encontraron proyectos con esos filtros.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="text-sm text-red-500 hover:text-red-600 font-medium font-sans"
+            >
+              Limpiar filtros
             </button>
           </div>
         )}
@@ -155,17 +323,7 @@ export function ProjectList({
               Mis proyectos
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {myProjects.map(project => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onSelect={() => onSelectProject(project.id)}
-                  onOpenMembers={() => setActiveProject(project)}
-                  onDelete={() => onDeleteProject(project.id)}
-                  onToggleVisibility={(isPublic) => onToggleVisibility(project.id, isPublic)}
-                  onRename={(name) => onRenameProject?.(project.id, name)}
-                />
-              ))}
+              {myProjects.map(renderProjectCard)}
             </div>
           </section>
         )}
@@ -177,17 +335,7 @@ export function ProjectList({
               Compartidos conmigo
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sharedProjects.map(project => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onSelect={() => onSelectProject(project.id)}
-                  onOpenMembers={() => setActiveProject(project)}
-                  onDelete={() => onDeleteProject(project.id)}
-                  onToggleVisibility={(isPublic) => onToggleVisibility(project.id, isPublic)}
-                  onRename={(name) => onRenameProject?.(project.id, name)}
-                />
-              ))}
+              {sharedProjects.map(renderProjectCard)}
             </div>
           </section>
         )}
@@ -195,7 +343,7 @@ export function ProjectList({
 
       {/* Members drawer */}
       <MembersDrawer
-        project={activeProject}
+        project={activeProject ? (projects.find(p => p.id === activeProject.id) ?? activeProject) : null}
         availableUsers={availableUsers}
         roleOptions={roleOptions}
         onClose={() => setActiveProject(null)}

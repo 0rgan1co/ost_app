@@ -33,9 +33,9 @@ export function UndoToast({
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm">
-      <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
         <div className="flex items-center gap-3 px-4 py-3">
-          <p className="text-sm text-slate-300 font-[Nunito_Sans] flex-1">
+          <p className="text-sm text-slate-700 dark:text-slate-300 font-[Nunito_Sans] flex-1">
             {message}
           </p>
           <button
@@ -52,7 +52,7 @@ export function UndoToast({
             <X size={14} />
           </button>
         </div>
-        <div className="h-0.5 bg-slate-700">
+        <div className="h-0.5 bg-slate-200 dark:bg-slate-700">
           <div
             className="h-full bg-red-500 transition-all duration-75"
             style={{ width: `${progress}%` }}

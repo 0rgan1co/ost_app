@@ -92,16 +92,16 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
 
   const allEmpty = !objective && !criterion && !who && !action1
 
-  const fc = "w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 resize-none font-[Nunito_Sans]"
+  const fc = "w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 resize-none font-[Nunito_Sans]"
 
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 pointer-events-none">
-        <div className="w-full max-w-3xl max-h-[90vh] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="w-full max-w-3xl max-h-[90vh] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl pointer-events-auto flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
 
           {/* Header */}
-          <div className="flex items-start justify-between p-5 border-b border-slate-800">
+          <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-800">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-[10px] font-['IBM_Plex_Mono'] text-amber-400 uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded">Experimento Semilla</span>
@@ -114,7 +114,7 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
                   <option value="terminada">● Terminada</option>
                 </select>
               </div>
-              <h2 className="font-[Nunito_Sans] font-bold text-slate-100 text-base leading-snug">{exp.description}</h2>
+              <h2 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-base leading-snug">{exp.description}</h2>
               <div className="flex items-center gap-1 mt-2 text-[9px] font-['IBM_Plex_Mono'] text-slate-500">
                 <span className="text-red-400">{exp.projectName}</span>
                 <ChevronRight size={8} />
@@ -123,7 +123,7 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
                 <span className="text-indigo-400 truncate max-w-[120px]">{exp.assumptionDescription}</span>
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 flex-shrink-0 ml-3"><X size={16} /></button>
+            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0 ml-3"><X size={16} /></button>
           </div>
 
           {/* Break blank */}
@@ -184,18 +184,18 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
                 <textarea value={result} onChange={e => setResult(e.target.value)} onBlur={() => save('result', result)} placeholder="¿Qué queremos lograr?" rows={3} className={fc} />
               </div>
             </div>
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
               <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500">Esfuerzo:</span>
               <span className={`text-xs font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.effort]}`}>{exp.effort}</span>
               <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 ml-2">Impacto:</span>
               <span className={`text-xs font-['IBM_Plex_Mono'] font-bold capitalize ${EFFORT_IMPACT[exp.impact]}`}>{exp.impact}</span>
               <span className="text-[10px] font-['IBM_Plex_Mono'] text-slate-500 ml-2">Tipo:</span>
-              <span className="text-xs font-['IBM_Plex_Mono'] text-slate-300">{TYPE_LABEL[exp.type] ?? exp.type}</span>
+              <span className="text-xs font-['IBM_Plex_Mono'] text-slate-700 dark:text-slate-300">{TYPE_LABEL[exp.type] ?? exp.type}</span>
             </div>
           </div>
 
           {showResult && (
-            <div className="p-5 border-t border-slate-800 space-y-2">
+            <div className="p-5 border-t border-slate-200 dark:border-slate-800 space-y-2">
               <p className="text-xs text-slate-400 font-[Nunito_Sans]">Registrá el resultado:</p>
               <textarea autoFocus value={resultText} onChange={e => setResultText(e.target.value)} placeholder="¿Qué aprendiste?" rows={3} className={fc} />
               <div className="flex gap-2 justify-end">
@@ -209,7 +209,7 @@ export function ExperimentSeedModal({ experiment: exp, onClose, onRefresh }: Pro
           )}
 
           {status !== 'terminada' && !showResult && (
-            <div className="flex gap-2 p-5 border-t border-slate-800">
+            <div className="flex gap-2 p-5 border-t border-slate-200 dark:border-slate-800">
               {status === 'to do' && (
                 <button onClick={() => handleStatus('en curso')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold font-[Nunito_Sans]">

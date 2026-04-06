@@ -21,7 +21,7 @@ import { AIEvaluationSelectPage } from './pages/AIEvaluationSelectPage'
 import { BusinessContextPage } from './pages/BusinessContextPage'
 
 const Stub = ({ label }: { label: string }) => (
-  <div className="p-4 sm:p-8 text-slate-400 font-sans">{label} — coming soon</div>
+  <div className="p-4 sm:p-8 text-slate-500 dark:text-slate-400 font-sans">{label} — coming soon</div>
 )
 
 function OSTTreePage() {
@@ -43,7 +43,7 @@ function OpportunityDetailPage() {
   } = useOpportunityDetail(id ?? '')
 
   if (!opportunity) {
-    return <div className="min-h-screen bg-slate-950" />
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950" />
   }
 
   return (
@@ -97,7 +97,7 @@ function AIEvaluationPage() {
   }, [opportunityId])
 
   if (!opportunityId) {
-    return <div className="min-h-screen bg-slate-950" />
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950" />
   }
 
   return (

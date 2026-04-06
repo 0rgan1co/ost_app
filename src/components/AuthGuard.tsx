@@ -17,14 +17,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       .then(({ data }) => setAllowed(!!data))
   }, [user])
 
-  if (loading) return <div className="min-h-screen bg-slate-950" />
+  if (loading) return <div className="min-h-screen bg-slate-50 dark:bg-slate-950" />
   if (!user) return <Navigate to="/login" replace />
-  if (allowed === null) return <div className="min-h-screen bg-slate-950" />
+  if (allowed === null) return <div className="min-h-screen bg-slate-50 dark:bg-slate-950" />
   if (!allowed) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
       <div className="text-center space-y-3">
-        <p className="text-white font-semibold">Acceso restringido</p>
-        <p className="text-slate-400 text-sm">Tu cuenta no tiene acceso a esta aplicación.</p>
+        <p className="text-slate-900 dark:text-white font-semibold">Acceso restringido</p>
+        <p className="text-slate-600 dark:text-slate-400 text-sm">Tu cuenta no tiene acceso a esta aplicación.</p>
         <button
           onClick={() => supabase.auth.signOut()}
           className="text-sm text-red-400 hover:text-red-300"

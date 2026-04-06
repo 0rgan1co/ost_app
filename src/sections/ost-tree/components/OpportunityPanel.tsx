@@ -43,7 +43,7 @@ export function OpportunityPanel({
         className={`
           fixed top-0 right-0 h-full z-50
           w-full sm:w-[380px]
-          bg-slate-950 border-l border-slate-800
+          bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800
           flex flex-col
           transition-transform duration-300 ease-out
           ${isOpen && opportunity ? 'translate-x-0' : 'translate-x-full'}
@@ -52,11 +52,11 @@ export function OpportunityPanel({
         {opportunity && (
           <>
             {/* Header */}
-            <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-800">
+            <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-200 dark:border-slate-800">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {opportunity.isArchived ? (
-                    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                    <span className="font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
                       Descartada
                     </span>
                   ) : (
@@ -65,7 +65,7 @@ export function OpportunityPanel({
                     </span>
                   )}
                 </div>
-                <h2 className="font-[Nunito_Sans] font-bold text-slate-100 text-base leading-snug">
+                <h2 className="font-[Nunito_Sans] font-bold text-slate-900 dark:text-slate-100 text-base leading-snug">
                   {opportunity.title}
                 </h2>
               </div>
@@ -94,7 +94,7 @@ export function OpportunityPanel({
 
               {/* Counters grid */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
+                <div className="bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3">
                   <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 uppercase tracking-wider mb-1">
                     Evidencia
                   </p>
@@ -102,7 +102,7 @@ export function OpportunityPanel({
                     {opportunity.evidenceCount}
                   </p>
                 </div>
-                <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
+                <div className="bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3">
                   <p className="font-[IBM_Plex_Mono] text-[10px] text-slate-400 uppercase tracking-wider mb-1">
                     Soluciones
                   </p>
@@ -124,7 +124,7 @@ export function OpportunityPanel({
                       return (
                         <div
                           key={ev.id}
-                          className="bg-slate-900 rounded-lg border border-slate-800 p-3"
+                          className="bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-3"
                         >
                           <div className="flex items-center gap-1.5 mb-1.5">
                             <span className={`font-[IBM_Plex_Mono] text-[10px] px-1.5 py-0.5 rounded ${config.color} ${config.bg} border ${config.border}`}>
@@ -182,7 +182,7 @@ export function OpportunityPanel({
             </div>
 
             {/* Footer actions */}
-            <div className="p-4 border-t border-slate-800 space-y-2">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
               <button
                 onClick={() => onNavigateToDetail(opportunity.id)}
                 className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-[Nunito_Sans] font-semibold text-sm transition-colors"
@@ -193,7 +193,7 @@ export function OpportunityPanel({
               <div className="flex gap-2">
                 <button
                   onClick={() => onNavigateToDetail(opportunity.id)}
-                  className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 font-[Nunito_Sans] text-sm transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 font-[Nunito_Sans] text-sm transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="12" y1="5" x2="12" y2="19" />
@@ -205,14 +205,14 @@ export function OpportunityPanel({
                 {opportunity.isArchived ? (
                   <button
                     onClick={() => { onRestore(opportunity.id); onClose() }}
-                    className="flex-1 py-2 rounded-xl border border-slate-700 text-green-400 hover:text-green-300 hover:border-green-500/30 font-[Nunito_Sans] text-sm transition-colors"
+                    className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-green-400 hover:text-green-300 hover:border-green-500/30 font-[Nunito_Sans] text-sm transition-colors"
                   >
                     Restaurar
                   </button>
                 ) : (
                   <button
                     onClick={() => { onArchive(opportunity.id); onClose() }}
-                    className="flex-1 py-2 rounded-xl border border-slate-700 text-amber-400 hover:text-amber-300 hover:border-amber-500/30 font-[Nunito_Sans] text-sm transition-colors"
+                    className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-amber-400 hover:text-amber-300 hover:border-amber-500/30 font-[Nunito_Sans] text-sm transition-colors"
                   >
                     Archivar
                   </button>

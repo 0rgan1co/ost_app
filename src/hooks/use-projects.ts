@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendProjectInvite } from '../lib/email'
-import type { Project, ProjectRole, InviteState, User } from '../types'
+import type { Project, ProjectRole, ProjectTag, InviteState, User } from '../types'
 
 export function useProjects(currentUserId: string) {
   const [projects, setProjects] = useState<Project[]>([])
@@ -58,7 +58,7 @@ export function useProjects(currentUserId: string) {
     const [{ data: allMembers }, { data: oppCounts }] = await Promise.all([
       supabase
         .from('project_members')
-        .select('id, project_id, user_id, role, profiles(id, full_name, avatar_url, email)')
+        .select('id, project_id, user_id, role, profiles!project_members_user_id_profiles_fkey(id, full_name, avatar_url, email)')
         .in('project_id', allProjectIds),
       supabase
         .from('opportunities')
@@ -91,6 +91,7 @@ export function useProjects(currentUserId: string) {
         members,
         opportunityCount,
         lastActivityAt: p.updated_at,
+        tags: Array.isArray(p.tags) ? p.tags : [],
       } satisfies Project
     })
 
@@ -130,6 +131,25 @@ export function useProjects(currentUserId: string) {
   useEffect(() => {
     fetchProjects()
     fetchAvailableUsers()
+  }, [currentUserId])
+
+  // Realtime subscription for project_members changes
+  useEffect(() => {
+    if (!currentUserId) return
+
+    const channel = supabase
+      .channel(`projects-members-${currentUserId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'project_members' },
+        () => fetchProjects()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        () => fetchProjects()
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [currentUserId])
 
   async function createProject(data: { name: string; description: string }): Promise<string | false> {
@@ -221,6 +241,16 @@ export function useProjects(currentUserId: string) {
   }
 
   async function addMember(projectId: string, userId: string, role: ProjectRole) {
+    // Optimistic update
+    const addedUser = availableUsers.find(u => u.id === userId)
+    if (addedUser) {
+      setProjects(prev => prev.map(p =>
+        p.id === projectId
+          ? { ...p, members: [...p.members, { id: addedUser.id, name: addedUser.name, email: addedUser.email, avatarUrl: addedUser.avatarUrl, role }] }
+          : p
+      ))
+    }
+
     const { error } = await supabase.from('project_members').insert({
       project_id: projectId,
       user_id: userId,
@@ -229,12 +259,12 @@ export function useProjects(currentUserId: string) {
 
     if (error) {
       console.error('Error adding member:', error)
+      await fetchProjects() // Revert on error
       return
     }
 
     // Send email invite (fire and forget)
     const project = projects.find(p => p.id === projectId)
-    const addedUser = availableUsers.find(u => u.id === userId)
     const { data: inviterProfile } = await supabase.from('profiles').select('full_name').eq('id', currentUserId).single()
     if (project && addedUser?.email) {
       sendProjectInvite({
@@ -246,8 +276,6 @@ export function useProjects(currentUserId: string) {
         role,
       }).catch(() => {})
     }
-
-    await fetchProjects()
   }
 
   async function inviteMember(projectId: string, email: string, role: ProjectRole) {
@@ -277,26 +305,60 @@ export function useProjects(currentUserId: string) {
   }
 
   async function updateMemberRole(projectId: string, memberId: string, role: ProjectRole) {
-    const { data: member } = await supabase
+    // Optimistic update
+    setProjects(prev => prev.map(p =>
+      p.id === projectId
+        ? { ...p, members: p.members.map(m => m.id === memberId ? { ...m, role } : m) }
+        : p
+    ))
+
+    const { error } = await supabase
       .from('project_members')
-      .select('id')
+      .update({ role })
       .eq('project_id', projectId)
       .eq('user_id', memberId)
-      .single()
 
-    if (member) {
-      await supabase.from('project_members').update({ role }).eq('id', member.id)
-      await fetchProjects()
+    if (error) {
+      console.error('Error updating member role:', error)
+      await fetchProjects() // Revert on error
     }
   }
 
   async function removeMember(projectId: string, memberId: string) {
-    await supabase
+    // Optimistic update
+    setProjects(prev => prev.map(p =>
+      p.id === projectId
+        ? { ...p, members: p.members.filter(m => m.id !== memberId) }
+        : p
+    ))
+
+    const { data, error } = await supabase
       .from('project_members')
       .delete()
       .eq('project_id', projectId)
       .eq('user_id', memberId)
-    await fetchProjects()
+      .select()
+
+    if (error || !data?.length) {
+      console.error('Error removing member:', error ?? 'No rows deleted (RLS may have blocked)')
+      await fetchProjects()
+    }
+  }
+
+  async function updateTags(projectId: string, tags: ProjectTag[]) {
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, tags } : p
+    ))
+
+    const { error } = await supabase
+      .from('projects')
+      .update({ tags })
+      .eq('id', projectId)
+
+    if (error) {
+      console.error('Error updating tags:', error)
+      await fetchProjects()
+    }
   }
 
   return {
@@ -313,6 +375,7 @@ export function useProjects(currentUserId: string) {
     inviteMember,
     updateMemberRole,
     removeMember,
+    updateTags,
     refetch: fetchProjects,
   }
 }

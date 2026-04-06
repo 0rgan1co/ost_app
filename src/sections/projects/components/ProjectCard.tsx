@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { GitBranch, Users, Clock, ChevronRight, Trash2, Globe, Lock, Pencil, Check, X } from 'lucide-react'
-import type { Project, ProjectRole } from '../../../types'
+import { useState, useRef, useEffect } from 'react'
+import { GitBranch, Users, Clock, ChevronRight, Trash2, Globe, Lock, Pencil, Check, X, Plus, Tag } from 'lucide-react'
+import type { Project, ProjectRole, ProjectTag } from '../../../types'
 
 interface ProjectCardProps {
   project: Project
@@ -9,12 +9,28 @@ interface ProjectCardProps {
   onDelete: () => void
   onToggleVisibility: (isPublic: boolean) => void
   onRename?: (name: string) => void
+  onUpdateTags: (tags: ProjectTag[]) => void
 }
 
 const roleConfig: Record<ProjectRole, { label: string; className: string; borderClass: string }> = {
   admin:   { label: 'Admin',   className: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400',     borderClass: 'border-red-400 dark:border-red-500' },
   usuario: { label: 'Usuario', className: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300', borderClass: 'border-slate-400 dark:border-slate-500' },
   viewer:  { label: 'Viewer',  className: 'bg-slate-50 text-slate-400 dark:bg-slate-800 dark:text-slate-400',  borderClass: 'border-slate-300 dark:border-slate-700' },
+}
+
+const TAG_COLORS = [
+  { key: 'red',    bg: 'bg-red-100 dark:bg-red-500/15',    text: 'text-red-700 dark:text-red-300',    dot: 'bg-red-500' },
+  { key: 'blue',   bg: 'bg-blue-100 dark:bg-blue-500/15',   text: 'text-blue-700 dark:text-blue-300',   dot: 'bg-blue-500' },
+  { key: 'green',  bg: 'bg-emerald-100 dark:bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500' },
+  { key: 'amber',  bg: 'bg-amber-100 dark:bg-amber-500/15',  text: 'text-amber-700 dark:text-amber-300',  dot: 'bg-amber-500' },
+  { key: 'purple', bg: 'bg-purple-100 dark:bg-purple-500/15', text: 'text-purple-700 dark:text-purple-300', dot: 'bg-purple-500' },
+  { key: 'pink',   bg: 'bg-pink-100 dark:bg-pink-500/15',   text: 'text-pink-700 dark:text-pink-300',   dot: 'bg-pink-500' },
+  { key: 'cyan',   bg: 'bg-cyan-100 dark:bg-cyan-500/15',   text: 'text-cyan-700 dark:text-cyan-300',   dot: 'bg-cyan-500' },
+  { key: 'slate',  bg: 'bg-slate-100 dark:bg-slate-700',    text: 'text-slate-700 dark:text-slate-300',  dot: 'bg-slate-500' },
+]
+
+function getTagStyle(colorKey: string) {
+  return TAG_COLORS.find(c => c.key === colorKey) ?? TAG_COLORS[TAG_COLORS.length - 1]
 }
 
 function formatRelativeTime(isoDate: string): string {
@@ -42,21 +58,47 @@ function Avatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: st
   )
 }
 
-export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onToggleVisibility, onRename }: ProjectCardProps) {
+export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onToggleVisibility, onRename, onUpdateTags }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(project.name)
+  const [showTagMenu, setShowTagMenu] = useState(false)
+  const [newTagName, setNewTagName] = useState('')
+  const [newTagColor, setNewTagColor] = useState('blue')
+  const tagMenuRef = useRef<HTMLDivElement>(null)
   const role = roleConfig[project.currentUserRole]
   const isAdmin = project.currentUserRole === 'admin'
   const visibleMembers = project.members.slice(0, 4)
   const extraCount = project.members.length - visibleMembers.length
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (tagMenuRef.current && !tagMenuRef.current.contains(e.target as Node)) {
+        setShowTagMenu(false)
+      }
+    }
+    if (showTagMenu) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showTagMenu])
 
   const handleSaveRename = () => {
     if (editName.trim() && editName.trim() !== project.name) {
       onRename?.(editName.trim())
     }
     setEditing(false)
+  }
+
+  const handleAddTag = () => {
+    if (!newTagName.trim()) return
+    const exists = project.tags.some(t => t.name.toLowerCase() === newTagName.trim().toLowerCase())
+    if (exists) return
+    onUpdateTags([...project.tags, { name: newTagName.trim(), color: newTagColor }])
+    setNewTagName('')
+  }
+
+  const handleRemoveTag = (tagName: string) => {
+    onUpdateTags(project.tags.filter(t => t.name !== tagName))
   }
 
   return (
@@ -100,7 +142,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
 
       {/* Clickable main area */}
       <button
-        className="w-full text-left p-5 pb-4 focus:outline-none"
+        className="w-full text-left p-5 pb-3 focus:outline-none"
         onClick={onSelect}
       >
         {/* Top row: name + badges */}
@@ -135,7 +177,6 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
             </div>
           )}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Visibility badge */}
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full font-['IBM_Plex_Mono'] ${
               project.isPublic
                 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
@@ -144,7 +185,6 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
               {project.isPublic ? <Globe size={10} className="inline mr-1" /> : <Lock size={10} className="inline mr-1" />}
               {project.isPublic ? 'Público' : 'Privado'}
             </span>
-            {/* Role badge */}
             <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full font-['IBM_Plex_Mono'] ${role.className}`}>
               {role.label}
             </span>
@@ -153,13 +193,39 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
 
         {/* Description */}
         {project.description ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 mb-4 font-sans">
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 mb-3 font-sans">
             {project.description}
           </p>
         ) : (
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic mb-4 font-sans">
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic mb-3 font-sans">
             Sin descripción
           </p>
+        )}
+
+        {/* Tags */}
+        {project.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3" onClick={e => e.stopPropagation()}>
+            {project.tags.map(tag => {
+              const style = getTagStyle(tag.color)
+              return (
+                <span
+                  key={tag.name}
+                  className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full font-['IBM_Plex_Mono'] ${style.bg} ${style.text}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                  {tag.name}
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleRemoveTag(tag.name)}
+                      className="ml-0.5 hover:opacity-60 transition-opacity"
+                    >
+                      <X size={8} />
+                    </button>
+                  )}
+                </span>
+              )
+            })}
+          </div>
         )}
 
         {/* Stats row */}
@@ -176,7 +242,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
       </button>
 
       {/* Bottom row: members + actions */}
-      <div className="px-5 pb-4 flex items-center justify-between">
+      <div className="px-5 pb-4 pt-1 flex items-center justify-between">
         {/* Stacked avatars */}
         <button
           className="flex items-center gap-2 group/members hover:opacity-80 transition-opacity"
@@ -199,6 +265,57 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
         </button>
 
         <div className="flex items-center gap-1">
+          {/* Tag button (admin only) */}
+          {isAdmin && (
+            <div className="relative" ref={tagMenuRef}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowTagMenu(!showTagMenu) }}
+                title="Agregar tag"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              >
+                <Tag size={13} />
+              </button>
+
+              {/* Tag popover */}
+              {showTagMenu && (
+                <div className="absolute bottom-full right-0 mb-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 p-3">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-2">
+                    Agregar tag
+                  </p>
+                  <div className="flex gap-1.5 mb-2">
+                    <input
+                      type="text"
+                      placeholder="Nombre..."
+                      value={newTagName}
+                      onChange={e => setNewTagName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddTag() }}
+                      autoFocus
+                      className="flex-1 px-2 py-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                    />
+                    <button
+                      onClick={handleAddTag}
+                      disabled={!newTagName.trim()}
+                      className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 disabled:opacity-30 text-white rounded-md transition-colors"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {TAG_COLORS.map(c => (
+                      <button
+                        key={c.key}
+                        onClick={() => setNewTagColor(c.key)}
+                        className={`w-5 h-5 rounded-full ${c.dot} transition-all ${
+                          newTagColor === c.key ? 'ring-2 ring-offset-1 ring-red-400 dark:ring-offset-slate-900 scale-110' : 'opacity-60 hover:opacity-100'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Visibility toggle (admin only) */}
           {isAdmin && (
             <button
