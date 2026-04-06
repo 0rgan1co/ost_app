@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ProjectProvider } from './contexts/ProjectContext'
 import { AuthGuard } from './components/AuthGuard'
 import { ShellWrapper } from './components/ShellWrapper'
 import { LoginPage } from './pages/LoginPage'
@@ -141,6 +142,7 @@ export function App() {
   return (
     <ThemeProvider>
     <AuthProvider>
+    <ProjectProvider>
       <BrowserRouter basename="/ost_app">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -192,6 +194,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/projects" replace />} />
         </Routes>
       </BrowserRouter>
+    </ProjectProvider>
     </AuthProvider>
     </ThemeProvider>
   )

@@ -24,57 +24,6 @@ interface DBMessage {
   created_at: string
 }
 
-interface DBOpportunity {
-  id: string
-  name: string
-  description: string | null
-  outcome: string | null
-}
-
-interface DBEvidence {
-  id: string
-  type: string
-  content: string
-  source: string | null
-}
-
-interface DBSolution {
-  id: string
-  opportunity_id: string
-  name: string
-  description: string | null
-}
-
-interface DBAssumption {
-  id: string
-  solution_id: string
-  description: string
-  category: string
-  status: string
-  result: string | null
-}
-
-interface DBExperiment {
-  id: string
-  assumption_id: string
-  type: string
-  description: string
-  success_criterion: string
-  effort: string
-  impact: string
-  status: string
-  result: string | null
-}
-
-interface DBBusinessContext {
-  content: string // JSON string: { northStar, targetSegment, keyConstraints }
-}
-
-interface ParsedBusinessContext {
-  northStar: string
-  targetSegment: string
-  keyConstraints: string
-}
 
 // ─── Hook return ──────────────────────────────────────────────────────────────
 

@@ -83,6 +83,11 @@ function mapDBToOpportunity(row: DBOpportunity, evidenceCount: number, solutionC
     solutionCount,
     experimentCount: 0,
     activeExperimentCount: 0,
+    priorityImpact: null,
+    priorityFrequency: null,
+    priorityIntensity: null,
+    priorityCapacity: null,
+    isTarget: false,
     createdAt: row.created_at,
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { BusinessContextFieldSchema } from '../lib/schemas'
 import type { BusinessContext, ContextField } from '../types'

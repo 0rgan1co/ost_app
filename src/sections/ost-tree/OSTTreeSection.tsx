@@ -229,13 +229,14 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
         supabase.from('opportunities').select('id, assigned_to').eq('project_id', project.id),
         supabase.from('solutions').select('id, assigned_to').in('opportunity_id', opportunities.map(o => o.id)),
         solIds.length > 0
-          ? supabase.from('assumptions').select('id').in('solution_id', solIds).then(({ data: assumptions }) => {
+          ? supabase.from('assumptions').select('id').in('solution_id', solIds).then(async ({ data: assumptions }) => {
               const assIds = (assumptions ?? []).map((a: any) => a.id)
-              return assIds.length > 0
-                ? supabase.from('experiments').select('id, assigned_to').in('assumption_id', assIds)
-                : { data: [] }
+              if (assIds.length > 0) {
+                return supabase.from('experiments').select('id, assigned_to').in('assumption_id', assIds)
+              }
+              return { data: [] as any[], error: null }
             })
-          : Promise.resolve({ data: [] }),
+          : Promise.resolve({ data: [] as any[], error: null }),
       ])
       const map: Record<string, string | null> = {}
       for (const o of (opps ?? []) as any[]) if (o.assigned_to) map[o.id] = o.assigned_to
