@@ -252,10 +252,9 @@ export function useAIEvaluation(
       for (const action of actions) {
         try {
           switch (action.type) {
-            case 'add_hypothesis': {
+            case 'add_solution': {
               const desc =
                 (action.data.description as string) ?? action.description
-              // Insert as solution (Torres methodology alignment)
               const { error: insertErr } = await supabase
                 .from('solutions')
                 .insert({

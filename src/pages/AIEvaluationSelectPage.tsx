@@ -19,7 +19,7 @@ export function AIEvaluationSelectPage() {
 
         {/* Description */}
         <p className="text-sm text-slate-600 dark:text-slate-400 font-[Nunito_Sans] leading-relaxed mb-2">
-          Claude analizará tus oportunidades, evidencia e hipótesis para darte feedback accionable sobre tu OST.
+          Claude analizará tus oportunidades, evidencia, soluciones y supuestos para darte feedback accionable sobre tu OST.
         </p>
 
         {/* Coming soon badge */}

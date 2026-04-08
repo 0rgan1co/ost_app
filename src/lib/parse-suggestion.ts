@@ -1,9 +1,9 @@
 // ─── Suggestion Parser ────────────────────────────────────────────────────────
 // Extracts actionable items from AI assistant messages so they can be applied
-// to the OST (hypotheses, evidence, description updates, experiments).
+// to the OST (solutions, assumptions, evidence, description updates, experiments).
 
 export type SuggestionActionType =
-  | 'add_hypothesis'
+  | 'add_solution'
   | 'add_evidence'
   | 'update_description'
   | 'suggest_experiment'
@@ -28,12 +28,12 @@ interface PatternDef {
 }
 
 const PATTERNS: PatternDef[] = [
-  // ── Hypothesis ──────────────────────────────────────────────────────────────
+  // ── Solution ─────────────────────────────────────────────────────────────────
   {
-    type: 'add_hypothesis',
+    type: 'add_solution',
     pattern:
-      /(?:agregar\s+hip[oó]tesis|nueva\s+hip[oó]tesis|hip[oó]tesis\s*:\s*|crear\s+hip[oó]tesis|a[nñ]adir\s+hip[oó]tesis|considerar\s+(?:la\s+)?hip[oó]tesis)[:\s]*[""]?(.+?)[""]?\s*$/i,
-    label: 'Agregar hipotesis',
+      /(?:agregar\s+soluci[oó]n|nueva\s+soluci[oó]n|soluci[oó]n\s*:\s*|crear\s+soluci[oó]n|a[nñ]adir\s+soluci[oó]n|considerar\s+(?:la\s+)?soluci[oó]n)[:\s]*[""]?(.+?)[""]?\s*$/i,
+    label: 'Agregar solución',
     buildData: (content) => ({ description: content.trim() }),
   },
   // ── Evidence ────────────────────────────────────────────────────────────────
@@ -74,9 +74,9 @@ interface KeywordDef {
 
 const KEYWORD_HINTS: KeywordDef[] = [
   {
-    type: 'add_hypothesis',
-    keywords: /hip[oó]tesis/i,
-    label: 'Agregar hipotesis sugerida',
+    type: 'add_solution',
+    keywords: /soluci[oó]n/i,
+    label: 'Agregar solución sugerida',
   },
   {
     type: 'add_evidence',

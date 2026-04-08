@@ -5,9 +5,9 @@ import type { SuggestionAction } from '../../../lib/parse-suggestion'
 // ─── Type label mapping ──────────────────────────────────────────────────────
 
 const TYPE_LABELS: Record<string, string> = {
-  add_hypothesis: 'Hipotesis',
+  add_solution: 'Solución',
   add_evidence: 'Evidencia',
-  update_description: 'Descripcion',
+  update_description: 'Descripción',
   suggest_experiment: 'Experimento',
   manual: 'Manual',
 }

@@ -74,10 +74,10 @@ export const ExperimentCreateSchema = z.object({
 
 export type ExperimentCreateInput = z.infer<typeof ExperimentCreateSchema>
 
-// ─── Hypothesis / Assumption ─────────────────────────────────────────────────
+// ─── Assumption ──────────────────────────────────────────────────────────────
 
 export const HypothesisSchema = z.object({
-  description: z.string().min(1, 'La descripción de la hipótesis es obligatoria'),
+  description: z.string().min(1, 'La descripción del supuesto es obligatoria'),
   category: AssumptionCategorySchema,
   status: AssumptionStatusSchema,
   result: z.string().optional(),
@@ -89,7 +89,7 @@ export type HypothesisInput = z.infer<typeof HypothesisSchema>
  * Schema for creating a new assumption (status defaults to 'pendiente').
  */
 export const HypothesisCreateSchema = z.object({
-  description: z.string().min(1, 'La descripción de la hipótesis es obligatoria'),
+  description: z.string().min(1, 'La descripción del supuesto es obligatoria'),
   category: AssumptionCategorySchema,
 })
 

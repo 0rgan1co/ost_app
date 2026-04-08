@@ -27,10 +27,6 @@ export function useRealtimeProject({ projectId, onEvent, enabled = true }: UseRe
         () => onEventRef.current()
       )
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'hypotheses' },
-        () => onEventRef.current()
-      )
-      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'experiments' },
         () => onEventRef.current()
       )

@@ -402,7 +402,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
 
   // Quick-add solution from tree
   const handleQuickAddSolution = useCallback(async (opportunityId: string) => {
-    const name = prompt('Escribí la solución (hipótesis): "Si hacemos [acción], vamos a obtener [resultado]"')
+    const name = prompt('Escribí la solución: "Si hacemos [acción], vamos a obtener [resultado]"')
     if (!name?.trim()) return
     await supabase.from('solutions').insert({
       opportunity_id: opportunityId,
