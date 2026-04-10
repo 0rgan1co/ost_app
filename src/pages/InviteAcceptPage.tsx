@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { GitBranch, Clock, Shield, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { sendClaimNotification } from '../lib/email'
 
 interface InviteData {
   id: string
@@ -16,6 +17,7 @@ interface InviteData {
   approved_at: string | null
   rejected_at: string | null
   project_name: string | null
+  created_by: string | null
 }
 
 type PageState =
@@ -68,7 +70,7 @@ export function InviteAcceptPage() {
     async function fetchInvite() {
       const { data, error } = await supabase
         .from('project_invites')
-        .select('id, project_id, token, role, expires_at, claimed_by, claimed_email, claimed_at, approved_at, rejected_at, project_name')
+        .select('id, project_id, token, role, expires_at, claimed_by, claimed_email, claimed_at, approved_at, rejected_at, project_name, created_by')
         .eq('token', token)
         .maybeSingle()
 
@@ -132,6 +134,41 @@ export function InviteAcceptPage() {
       setClaimError('Hubo un error al enviar tu solicitud. Intentá de nuevo.')
       setIsClaiming(false)
       return
+    }
+
+    // Fire-and-forget: notify the admin that someone claimed the invite
+    if (invite.created_by) {
+      Promise.all([
+        supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', invite.created_by)
+          .maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ]).then(([adminResult, claimantResult]) => {
+        const adminProfile = adminResult.data
+        const claimantProfile = claimantResult.data
+        if (adminProfile?.email) {
+          sendClaimNotification({
+            adminEmail: adminProfile.email,
+            adminName: adminProfile.full_name ?? adminProfile.email,
+            claimantEmail: user.email ?? '',
+            claimantName: claimantProfile?.full_name ?? user.email ?? '',
+            projectName: invite.project_name ?? 'Proyecto',
+            role: invite.role,
+            inviteId: invite.id,
+            token: invite.token,
+          }).catch((err) => {
+            console.error('Failed to send claim notification:', err)
+          })
+        }
+      }).catch((err) => {
+        console.error('Failed to fetch profiles for claim notification:', err)
+      })
     }
 
     setPageState('already_claimed')
