@@ -238,7 +238,7 @@ export function InviteAcceptPage() {
             />
           )}
 
-          {/* UNAUTHENTICATED — step 1: email input */}
+          {/* UNAUTHENTICATED — step 1: email input (Gmail only) */}
           {pageState === 'unauthenticated' && !emailSubmitted && (
             <>
               <InviteHeader
@@ -247,32 +247,46 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Te invitaron a colaborar en este proyecto. Ingresá tu email para continuar.
+                Te invitaron a colaborar en este proyecto. Ingresá tu email de Gmail para solicitar acceso.
               </p>
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1 block">
-                    Tu email
+                    Tu email de Gmail
                   </label>
                   <input
                     type="email"
                     value={recipientEmail}
                     onChange={e => setRecipientEmail(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && recipientEmail.includes('@')) setEmailSubmitted(true)
+                      if (e.key === 'Enter' && recipientEmail.toLowerCase().endsWith('@gmail.com')) setEmailSubmitted(true)
                     }}
-                    placeholder="nombre@ejemplo.com"
+                    placeholder="nombre@gmail.com"
                     autoFocus
                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 font-sans"
                   />
+                  {recipientEmail && !recipientEmail.toLowerCase().endsWith('@gmail.com') && recipientEmail.includes('@') && (
+                    <p className="text-xs text-amber-400 mt-1.5 font-sans">
+                      Por ahora solo aceptamos cuentas de Gmail.
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setEmailSubmitted(true)}
-                  disabled={!recipientEmail.includes('@')}
+                  disabled={!recipientEmail.toLowerCase().endsWith('@gmail.com')}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-colors font-sans"
                 >
                   Continuar
                 </button>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg px-4 py-3 space-y-1.5">
+                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Como funciona</p>
+                <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside font-sans leading-relaxed">
+                  <li>Ingresás tu email y te logueás con Google</li>
+                  <li>Tu solicitud queda pendiente de aprobación</li>
+                  <li>El admin del proyecto la revisa y aprueba</li>
+                  <li>Recibís un email de confirmación para acceder</li>
+                </ol>
               </div>
             </>
           )}
@@ -286,7 +300,9 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Ingresá con tu cuenta de Google <span className="text-slate-300 font-medium">{recipientEmail}</span> para solicitar acceso.
+                Ingresá con tu cuenta de Google{' '}
+                <span className="text-slate-300 font-medium">{recipientEmail}</span>{' '}
+                para enviar tu solicitud.
               </p>
               <button
                 onClick={handleGoogleLogin}
@@ -332,7 +348,7 @@ export function InviteAcceptPage() {
 
           {/* ALREADY CLAIMED / PENDING */}
           {pageState === 'already_claimed' && (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-5">
               <div className="flex justify-center">
                 <div className="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center">
                   <CheckCircle size={28} className="text-green-400" />
@@ -340,17 +356,27 @@ export function InviteAcceptPage() {
               </div>
               <div>
                 <h2 className="text-base font-bold text-white font-sans">Solicitud enviada</h2>
-                <p className="text-sm text-slate-400 mt-1 leading-relaxed">
+                <p className="text-sm text-slate-400 mt-2 leading-relaxed">
                   Tu solicitud para unirte a{' '}
                   <span className="text-white font-semibold">{projectName}</span>{' '}
-                  está pendiente de aprobación.
+                  fue enviada al administrador del proyecto.
                 </p>
               </div>
-              <div className="flex items-center gap-2 justify-center">
-                <Shield size={14} className="text-slate-500" />
-                <span className="text-xs text-slate-500 font-mono">
-                  El administrador revisará tu pedido
-                </span>
+              <div className="bg-slate-800/50 rounded-xl px-4 py-4 space-y-3 text-left">
+                <div className="flex items-start gap-3">
+                  <Shield size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                    Tu acceso requiere <span className="text-slate-300 font-medium">aprobación del administrador</span>.
+                    Cuando sea aprobado, vas a recibir un email de confirmación en tu cuenta de Gmail.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                    Una vez aprobado, podés ingresar con tu cuenta de Google desde{' '}
+                    <span className="text-slate-400 font-medium">OST App</span>.
+                  </p>
+                </div>
               </div>
             </div>
           )}
