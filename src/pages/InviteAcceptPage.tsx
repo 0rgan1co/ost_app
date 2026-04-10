@@ -58,7 +58,8 @@ export function InviteAcceptPage() {
   const [pageState, setPageState] = useState<PageState>('loading')
   const [isClaiming, setIsClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
-  const [acceptedPreLogin, setAcceptedPreLogin] = useState(false)
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [emailSubmitted, setEmailSubmitted] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -237,8 +238,8 @@ export function InviteAcceptPage() {
             />
           )}
 
-          {/* UNAUTHENTICATED — step 1: accept, step 2: login */}
-          {pageState === 'unauthenticated' && !acceptedPreLogin && (
+          {/* UNAUTHENTICATED — step 1: email input */}
+          {pageState === 'unauthenticated' && !emailSubmitted && (
             <>
               <InviteHeader
                 projectName={projectName}
@@ -246,19 +247,38 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Te invitaron a colaborar en este proyecto.
+                Te invitaron a colaborar en este proyecto. Ingresá tu email para continuar.
               </p>
-              <button
-                onClick={() => setAcceptedPreLogin(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl transition-colors font-sans"
-              >
-                Aceptar invitación
-              </button>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1 block">
+                    Tu email
+                  </label>
+                  <input
+                    type="email"
+                    value={recipientEmail}
+                    onChange={e => setRecipientEmail(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && recipientEmail.includes('@')) setEmailSubmitted(true)
+                    }}
+                    placeholder="nombre@ejemplo.com"
+                    autoFocus
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 font-sans"
+                  />
+                </div>
+                <button
+                  onClick={() => setEmailSubmitted(true)}
+                  disabled={!recipientEmail.includes('@')}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-colors font-sans"
+                >
+                  Continuar
+                </button>
+              </div>
             </>
           )}
 
           {/* UNAUTHENTICATED — step 2: google login */}
-          {pageState === 'unauthenticated' && acceptedPreLogin && (
+          {pageState === 'unauthenticated' && emailSubmitted && (
             <>
               <InviteHeader
                 projectName={projectName}
@@ -266,7 +286,7 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Para continuar, ingresá con tu cuenta de Google.
+                Ingresá con tu cuenta de Google <span className="text-slate-300 font-medium">{recipientEmail}</span> para solicitar acceso.
               </p>
               <button
                 onClick={handleGoogleLogin}
@@ -278,6 +298,12 @@ export function InviteAcceptPage() {
                   className="w-5 h-5"
                 />
                 Entrar con Google
+              </button>
+              <button
+                onClick={() => setEmailSubmitted(false)}
+                className="w-full text-xs text-slate-500 hover:text-slate-300 transition-colors font-sans"
+              >
+                Usar otro email
               </button>
             </>
           )}
