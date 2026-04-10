@@ -15,9 +15,7 @@ interface InviteData {
   claimed_at: string | null
   approved_at: string | null
   rejected_at: string | null
-  projects: {
-    name: string
-  } | null
+  project_name: string | null
 }
 
 type PageState =
@@ -58,6 +56,7 @@ export function InviteAcceptPage() {
   const [pageState, setPageState] = useState<PageState>('loading')
   const [isClaiming, setIsClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
+  const [acceptedPreLogin, setAcceptedPreLogin] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -69,7 +68,7 @@ export function InviteAcceptPage() {
     async function fetchInvite() {
       const { data, error } = await supabase
         .from('project_invites')
-        .select('*, projects(name)')
+        .select('id, project_id, token, role, expires_at, claimed_by, claimed_email, claimed_at, approved_at, rejected_at, project_name')
         .eq('token', token)
         .maybeSingle()
 
@@ -156,7 +155,7 @@ export function InviteAcceptPage() {
     )
   }
 
-  const projectName = invite?.projects?.name ?? 'Proyecto'
+  const projectName = invite?.project_name ?? 'Proyecto'
   const expiryLabel = invite ? formatExpiry(invite.expires_at) : null
 
   return (
@@ -201,8 +200,8 @@ export function InviteAcceptPage() {
             />
           )}
 
-          {/* UNAUTHENTICATED */}
-          {pageState === 'unauthenticated' && (
+          {/* UNAUTHENTICATED — step 1: accept, step 2: login */}
+          {pageState === 'unauthenticated' && !acceptedPreLogin && (
             <>
               <InviteHeader
                 projectName={projectName}
@@ -210,7 +209,27 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Para solicitar acceso, ingresá con tu cuenta de Google.
+                Te invitaron a colaborar en este proyecto.
+              </p>
+              <button
+                onClick={() => setAcceptedPreLogin(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl transition-colors font-sans"
+              >
+                Aceptar invitación
+              </button>
+            </>
+          )}
+
+          {/* UNAUTHENTICATED — step 2: google login */}
+          {pageState === 'unauthenticated' && acceptedPreLogin && (
+            <>
+              <InviteHeader
+                projectName={projectName}
+                role={invite?.role ?? ''}
+                expiryLabel={expiryLabel}
+              />
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Para continuar, ingresá con tu cuenta de Google.
               </p>
               <button
                 onClick={handleGoogleLogin}
@@ -292,7 +311,7 @@ function InviteHeader({
   return (
     <div className="space-y-3">
       <h2 className="text-base font-bold text-white font-sans">
-        Invitación a proyecto
+        Invitación a <span className="text-red-400">{projectName}</span>
       </h2>
       <div className="bg-slate-800 rounded-xl p-4 space-y-2">
         <div className="flex items-center justify-between">

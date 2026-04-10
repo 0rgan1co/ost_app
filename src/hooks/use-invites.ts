@@ -63,9 +63,16 @@ export function useInvites(projectId: string | undefined) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
+    // Fetch project name for the denormalized column
+    const { data: project } = await supabase
+      .from('projects')
+      .select('name')
+      .eq('id', projectId)
+      .single()
+
     const { data, error } = await supabase
       .from('project_invites')
-      .insert({ project_id: projectId, role, created_by: user.id })
+      .insert({ project_id: projectId, role, created_by: user.id, project_name: project?.name ?? null })
       .select('token')
       .single()
 
