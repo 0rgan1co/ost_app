@@ -20,6 +20,7 @@ import { ExperimentsPage } from './pages/ExperimentsPage'
 import { ReviewsPage } from './pages/ReviewsPage'
 import { AIEvaluationSelectPage } from './pages/AIEvaluationSelectPage'
 import { BusinessContextPage } from './pages/BusinessContextPage'
+import { InviteAcceptPage } from './pages/InviteAcceptPage'
 
 const Stub = ({ label }: { label: string }) => (
   <div className="p-4 sm:p-8 text-slate-500 dark:text-slate-400 font-sans">{label} — coming soon</div>
@@ -146,6 +147,7 @@ export function App() {
       <BrowserRouter basename="/ost_app">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/invite/:token" element={<InviteAcceptPage />} />
           <Route path="/" element={<Navigate to="/projects" replace />} />
 
           {/* Projects list */}

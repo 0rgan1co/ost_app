@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Mail, Loader2, UserPlus, ChevronDown } from 'lucide-react'
+import { X, Check, Mail, Loader2, UserPlus, ChevronDown, Link, Copy, Clock } from 'lucide-react'
 import type { Project, ProjectRole, User } from '../../../types'
+import { useInvites } from '../../../hooks/use-invites'
 
 interface MembersDrawerProps {
   project: Project | null
@@ -11,6 +12,16 @@ interface MembersDrawerProps {
   onInviteViewer?: (projectId: string, email: string) => Promise<boolean>
   onChangeMemberRole: (projectId: string, memberId: string, role: ProjectRole) => void
   onRemoveMember: (projectId: string, memberId: string) => void
+}
+
+function formatRelativeTime(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `hace ${mins}m`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `hace ${hours}h`
+  const days = Math.floor(hours / 24)
+  return `hace ${days}d`
 }
 
 const roleLabels: Record<ProjectRole, string> = {
@@ -55,10 +66,24 @@ export function MembersDrawer({
   const [invitingViewer, setInvitingViewer] = useState(false)
   const [viewerInvited, setViewerInvited] = useState(false)
 
+  // Invite link state
+  const [inviteLinkRole, setInviteLinkRole] = useState<ProjectRole>('viewer')
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null)
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+
+  const { pendingClaims, generateInviteLink, approveClaim, rejectClaim } = useInvites(project?.id)
+
   useEffect(() => {
     if (project) setVisible(true)
     else setVisible(false)
   }, [project])
+
+  // Reset generated link when project changes
+  useEffect(() => {
+    setGeneratedLink(null)
+    setLinkCopied(false)
+  }, [project?.id])
 
   const handleInviteViewer = async () => {
     if (!project || !viewerEmail.trim() || !onInviteViewer || invitingViewer) return
@@ -69,6 +94,22 @@ export function MembersDrawer({
       setViewerInvited(true)
       setViewerEmail('')
     }
+  }
+
+  const handleGenerateLink = async () => {
+    if (generatingLink) return
+    setGeneratingLink(true)
+    setGeneratedLink(null)
+    const url = await generateInviteLink(inviteLinkRole)
+    setGeneratingLink(false)
+    if (url) setGeneratedLink(url)
+  }
+
+  const handleCopyLink = async () => {
+    if (!generatedLink) return
+    await navigator.clipboard.writeText(generatedLink)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 2000)
   }
 
   if (!project) return null
@@ -231,6 +272,135 @@ export function MembersDrawer({
               {viewerInvited && (
                 <p className="text-xs text-green-500 mt-1 px-1 font-sans">Agregado</p>
               )}
+            </div>
+          )}
+
+          {/* Generate invite link */}
+          {isAdmin && (
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 p-3 bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <Link size={13} className="text-slate-400 flex-shrink-0" />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans font-medium">
+                    Generar link de invitación
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  {/* Role select */}
+                  <div className="relative flex-shrink-0">
+                    <select
+                      value={inviteLinkRole}
+                      onChange={e => {
+                        setInviteLinkRole(e.target.value as ProjectRole)
+                        setGeneratedLink(null)
+                      }}
+                      className="appearance-none text-[10px] font-semibold pl-2 pr-6 py-1.5 rounded-lg cursor-pointer font-['IBM_Plex_Mono'] bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-red-400"
+                    >
+                      {roleOptions.map(r => (
+                        <option key={r} value={r}>{roleLabels[r]}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={8} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                  </div>
+
+                  {/* Generate button */}
+                  <button
+                    onClick={handleGenerateLink}
+                    disabled={generatingLink}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-sans bg-red-500 hover:bg-red-600 disabled:opacity-40 text-white rounded-lg transition-colors"
+                  >
+                    {generatingLink
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : <Link size={12} />
+                    }
+                    Generar link
+                  </button>
+                </div>
+
+                {/* Generated link display */}
+                {generatedLink && (
+                  <div className="mt-2.5 flex gap-2">
+                    <input
+                      readOnly
+                      value={generatedLink}
+                      className="flex-1 min-w-0 px-2.5 py-1.5 text-[11px] font-['IBM_Plex_Mono'] bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 focus:outline-none truncate"
+                      onFocus={e => e.target.select()}
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
+                        linkCopied
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:border-red-400 hover:text-red-500'
+                      }`}
+                      title={linkCopied ? 'Copiado!' : 'Copiar link'}
+                    >
+                      {linkCopied ? <Check size={13} strokeWidth={2.5} /> : <Copy size={13} />}
+                    </button>
+                  </div>
+                )}
+                {linkCopied && (
+                  <p className="text-[10px] text-green-500 mt-1 font-sans">Copiado!</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Pending claims */}
+          {isAdmin && pendingClaims.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans font-medium">
+                  Solicitudes pendientes
+                </p>
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold font-['IBM_Plex_Mono'] bg-red-500 text-white rounded-full">
+                  {pendingClaims.length}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {pendingClaims.map(claim => (
+                  <div
+                    key={claim.id}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50/60 dark:bg-amber-500/5 border border-amber-200/60 dark:border-amber-500/15"
+                  >
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold font-sans text-slate-800 dark:text-slate-100 truncate">
+                        {claim.claimedEmail}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full font-['IBM_Plex_Mono'] ${roleBadge[claim.role]}`}>
+                          {roleLabels[claim.role]}
+                        </span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-slate-400 font-['IBM_Plex_Mono']">
+                          <Clock size={9} />
+                          {formatRelativeTime(claim.claimedAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Approve */}
+                    <button
+                      onClick={() => approveClaim(claim.id)}
+                      className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
+                      title="Aprobar"
+                    >
+                      <Check size={13} strokeWidth={2.5} />
+                    </button>
+
+                    {/* Reject */}
+                    <button
+                      onClick={() => rejectClaim(claim.id)}
+                      className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-500/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      title="Rechazar"
+                    >
+                      <X size={13} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
