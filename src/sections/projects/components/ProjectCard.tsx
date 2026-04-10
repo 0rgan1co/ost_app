@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { GitBranch, Users, Clock, ChevronRight, Trash2, Globe, Lock, Pencil, Check, X, Plus, Tag } from 'lucide-react'
+import { GitBranch, Users, Clock, ChevronRight, Trash2, Globe, Lock, Pencil, Check, X, Plus, Tag, Share2 } from 'lucide-react'
 import type { Project, ProjectRole, ProjectTag } from '../../../types'
 
 interface ProjectCardProps {
@@ -10,6 +10,7 @@ interface ProjectCardProps {
   onToggleVisibility: (isPublic: boolean) => void
   onRename?: (name: string) => void
   onUpdateTags: (tags: ProjectTag[]) => void
+  onGenerateInviteLink?: (role: ProjectRole) => Promise<string | null>
 }
 
 const roleConfig: Record<ProjectRole, { label: string; className: string; borderClass: string }> = {
@@ -58,7 +59,7 @@ function Avatar({ name, avatarUrl, size = 'sm' }: { name: string; avatarUrl?: st
   )
 }
 
-export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onToggleVisibility, onRename, onUpdateTags }: ProjectCardProps) {
+export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onToggleVisibility, onRename, onUpdateTags, onGenerateInviteLink }: ProjectCardProps) {
   const [hovered, setHovered] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -66,6 +67,8 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
   const [showTagMenu, setShowTagMenu] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('blue')
+  const [shareCopied, setShareCopied] = useState(false)
+  const [shareLoading, setShareLoading] = useState(false)
   const tagMenuRef = useRef<HTMLDivElement>(null)
   const role = roleConfig[project.currentUserRole]
   const isAdmin = project.currentUserRole === 'admin'
@@ -314,6 +317,38 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
                 </div>
               )}
             </div>
+          )}
+
+          {/* Share invite link (admin only) */}
+          {isAdmin && onGenerateInviteLink && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (shareCopied || shareLoading) return
+                setShareLoading(true)
+                const link = await onGenerateInviteLink('usuario')
+                setShareLoading(false)
+                if (link) {
+                  await navigator.clipboard.writeText(link)
+                  setShareCopied(true)
+                  setTimeout(() => setShareCopied(false), 2000)
+                }
+              }}
+              title={shareCopied ? 'Link copiado!' : 'Compartir link de invitación'}
+              className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                shareCopied
+                  ? 'text-green-500 bg-green-50 dark:bg-green-500/10'
+                  : 'text-slate-400 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              {shareLoading ? (
+                <span className="w-3 h-3 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin" />
+              ) : shareCopied ? (
+                <Check size={13} />
+              ) : (
+                <Share2 size={13} />
+              )}
+            </button>
           )}
 
           {/* Visibility toggle (admin only) */}

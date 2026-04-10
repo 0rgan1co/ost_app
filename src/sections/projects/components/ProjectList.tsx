@@ -4,6 +4,7 @@ import type { ProjectsProps, Project, ProjectRole } from '../../../types'
 import { ProjectCard } from './ProjectCard'
 import { MembersDrawer } from './MembersDrawer'
 import { OSTWizardModal } from './OSTWizardModal'
+import { supabase } from '../../../lib/supabase'
 
 type VisibilityFilter = 'all' | 'public' | 'private'
 type RoleFilter = 'all' | ProjectRole
@@ -91,6 +92,18 @@ export function ProjectList({
     setTagFilter('all')
   }
 
+  const generateInviteLink = async (projectId: string, projectName: string, role: ProjectRole): Promise<string | null> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const { data, error } = await supabase
+      .from('project_invites')
+      .insert({ project_id: projectId, role, created_by: user.id, project_name: projectName })
+      .select('token')
+      .single()
+    if (error || !data) return null
+    return `${window.location.origin}/ost_app/invite/${data.token}`
+  }
+
   const renderProjectCard = (project: Project) => (
     <ProjectCard
       key={project.id}
@@ -101,6 +114,7 @@ export function ProjectList({
       onToggleVisibility={(isPublic) => onToggleVisibility(project.id, isPublic)}
       onRename={(name) => onRenameProject?.(project.id, name)}
       onUpdateTags={(tags) => onUpdateTags(project.id, tags)}
+      onGenerateInviteLink={(role) => generateInviteLink(project.id, project.name, role)}
     />
   )
 
