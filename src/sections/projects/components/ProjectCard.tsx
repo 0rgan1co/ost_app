@@ -329,21 +329,19 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
 
           {/* Share invite link (admin only) */}
           {isAdmin && onGenerateInviteLink && (
-            <div className="relative" ref={shareMenuRef}>
+            <>
               <button
-                onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); setGeneratedLink(null); setShareCopied(false); setShareEmail('') }}
+                onClick={(e) => { e.stopPropagation(); setShowShareMenu(true); setGeneratedLink(null); setShareCopied(false); setShareEmail('') }}
                 title="Invitar al proyecto"
-                className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
-                  showShareMenu
-                    ? 'text-red-500 bg-red-50 dark:bg-red-500/10'
-                    : 'text-slate-400 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all text-slate-400 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <Share2 size={13} />
               </button>
 
               {showShareMenu && (
-                <div className="absolute bottom-full right-0 mb-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 p-4 space-y-3" onClick={e => e.stopPropagation()}>
+                <>
+                  <div className="fixed inset-0 bg-black/50 z-50" onClick={(e) => { e.stopPropagation(); setShowShareMenu(false) }} />
+                  <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 p-5 space-y-4" onClick={e => e.stopPropagation()}>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider font-['IBM_Plex_Mono']">
                     Invitar al proyecto
                   </p>
@@ -444,9 +442,17 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
                       )}
                     </div>
                   )}
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowShareMenu(false) }}
+                    className="w-full text-xs text-slate-500 hover:text-slate-300 transition-colors font-sans pt-1"
+                  >
+                    Cerrar
+                  </button>
                 </div>
+              </>
               )}
-            </div>
+            </>
           )}
 
           {/* Visibility toggle (admin only) */}
