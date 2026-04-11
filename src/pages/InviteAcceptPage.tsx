@@ -112,26 +112,26 @@ export function InviteAcceptPage() {
 
     // Fire-and-forget: notify the admin
     if (invite.created_by) {
-      supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('id', invite.created_by)
-        .maybeSingle()
-        .then(({ data: adminProfile }) => {
-          if (adminProfile?.email) {
-            sendClaimNotification({
-              adminEmail: adminProfile.email,
-              adminName: adminProfile.full_name ?? adminProfile.email,
-              claimantEmail: email,
-              claimantName: email.split('@')[0],
-              projectName: invite.project_name ?? 'Proyecto',
-              role: invite.role,
-              inviteId: invite.id,
-              token: invite.token,
-            }).catch(err => console.error('Failed to send claim notification:', err))
-          }
-        })
-        .catch(err => console.error('Failed to fetch admin profile:', err))
+      Promise.resolve(
+        supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', invite.created_by)
+          .maybeSingle()
+      ).then(({ data: adminProfile }) => {
+        if (adminProfile?.email) {
+          sendClaimNotification({
+            adminEmail: adminProfile.email,
+            adminName: adminProfile.full_name ?? adminProfile.email,
+            claimantEmail: email,
+            claimantName: email.split('@')[0],
+            projectName: invite.project_name ?? 'Proyecto',
+            role: invite.role,
+            inviteId: invite.id,
+            token: invite.token,
+          }).catch((err: unknown) => console.error('Failed to send claim notification:', err))
+        }
+      }).catch((err: unknown) => console.error('Failed to fetch admin profile:', err))
     }
 
     setPageState('success')
