@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { GitBranch, Clock, Shield, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { GitBranch, Clock, Shield, CheckCircle, XCircle, Loader2, Mail } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
 import { sendClaimNotification } from '../lib/email'
 
 interface InviteData {
@@ -11,7 +10,6 @@ interface InviteData {
   token: string
   role: string
   expires_at: string | null
-  claimed_by: string | null
   claimed_email: string | null
   claimed_at: string | null
   approved_at: string | null
@@ -25,10 +23,9 @@ type PageState =
   | 'not_found'
   | 'expired'
   | 'rejected'
-  | 'approved'
-  | 'unauthenticated'
   | 'already_claimed'
-  | 'ready_to_claim'
+  | 'form'
+  | 'success'
 
 function roleLabel(role: string): string {
   const map: Record<string, string> = {
@@ -51,18 +48,14 @@ function formatExpiry(expiresAt: string | null): string | null {
 
 export function InviteAcceptPage() {
   const { token } = useParams<{ token: string }>()
-  const { user, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
 
   const [invite, setInvite] = useState<InviteData | null>(null)
   const [pageState, setPageState] = useState<PageState>('loading')
+  const [email, setEmail] = useState('')
   const [isClaiming, setIsClaiming] = useState(false)
   const [claimError, setClaimError] = useState<string | null>(null)
-  const [recipientEmail, setRecipientEmail] = useState('')
-  const [emailSubmitted, setEmailSubmitted] = useState(false)
 
   useEffect(() => {
-    if (authLoading) return
     if (!token) {
       setPageState('not_found')
       return
@@ -71,7 +64,7 @@ export function InviteAcceptPage() {
     async function fetchInvite() {
       const { data, error } = await supabase
         .from('project_invites')
-        .select('id, project_id, token, role, expires_at, claimed_by, claimed_email, claimed_at, approved_at, rejected_at, project_name, created_by')
+        .select('id, project_id, token, role, expires_at, claimed_email, claimed_at, approved_at, rejected_at, project_name, created_by')
         .eq('token', token)
         .maybeSingle()
 
@@ -80,53 +73,33 @@ export function InviteAcceptPage() {
         return
       }
 
-      const now = new Date()
-      const isExpired = data.expires_at ? new Date(data.expires_at) < now : false
-
       setInvite(data as InviteData)
 
       if (data.rejected_at) {
         setPageState('rejected')
-        return
-      }
-
-      if (isExpired) {
+      } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
         setPageState('expired')
-        return
-      }
-
-      if (data.approved_at) {
-        // Redirect to project tree
-        navigate(`/projects/${data.project_id}/ost-tree`, { replace: true })
-        return
-      }
-
-      if (!user) {
-        setPageState('unauthenticated')
-        return
-      }
-
-      if (data.claimed_by && data.claimed_by === user.id) {
+      } else if (data.approved_at) {
+        setPageState('already_claimed') // reuse for "approved" message
+      } else if (data.claimed_email) {
         setPageState('already_claimed')
-        return
+      } else {
+        setPageState('form')
       }
-
-      setPageState('ready_to_claim')
     }
 
     fetchInvite()
-  }, [token, user, authLoading, navigate])
+  }, [token])
 
   async function handleClaim() {
-    if (!invite || !user) return
+    if (!invite || !email.includes('@')) return
     setIsClaiming(true)
     setClaimError(null)
 
     const { error } = await supabase
       .from('project_invites')
       .update({
-        claimed_by: user.id,
-        claimed_email: user.email,
+        claimed_email: email,
         claimed_at: new Date().toISOString(),
       })
       .eq('id', invite.id)
@@ -137,55 +110,35 @@ export function InviteAcceptPage() {
       return
     }
 
-    // Fire-and-forget: notify the admin that someone claimed the invite
+    // Fire-and-forget: notify the admin
     if (invite.created_by) {
-      Promise.all([
-        supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('id', invite.created_by)
-          .maybeSingle(),
-        supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .maybeSingle(),
-      ]).then(([adminResult, claimantResult]) => {
-        const adminProfile = adminResult.data
-        const claimantProfile = claimantResult.data
-        if (adminProfile?.email) {
-          sendClaimNotification({
-            adminEmail: adminProfile.email,
-            adminName: adminProfile.full_name ?? adminProfile.email,
-            claimantEmail: user.email ?? '',
-            claimantName: claimantProfile?.full_name ?? user.email ?? '',
-            projectName: invite.project_name ?? 'Proyecto',
-            role: invite.role,
-            inviteId: invite.id,
-            token: invite.token,
-          }).catch((err) => {
-            console.error('Failed to send claim notification:', err)
-          })
-        }
-      }).catch((err) => {
-        console.error('Failed to fetch profiles for claim notification:', err)
-      })
+      supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', invite.created_by)
+        .maybeSingle()
+        .then(({ data: adminProfile }) => {
+          if (adminProfile?.email) {
+            sendClaimNotification({
+              adminEmail: adminProfile.email,
+              adminName: adminProfile.full_name ?? adminProfile.email,
+              claimantEmail: email,
+              claimantName: email.split('@')[0],
+              projectName: invite.project_name ?? 'Proyecto',
+              role: invite.role,
+              inviteId: invite.id,
+              token: invite.token,
+            }).catch(err => console.error('Failed to send claim notification:', err))
+          }
+        })
+        .catch(err => console.error('Failed to fetch admin profile:', err))
     }
 
-    setPageState('already_claimed')
+    setPageState('success')
     setIsClaiming(false)
   }
 
-  async function handleGoogleLogin() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/ost_app/invite/${token}`,
-      },
-    })
-  }
-
-  if (authLoading || pageState === 'loading') {
+  if (pageState === 'loading') {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <Loader2 size={32} className="text-red-500 animate-spin" />
@@ -215,8 +168,8 @@ export function InviteAcceptPage() {
           {pageState === 'not_found' && (
             <ErrorState
               icon={<XCircle size={32} className="text-red-500" />}
-              title="Invitación no encontrada"
-              message="Este enlace de invitación no es válido o ya no existe."
+              title="Invitacion no encontrada"
+              message="Este enlace de invitacion no es valido o ya no existe."
             />
           )}
 
@@ -224,8 +177,8 @@ export function InviteAcceptPage() {
           {pageState === 'expired' && (
             <ErrorState
               icon={<Clock size={32} className="text-amber-500" />}
-              title="Invitación vencida"
-              message={`Este enlace expiró${expiryLabel ? ` el ${expiryLabel}` : ''}. Pedile al administrador que genere uno nuevo.`}
+              title="Invitacion vencida"
+              message={`Este enlace expiro${expiryLabel ? ` el ${expiryLabel}` : ''}. Pedile al administrador que genere uno nuevo.`}
             />
           )}
 
@@ -233,13 +186,38 @@ export function InviteAcceptPage() {
           {pageState === 'rejected' && (
             <ErrorState
               icon={<XCircle size={32} className="text-red-500" />}
-              title="Invitación rechazada"
-              message="Esta invitación fue rechazada por el administrador del proyecto."
+              title="Invitacion rechazada"
+              message="Esta invitacion fue rechazada por el administrador del proyecto."
             />
           )}
 
-          {/* UNAUTHENTICATED — step 1: email input */}
-          {pageState === 'unauthenticated' && !emailSubmitted && (
+          {/* ALREADY CLAIMED */}
+          {pageState === 'already_claimed' && (
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center">
+                  {invite?.approved_at
+                    ? <CheckCircle size={28} className="text-green-400" />
+                    : <Clock size={28} className="text-amber-400" />
+                  }
+                </div>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white font-sans">
+                  {invite?.approved_at ? 'Acceso aprobado' : 'Solicitud pendiente'}
+                </h2>
+                <p className="text-sm text-slate-400 mt-1 leading-relaxed">
+                  {invite?.approved_at
+                    ? `Tu acceso a ${projectName} fue aprobado. Ingresa con tu cuenta de Google desde OST App.`
+                    : `Ya se envio una solicitud para ${invite?.claimed_email ?? 'este email'}. El administrador la esta revisando.`
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* FORM — email input + submit */}
+          {pageState === 'form' && (
             <>
               <InviteHeader
                 projectName={projectName}
@@ -247,7 +225,7 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Te invitaron a colaborar en este proyecto. Ingresá tu email para solicitar acceso.
+                Te invitaron a colaborar en este proyecto. Ingresa tu email para solicitar acceso.
               </p>
               <div className="space-y-3">
                 <div>
@@ -256,10 +234,10 @@ export function InviteAcceptPage() {
                   </label>
                   <input
                     type="email"
-                    value={recipientEmail}
-                    onChange={e => setRecipientEmail(e.target.value)}
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && recipientEmail.includes('@')) setEmailSubmitted(true)
+                      if (e.key === 'Enter' && email.includes('@')) handleClaim()
                     }}
                     placeholder="nombre@gmail.com"
                     autoFocus
@@ -269,83 +247,23 @@ export function InviteAcceptPage() {
                     Funciona con Gmail y cualquier dominio gestionado por Google Workspace (ej. tu@empresa.com).
                   </p>
                 </div>
+                {claimError && (
+                  <p className="text-xs text-red-400">{claimError}</p>
+                )}
                 <button
-                  onClick={() => setEmailSubmitted(true)}
-                  disabled={!recipientEmail.includes('@')}
+                  onClick={handleClaim}
+                  disabled={!email.includes('@') || isClaiming}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-colors font-sans"
                 >
-                  Continuar
+                  {isClaiming ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                  Solicitar acceso
                 </button>
               </div>
-              <div className="bg-slate-800/50 rounded-lg px-4 py-3 space-y-1.5">
-                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Como funciona</p>
-                <ol className="text-xs text-slate-400 space-y-1 list-decimal list-inside font-sans leading-relaxed">
-                  <li>Ingresás tu email y te logueás con Google</li>
-                  <li>Tu solicitud queda pendiente de aprobación</li>
-                  <li>El admin del proyecto la revisa y aprueba</li>
-                  <li>Recibís un email de confirmación para acceder</li>
-                </ol>
-              </div>
             </>
           )}
 
-          {/* UNAUTHENTICATED — step 2: google login */}
-          {pageState === 'unauthenticated' && emailSubmitted && (
-            <>
-              <InviteHeader
-                projectName={projectName}
-                role={invite?.role ?? ''}
-                expiryLabel={expiryLabel}
-              />
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Ingresá con tu cuenta de Google{' '}
-                <span className="text-slate-300 font-medium">{recipientEmail}</span>{' '}
-                para enviar tu solicitud.
-              </p>
-              <button
-                onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm rounded-xl transition-colors font-sans"
-              >
-                <img
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                  alt=""
-                  className="w-5 h-5"
-                />
-                Entrar con Google
-              </button>
-              <button
-                onClick={() => setEmailSubmitted(false)}
-                className="w-full text-xs text-slate-500 hover:text-slate-300 transition-colors font-sans"
-              >
-                Usar otro email
-              </button>
-            </>
-          )}
-
-          {/* READY TO CLAIM */}
-          {pageState === 'ready_to_claim' && (
-            <>
-              <InviteHeader
-                projectName={projectName}
-                role={invite?.role ?? ''}
-                expiryLabel={expiryLabel}
-              />
-              {claimError && (
-                <p className="text-sm text-red-400">{claimError}</p>
-              )}
-              <button
-                onClick={handleClaim}
-                disabled={isClaiming}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-colors font-sans"
-              >
-                {isClaiming && <Loader2 size={16} className="animate-spin" />}
-                Solicitar acceso
-              </button>
-            </>
-          )}
-
-          {/* ALREADY CLAIMED / PENDING */}
-          {pageState === 'already_claimed' && (
+          {/* SUCCESS */}
+          {pageState === 'success' && (
             <div className="text-center space-y-5">
               <div className="flex justify-center">
                 <div className="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center">
@@ -364,15 +282,14 @@ export function InviteAcceptPage() {
                 <div className="flex items-start gap-3">
                   <Shield size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                    Tu acceso requiere <span className="text-slate-300 font-medium">aprobación del administrador</span>.
-                    Cuando sea aprobado, vas a recibir un email de confirmación en tu cuenta de Gmail.
+                    Tu acceso requiere <span className="text-slate-300 font-medium">aprobacion del administrador</span>.
+                    Cuando sea aprobado, vas a poder ingresar con tu cuenta de Google.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Clock size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
+                  <Mail size={16} className="text-slate-500 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-slate-500 leading-relaxed font-sans">
-                    Una vez aprobado, podés ingresar con tu cuenta de Google desde{' '}
-                    <span className="text-slate-400 font-medium">OST App</span>.
+                    Email registrado: <span className="text-slate-400 font-medium">{email}</span>
                   </p>
                 </div>
               </div>
@@ -398,7 +315,7 @@ function InviteHeader({
   return (
     <div className="space-y-3">
       <h2 className="text-base font-bold text-white font-sans">
-        Invitación a <span className="text-red-400">{projectName}</span>
+        Invitacion a <span className="text-red-400">{projectName}</span>
       </h2>
       <div className="bg-slate-800 rounded-xl p-4 space-y-2">
         <div className="flex items-center justify-between">
