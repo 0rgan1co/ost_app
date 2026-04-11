@@ -100,7 +100,7 @@ export function useInvites(projectId: string | undefined) {
       return false
     }
 
-    const { claimed_by, claimed_email, role, project_id } = invite
+    const { claimed_email, role, project_id } = invite
 
     // 2. Upsert into allowed_users
     const { error: allowedError } = await supabase
@@ -112,10 +112,10 @@ export function useInvites(projectId: string | undefined) {
       return false
     }
 
-    // 3. Insert into project_members if not already there
+    // 3. Insert into project_members with email (user_id will be linked on first login)
     const { error: memberError } = await supabase
       .from('project_members')
-      .insert({ project_id, user_id: claimed_by, role })
+      .insert({ project_id, email: claimed_email, role })
 
     if (memberError && memberError.code !== '23505') {
       // 23505 = unique_violation — member already exists, treat as success

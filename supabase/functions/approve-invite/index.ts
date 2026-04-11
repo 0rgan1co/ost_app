@@ -228,7 +228,7 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    if (!invite.claimed_by || !invite.claimed_email) {
+    if (!invite.claimed_email) {
       return errorPage(
         'La invitación aún no ha sido reclamada por ningún usuario.',
         'El usuario debe registrarse primero antes de que puedas aprobar su acceso.'
@@ -259,7 +259,7 @@ Deno.serve(async (req: Request) => {
       .from('project_members')
       .insert({
         project_id: invite.project_id,
-        user_id: invite.claimed_by,
+        email: invite.claimed_email,
         role: invite.role,
       })
 
