@@ -238,7 +238,7 @@ export function InviteAcceptPage() {
             />
           )}
 
-          {/* UNAUTHENTICATED — step 1: email input (Gmail only) */}
+          {/* UNAUTHENTICATED — step 1: email input */}
           {pageState === 'unauthenticated' && !emailSubmitted && (
             <>
               <InviteHeader
@@ -247,33 +247,31 @@ export function InviteAcceptPage() {
                 expiryLabel={expiryLabel}
               />
               <p className="text-sm text-slate-400 leading-relaxed">
-                Te invitaron a colaborar en este proyecto. Ingresá tu email de Gmail para solicitar acceso.
+                Te invitaron a colaborar en este proyecto. Ingresá tu email para solicitar acceso.
               </p>
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1 block">
-                    Tu email de Gmail
+                    Tu email
                   </label>
                   <input
                     type="email"
                     value={recipientEmail}
                     onChange={e => setRecipientEmail(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && recipientEmail.toLowerCase().endsWith('@gmail.com')) setEmailSubmitted(true)
+                      if (e.key === 'Enter' && recipientEmail.includes('@')) setEmailSubmitted(true)
                     }}
                     placeholder="nombre@gmail.com"
                     autoFocus
                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/20 font-sans"
                   />
-                  {recipientEmail && !recipientEmail.toLowerCase().endsWith('@gmail.com') && recipientEmail.includes('@') && (
-                    <p className="text-xs text-amber-400 mt-1.5 font-sans">
-                      Por ahora solo aceptamos cuentas de Gmail.
-                    </p>
-                  )}
+                  <p className="text-[11px] text-slate-500 mt-1.5 font-sans leading-relaxed">
+                    Funciona con Gmail y cualquier dominio gestionado por Google Workspace (ej. tu@empresa.com).
+                  </p>
                 </div>
                 <button
                   onClick={() => setEmailSubmitted(true)}
-                  disabled={!recipientEmail.toLowerCase().endsWith('@gmail.com')}
+                  disabled={!recipientEmail.includes('@')}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-colors font-sans"
                 >
                   Continuar
