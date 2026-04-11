@@ -37,6 +37,7 @@ export function ProjectList({
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all')
   const [tagFilter, setTagFilter] = useState<string>('all')
+  const [ownerFilter, setOwnerFilter] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
 
   // Collect all unique tags across projects
@@ -48,7 +49,18 @@ export function ProjectList({
     return Array.from(tagMap.entries()).map(([name, color]) => ({ name, color }))
   }, [projects])
 
-  const hasActiveFilters = search || roleFilter !== 'all' || visibilityFilter !== 'all' || tagFilter !== 'all'
+  // Collect all unique owners (admins) across projects
+  const allOwners = useMemo(() => {
+    const ownerMap = new Map<string, string>() // id → name
+    for (const p of projects) {
+      for (const m of p.members) {
+        if (m.role === 'admin') ownerMap.set(m.id, m.name)
+      }
+    }
+    return Array.from(ownerMap.entries()).map(([id, name]) => ({ id, name }))
+  }, [projects])
+
+  const hasActiveFilters = search || roleFilter !== 'all' || visibilityFilter !== 'all' || tagFilter !== 'all' || ownerFilter !== 'all'
 
   // Apply filters
   const filtered = useMemo(() => {
@@ -58,9 +70,10 @@ export function ProjectList({
       if (visibilityFilter === 'public' && !p.isPublic) return false
       if (visibilityFilter === 'private' && p.isPublic) return false
       if (tagFilter !== 'all' && !p.tags.some(t => t.name === tagFilter)) return false
+      if (ownerFilter !== 'all' && !p.members.some(m => m.id === ownerFilter && m.role === 'admin')) return false
       return true
     })
-  }, [projects, search, roleFilter, visibilityFilter, tagFilter])
+  }, [projects, search, roleFilter, visibilityFilter, tagFilter, ownerFilter])
 
   const myProjects = filtered.filter(p => p.currentUserRole === 'admin')
   const sharedProjects = filtered.filter(p => p.currentUserRole !== 'admin')
@@ -90,6 +103,7 @@ export function ProjectList({
     setRoleFilter('all')
     setVisibilityFilter('all')
     setTagFilter('all')
+    setOwnerFilter('all')
   }
 
   const generateInviteLink = async (projectId: string, projectName: string, role: ProjectRole): Promise<string | null> => {
@@ -216,6 +230,23 @@ export function ProjectList({
                   </select>
                   <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                 </div>
+
+                {/* Owner filter */}
+                {allOwners.length > 1 && (
+                  <div className="relative">
+                    <select
+                      value={ownerFilter}
+                      onChange={e => setOwnerFilter(e.target.value)}
+                      className="appearance-none text-xs font-medium pl-2.5 pr-6 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                    >
+                      <option value="all">Owner</option>
+                      {allOwners.map(o => (
+                        <option key={o.id} value={o.id}>{o.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                  </div>
+                )}
 
                 {/* Tag filter */}
                 {allTags.length > 0 && (
