@@ -9,6 +9,7 @@ export interface NavItem {
 interface MainNavProps {
   items: NavItem[]
   onNavigate?: (href: string) => void
+  collapsed?: boolean
 }
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -22,7 +23,7 @@ const iconMap: Record<string, React.ReactNode> = {
   '/help':              <HelpCircle size={18} />,
 }
 
-export function MainNav({ items, onNavigate }: MainNavProps) {
+export function MainNav({ items, onNavigate, collapsed = false }: MainNavProps) {
   const primary = items.filter(
     (i) => !['/settings', '/help'].includes(i.href)
   )
@@ -36,7 +37,7 @@ export function MainNav({ items, onNavigate }: MainNavProps) {
       className={`
         w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold
         font-sans transition-all duration-150
-        md:justify-center lg:justify-start
+        ${collapsed ? 'justify-center' : ''}
         ${item.isActive
           ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
@@ -46,9 +47,9 @@ export function MainNav({ items, onNavigate }: MainNavProps) {
       <span className={`flex-shrink-0 ${item.isActive ? 'text-red-500' : ''}`}>
         {iconMap[item.href] ?? <Layers size={18} />}
       </span>
-      <span className="truncate hidden lg:inline">{item.label}</span>
-      {item.isActive && (
-        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 hidden md:inline-block" />
+      {!collapsed && <span className="truncate">{item.label}</span>}
+      {item.isActive && !collapsed && (
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500" />
       )}
     </button>
   )

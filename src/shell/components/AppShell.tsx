@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu, X, GitBranch, FolderOpen, Sun, Moon } from 'lucide-react'
+import { Menu, X, GitBranch, FolderOpen, Sun, Moon, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { MainNav } from './MainNav'
 import { UserMenu } from './UserMenu'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -28,9 +28,12 @@ export function AppShell({
   onNavigateToProjects,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const { resolved, setTheme } = useTheme()
 
   const toggleTheme = () => setTheme(resolved === 'dark' ? 'light' : 'dark')
+
+  const expanded = !collapsed
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans">
@@ -44,19 +47,18 @@ export function AppShell({
       )}
 
       {/* ── Sidebar ──
-          mobile:  oculta, aparece como drawer (w-64, max 80vw)
-          tablet:  w-16 — solo iconos, tooltip en hover
-          desktop: w-56 — labels completos
+          mobile:  oculta, aparece como drawer
+          md+:     static, colapsable via toggle
       ── */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-40
-          w-64 max-w-[80vw] md:w-16 lg:w-56 md:max-w-none
-          flex flex-col
+          fixed md:static inset-y-0 left-0 z-40
+          ${mobileOpen ? 'w-64 max-w-[80vw]' : '-translate-x-full md:translate-x-0'}
+          ${expanded ? 'md:w-56' : 'md:w-16'}
+          flex flex-col flex-shrink-0
           bg-white dark:bg-slate-900
           border-r border-slate-200 dark:border-slate-800
-          transition-transform duration-200
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          transition-all duration-200
         `}
       >
         {/* Logo — clickable, navega a Projects */}
@@ -64,32 +66,34 @@ export function AppShell({
           <button
             onClick={() => { onNavigateToProjects?.(); setMobileOpen(false) }}
             title="Ver todos los proyectos"
-            className="flex items-center gap-2.5 px-4 flex-1 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors h-full min-w-0"
+            className={`flex items-center gap-2.5 px-4 flex-1 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors h-full min-w-0 ${!expanded ? 'md:justify-center md:px-0' : ''}`}
           >
             <div className="w-7 h-7 rounded-lg bg-red-500 flex items-center justify-center flex-shrink-0">
               <GitBranch size={14} className="text-white" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-slate-50 text-sm tracking-tight whitespace-nowrap hidden lg:inline">
-              OST App
-            </span>
+            {expanded && (
+              <span className="font-bold text-slate-900 dark:text-slate-50 text-sm tracking-tight whitespace-nowrap hidden md:inline">
+                OST App
+              </span>
+            )}
           </button>
           <button
-            className="mr-3 lg:hidden text-slate-400 hover:text-slate-600 flex-shrink-0"
+            className="mr-3 md:hidden text-slate-400 hover:text-slate-600 flex-shrink-0"
             onClick={() => setMobileOpen(false)}
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* "Todos los proyectos" — desktop: link con label; tablet: solo icono */}
+        {/* "Todos los proyectos" */}
         <div className="px-3 pt-3 pb-1">
           <button
             onClick={() => { onNavigateToProjects?.(); setMobileOpen(false) }}
             title="Todos los proyectos"
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 border border-red-200 dark:border-red-500/20 transition-colors md:justify-center lg:justify-start"
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 border border-red-200 dark:border-red-500/20 transition-colors ${!expanded ? 'md:justify-center md:px-0' : ''}`}
           >
             <FolderOpen size={15} className="flex-shrink-0" />
-            <span className="hidden lg:inline">Todos los proyectos</span>
+            {expanded && <span className="hidden md:inline">Todos los proyectos</span>}
           </button>
           <div className="mt-2 border-t border-slate-100 dark:border-slate-800" />
         </div>
@@ -102,21 +106,31 @@ export function AppShell({
               onNavigate?.(href)
               setMobileOpen(false)
             }}
+            collapsed={!expanded}
           />
-
         </div>
 
-        {/* Theme toggle + User menu */}
+        {/* Theme toggle + collapse + User menu */}
         <div className="px-3 py-3 border-t border-slate-200 dark:border-slate-800 flex-shrink-0 space-y-1">
+          {/* Collapse toggle (only on md+) */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            title={expanded ? 'Colapsar sidebar' : 'Expandir sidebar'}
+            className={`hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold font-sans text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-all ${!expanded ? 'justify-center' : ''}`}
+          >
+            {expanded ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            {expanded && <span>Colapsar</span>}
+          </button>
+
           <button
             onClick={toggleTheme}
             title={resolved === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold font-sans text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all md:justify-center lg:justify-start"
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold font-sans text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all ${!expanded ? 'md:justify-center' : ''}`}
           >
             {resolved === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            <span className="hidden lg:inline">{resolved === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
+            {expanded && <span className="hidden md:inline">{resolved === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>}
           </button>
-          <UserMenu user={user} onLogout={onLogout} />
+          <UserMenu user={user} onLogout={onLogout} collapsed={!expanded} />
         </div>
       </aside>
 
