@@ -74,24 +74,22 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
   const [shareCopied, setShareCopied] = useState(false)
   const [shareLoading, setShareLoading] = useState(false)
   const tagMenuRef = useRef<HTMLDivElement>(null)
-  const shareMenuRef = useRef<HTMLDivElement>(null)
   const role = roleConfig[project.currentUserRole]
   const isAdmin = project.currentUserRole === 'admin'
   const visibleMembers = project.members.slice(0, 4)
   const extraCount = project.members.length - visibleMembers.length
 
+  // Close tag menu on outside click (kept for backward compat with ref-based approach)
   useEffect(() => {
+    if (!showTagMenu) return
     function handleClickOutside(e: MouseEvent) {
       if (tagMenuRef.current && !tagMenuRef.current.contains(e.target as Node)) {
         setShowTagMenu(false)
       }
-      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) {
-        setShowShareMenu(false)
-      }
     }
-    if (showTagMenu || showShareMenu) document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showTagMenu, showShareMenu])
+  }, [showTagMenu])
 
   const handleSaveRename = () => {
     if (editName.trim() && editName.trim() !== project.name) {
@@ -278,7 +276,7 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
         <div className="flex items-center gap-1">
           {/* Tag button (admin only) */}
           {isAdmin && (
-            <div className="relative" ref={tagMenuRef}>
+            <>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowTagMenu(!showTagMenu) }}
                 title="Agregar tag"
@@ -287,44 +285,53 @@ export function ProjectCard({ project, onSelect, onOpenMembers, onDelete, onTogg
                 <Tag size={13} />
               </button>
 
-              {/* Tag popover */}
+              {/* Tag modal */}
               {showTagMenu && (
-                <div className="absolute bottom-full right-0 mb-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 p-3">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-2">
-                    Agregar tag
-                  </p>
-                  <div className="flex gap-1.5 mb-2">
-                    <input
-                      type="text"
-                      placeholder="Nombre..."
-                      value={newTagName}
-                      onChange={e => setNewTagName(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddTag() }}
-                      autoFocus
-                      className="flex-1 px-2 py-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
-                    />
+                <>
+                  <div className="fixed inset-0 bg-black/50 z-50" onClick={(e) => { e.stopPropagation(); setShowTagMenu(false) }} />
+                  <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 p-4" onClick={e => e.stopPropagation()}>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider font-['IBM_Plex_Mono'] mb-3">
+                      Agregar tag
+                    </p>
+                    <div className="flex gap-1.5 mb-3">
+                      <input
+                        type="text"
+                        placeholder="Nombre..."
+                        value={newTagName}
+                        onChange={e => setNewTagName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleAddTag() }}
+                        autoFocus
+                        className="flex-1 px-2 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-red-400 font-sans"
+                      />
+                      <button
+                        onClick={handleAddTag}
+                        disabled={!newTagName.trim()}
+                        className="px-2.5 py-1.5 text-xs bg-red-500 hover:bg-red-600 disabled:opacity-30 text-white rounded-lg transition-colors"
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {TAG_COLORS.map(c => (
+                        <button
+                          key={c.key}
+                          onClick={() => setNewTagColor(c.key)}
+                          className={`w-6 h-6 rounded-full ${c.dot} transition-all ${
+                            newTagColor === c.key ? 'ring-2 ring-offset-2 ring-red-400 dark:ring-offset-slate-900 scale-110' : 'opacity-60 hover:opacity-100'
+                          }`}
+                        />
+                      ))}
+                    </div>
                     <button
-                      onClick={handleAddTag}
-                      disabled={!newTagName.trim()}
-                      className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 disabled:opacity-30 text-white rounded-md transition-colors"
+                      onClick={(e) => { e.stopPropagation(); setShowTagMenu(false) }}
+                      className="w-full text-xs text-slate-500 hover:text-slate-300 transition-colors font-sans mt-3"
                     >
-                      <Plus size={12} />
+                      Cerrar
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {TAG_COLORS.map(c => (
-                      <button
-                        key={c.key}
-                        onClick={() => setNewTagColor(c.key)}
-                        className={`w-5 h-5 rounded-full ${c.dot} transition-all ${
-                          newTagColor === c.key ? 'ring-2 ring-offset-1 ring-red-400 dark:ring-offset-slate-900 scale-110' : 'opacity-60 hover:opacity-100'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+                </>
               )}
-            </div>
+            </>
           )}
 
           {/* Share invite link (admin only) */}
