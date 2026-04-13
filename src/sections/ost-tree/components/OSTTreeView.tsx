@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Check, Plus, Star, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Check, Plus, Star, Trash2, Sparkles } from 'lucide-react'
 import type { Opportunity, SolutionSummary } from '../../../types'
 import type { ExperimentSummary } from '../../../hooks/use-ost-tree'
 
@@ -24,6 +24,8 @@ interface OSTTreeViewProps {
   onDeleteOpportunity?: (id: string) => void
   onDeleteSolution?: (id: string) => void
   onDeleteExperiment?: (id: string) => void
+  onImproveOpportunity?: (id: string) => void
+  onImproveSolution?: (opportunityId: string, solutionId: string) => void
   onOpenExperiment?: (experimentId: string) => void
   members?: { id: string; name: string; avatarUrl: string | null }[]
   assignedMap?: Record<string, string | null>
@@ -102,6 +104,7 @@ export function OSTTreeViewCanvas({
   projectName, outcome, opportunities, solutionsSummary, experimentsSummary,
   selectedId, onSelect, onRenameOpportunity, onAddOpportunity, onAddSolution, onAddExperiment,
   onRenameSolution, onRenameExperiment, onEditOutcome, starredIds, onToggleStar,
+  onImproveOpportunity, onImproveSolution,
   onDeleteOpportunity, onDeleteSolution, onDeleteExperiment, onOpenExperiment,
   members, assignedMap, onAssign,
 }: OSTTreeViewProps) {
@@ -300,6 +303,13 @@ export function OSTTreeViewCanvas({
                         <Star size={12} fill={starredIds?.has(opp.id) ? 'currentColor' : 'none'} />
                       </button>
                     )}
+                    {onImproveOpportunity && (
+                      <button onClick={e => { e.stopPropagation(); onImproveOpportunity(opp.id) }}
+                        title="Mejorar con IA"
+                        className="text-slate-600 hover:text-red-400 flex-shrink-0 transition-colors">
+                        <Sparkles size={11} />
+                      </button>
+                    )}
                     {onDeleteOpportunity && (
                       <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(opp.id) }}
                         className="text-slate-600 hover:text-red-400 flex-shrink-0 transition-colors">
@@ -396,6 +406,9 @@ export function OSTTreeViewCanvas({
                             className={`flex-shrink-0 transition-colors ${starredIds?.has(s.id) ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
                             <Star size={10} fill={starredIds?.has(s.id) ? 'currentColor' : 'none'} />
                           </button>
+                        )}
+                        {onImproveSolution && (
+                          <button onClick={() => onImproveSolution(s.oppId, s.id)} title="Mejorar con IA" className="text-slate-600 hover:text-red-400 transition-colors"><Sparkles size={10} /></button>
                         )}
                         {onDeleteSolution && (
                           <button onClick={() => setConfirmDeleteId(s.id)} className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>

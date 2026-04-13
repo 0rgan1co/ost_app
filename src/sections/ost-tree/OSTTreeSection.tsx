@@ -10,6 +10,7 @@ import { CreateOpportunityModal } from './components/CreateOpportunityModal'
 import { WorkflowGuide } from './components/WorkflowGuide'
 import { AgentGuide } from './components/AgentGuide'
 import { ExperimentSeedModal } from '../../components/ExperimentSeedModal'
+import { ImproveModal, type ImproveTarget } from '../../components/ImproveModal'
 import { Target } from 'lucide-react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { Project } from '../../types'
@@ -430,6 +431,37 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
     refetch()
   }, [refetch])
 
+  // ── Improve modal state ─────────────────────────────────────────────────────
+  const [improveCtx, setImproveCtx] = useState<{ opportunityId: string; solutionId?: string; label: string } | null>(null)
+
+  const handleImproveOpportunity = useCallback((id: string) => {
+    const opp = opportunities.find(o => o.id === id)
+    setImproveCtx({ opportunityId: id, label: `Oportunidad: ${opp?.title ?? ''}` })
+  }, [opportunities])
+
+  const handleImproveSolution = useCallback((opportunityId: string, solutionId: string) => {
+    const sol = solutionsSummary[opportunityId]?.find(s => s.id === solutionId)
+    setImproveCtx({ opportunityId, solutionId, label: `Solución: ${sol?.name ?? ''}` })
+  }, [solutionsSummary])
+
+  const handleApplyImprove = useCallback(async (target: ImproveTarget, suggestion: string) => {
+    if (!improveCtx) return
+    if (target === 'rewrite_name') {
+      if (improveCtx.solutionId) {
+        await supabase.from('solutions').update({ name: suggestion }).eq('id', improveCtx.solutionId)
+      } else {
+        await supabase.from('opportunities').update({ name: suggestion }).eq('id', improveCtx.opportunityId)
+      }
+    } else if (target === 'rewrite_description') {
+      if (improveCtx.solutionId) {
+        await supabase.from('solutions').update({ description: suggestion }).eq('id', improveCtx.solutionId)
+      } else {
+        await supabase.from('opportunities').update({ description: suggestion }).eq('id', improveCtx.opportunityId)
+      }
+    }
+    refetch()
+  }, [improveCtx, refetch])
+
   // ── Shared view props ───────────────────────────────────────────────────────
   const sharedViewProps = {
     selectedId,
@@ -533,6 +565,8 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
               onDeleteSolution={handleDeleteSolution}
               onDeleteExperiment={handleDeleteExperiment}
               onOpenExperiment={handleOpenExperiment}
+              onImproveOpportunity={handleImproveOpportunity}
+              onImproveSolution={handleImproveSolution}
               members={treeMembers}
               assignedMap={assignedMap}
               onAssign={handleAssign}
@@ -569,6 +603,21 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
           experiment={openExpData}
           onClose={() => { setOpenExpId(null); setOpenExpData(null) }}
           onRefresh={refetch}
+        />
+      )}
+
+      {/* Improve with AI Modal */}
+      {improveCtx && (
+        <ImproveModal
+          isOpen
+          opportunityId={improveCtx.opportunityId}
+          projectId={project.id}
+          solutionId={improveCtx.solutionId}
+          nodeLabel={improveCtx.label}
+          canApplyName
+          canApplyDescription
+          onClose={() => setImproveCtx(null)}
+          onApply={handleApplyImprove}
         />
       )}
 
