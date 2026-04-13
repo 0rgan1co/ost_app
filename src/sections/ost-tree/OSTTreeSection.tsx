@@ -413,11 +413,12 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
   }, [refetch])
 
   // Quick-add experiment from tree (assumes the id passed is an assumption_id)
-  const handleQuickAddExperiment = useCallback(async (assumptionId: string) => {
+  const handleQuickAddExperiment = useCallback(async (solutionId: string) => {
     const name = prompt('Descripción del experimento:')
     if (!name?.trim()) return
-    await supabase.from('experiments').insert({
-      assumption_id: assumptionId,
+    const { error } = await supabase.from('experiments').insert({
+      solution_id: solutionId,
+      assumption_id: null,
       type: 'otro',
       description: name.trim(),
       success_criterion: 'Por definir',
@@ -425,6 +426,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       impact: 'medio',
       status: 'to do',
     })
+    if (error) console.error('[quickAddExperiment]', error)
     refetch()
   }, [refetch])
 
