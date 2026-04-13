@@ -165,11 +165,18 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
         expRows = data ?? []
       }
 
-      // Build experiments summary grouped by assumption_id
+      const assumptionToSolutionId: Record<string, string> = {}
+      for (const a of assumptionRows) {
+        assumptionToSolutionId[a.id] = a.solution_id
+      }
+
+      // Build experiments summary grouped by solution_id (via their assumption)
       const experimentsSummaryMap: Record<string, ExperimentSummary[]> = {}
       for (const e of expRows) {
-        if (!experimentsSummaryMap[e.assumption_id]) experimentsSummaryMap[e.assumption_id] = []
-        experimentsSummaryMap[e.assumption_id].push({
+        const solId = assumptionToSolutionId[e.assumption_id]
+        if (!solId) continue
+        if (!experimentsSummaryMap[solId]) experimentsSummaryMap[solId] = []
+        experimentsSummaryMap[solId].push({
           id: e.id,
           assumptionId: e.assumption_id,
           description: e.description,
@@ -204,13 +211,9 @@ export function useOSTTree(projectId: string): UseOSTTreeReturn {
       }
 
       // Build experiment count per solution (through assumptions)
-      const assumptionToSolution: Record<string, string> = {}
-      for (const a of assumptionRows) {
-        assumptionToSolution[a.id] = a.solution_id
-      }
       const experimentCountBySolution: Record<string, number> = {}
       for (const e of expRows) {
-        const solId = assumptionToSolution[e.assumption_id]
+        const solId = assumptionToSolutionId[e.assumption_id]
         if (solId) {
           experimentCountBySolution[solId] = (experimentCountBySolution[solId] ?? 0) + 1
         }
