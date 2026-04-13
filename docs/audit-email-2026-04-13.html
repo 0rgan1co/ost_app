@@ -1,0 +1,49 @@
+<!--
+TO: roldanjorgex@gmail.com, ricardo.colusso@kleer.la, gael@utopica.net
+SUBJECT: OST App — Auditoría pre-demo + invitación a ritual semanal
+FROM: hola@historiasconimpacto.com
+-->
+<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:640px;margin:0 auto;color:#0f172a;line-height:1.5">
+  <h2 style="color:#dc2626;margin-bottom:4px">OST App — Auditoría pre-demo</h2>
+  <p style="color:#64748b;font-size:13px;margin-top:0">13 de abril, 2026 · Preparación para demo con Rick y Gael</p>
+
+  <h3>Qué arreglamos esta noche</h3>
+  <ul>
+    <li><b>Bug en el árbol:</b> los experimentos no se mostraban. El hook agrupaba por <code>assumption_id</code> y la vista indexaba por <code>solution_id</code>. Fixeado.</li>
+    <li><b>Modelo evolucionado:</b> los experimentos ahora pueden colgar directo de soluciones (además de supuestos). Migración SQL aplicada en Supabase, RLS actualizada, y se agregó un <code>CHECK</code> XOR para garantizar que cada experimento tenga exactamente un padre.</li>
+    <li><b>Quick-add desde el árbol:</b> antes insertaba con <code>assumption_id = solution_id</code> y fallaba silenciosamente por FK constraint. Ahora usa <code>solution_id</code> correctamente.</li>
+    <li><b>Consistencia en vistas:</b> el kanban <code>/experiments</code>, el sidebar de top-3, y el detalle de oportunidad ahora fetchean experimentos por ambos padres (assumption o solution).</li>
+    <li><b>Typefix:</b> el supuesto virtual "(Sin supuesto)" usaba un status inválido, corregido a <code>pendiente</code>.</li>
+  </ul>
+
+  <h3>Gaps detectados (no bloqueantes para la demo)</h3>
+  <ul>
+    <li><b>Rol viewer sin enforcement en UI:</b> la RLS bloquea a nivel DB, pero la UI no deshabilita botones de escritura para viewers. Requisito REQ-OST-003 del spec, pendiente.</li>
+    <li><b>Inserts sin feedback de error:</b> ~13 operaciones en <code>use-opportunity-detail.ts</code> no muestran toast si falla el RLS. Riesgo de divergencia entre estado local y servidor.</li>
+    <li><b>Validación Zod silenciosa:</b> cuando <code>safeParse</code> falla, solo imprime en consola sin avisar al usuario.</li>
+    <li><b>Deuda UX:</b> los experimentos creados desde el árbol aparecen en el detalle bajo un grupo virtual "(Sin supuesto)". Las operaciones de status/delete sobre ese supuesto virtual van a fallar. Solución prolija: materializar un assumption "General" default al crear el primer experimento solution-level.</li>
+  </ul>
+
+  <h3>Lo que se puede probar mañana</h3>
+  <ol>
+    <li>Crear oportunidad → solución → experimento desde el árbol (quick-add).</li>
+    <li>Ver el experimento en el kanban <code>/experiments</code> y en el sidebar de top-3.</li>
+    <li>Entrar al detalle de la oportunidad → ver el experimento bajo "(Sin supuesto)".</li>
+    <li>Seguir flujo normal: crear supuesto → experimento anidado. Ambos caminos coexisten.</li>
+  </ol>
+
+  <h3 style="color:#dc2626">Propuesta: ritual semanal de evolución OST</h3>
+  <p>Les propongo un ritual de <b>30 min por semana</b> para evolucionar la app en base a uso real. Formato tentativo:</p>
+  <ul>
+    <li><b>10 min</b> — demo de lo nuevo + bugs encontrados en la semana</li>
+    <li><b>10 min</b> — priorizar 1–2 features para la próxima iteración (backlog vivo)</li>
+    <li><b>10 min</b> — discutir un gap de modelo o diseño (ej: ¿experimentos bajo solution es el shape correcto? ¿cómo modelar insights cross-project?)</li>
+  </ul>
+  <p>Criterio: cada semana sale una versión. Si no hay nada que mostrar, cancelamos. ¿Qué día les funciona? Propongo <b>jueves 9am</b> o <b>viernes 10am</b>.</p>
+
+  <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
+  <p style="color:#64748b;font-size:12px">
+    Commits de esta sesión: <code>b949cd9</code> · <code>f4a3b1e</code> · <code>f0a54d8</code> · <code>72a2959</code><br>
+    Branch: <code>main</code> · Deploy automático a GitHub Pages vía Actions
+  </p>
+</div>
