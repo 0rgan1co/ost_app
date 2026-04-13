@@ -610,6 +610,7 @@ export function OSTTreeSection({ project }: OSTTreeSectionProps) {
       {improveCtx && (
         <ImproveModal
           isOpen
+          nodeType={improveCtx.solutionId ? 'solution' : 'opportunity'}
           opportunityId={improveCtx.opportunityId}
           projectId={project.id}
           solutionId={improveCtx.solutionId}

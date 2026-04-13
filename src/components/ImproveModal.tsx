@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react'
 import { Sparkles, X, Loader2, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-export type ImproveTarget = 'rewrite_name' | 'rewrite_description' | 'suggest_assumptions' | 'suggest_experiments'
+export type ImproveTarget =
+  | 'rewrite_name'
+  | 'rewrite_description'
+  | 'suggest_evidence'
+  | 'suggest_solutions'
+  | 'suggest_assumptions'
+  | 'suggest_experiments'
+
+export type ImproveNodeType = 'opportunity' | 'solution'
 
 interface ImproveModalProps {
   isOpen: boolean
+  nodeType: ImproveNodeType
   opportunityId: string
   projectId: string
   solutionId?: string
@@ -16,15 +25,24 @@ interface ImproveModalProps {
   onApply?: (target: ImproveTarget, suggestion: string) => Promise<void> | void
 }
 
-const TARGETS: { key: ImproveTarget; label: string; icon: string; needsSolution?: boolean }[] = [
-  { key: 'rewrite_name', label: 'Reescribir nombre', icon: '✏️' },
-  { key: 'rewrite_description', label: 'Expandir descripción', icon: '📝' },
-  { key: 'suggest_assumptions', label: 'Sugerir supuestos', icon: '🧪' },
-  { key: 'suggest_experiments', label: 'Sugerir experimentos', icon: '🔬' },
-]
+const TARGETS_BY_TYPE: Record<ImproveNodeType, { key: ImproveTarget; label: string; icon: string }[]> = {
+  opportunity: [
+    { key: 'rewrite_name', label: 'Reescribir nombre', icon: '✏️' },
+    { key: 'rewrite_description', label: 'Expandir descripción', icon: '📝' },
+    { key: 'suggest_evidence', label: 'Sugerir evidencia faltante', icon: '🔍' },
+    { key: 'suggest_solutions', label: 'Sugerir soluciones', icon: '💡' },
+  ],
+  solution: [
+    { key: 'rewrite_name', label: 'Reescribir nombre', icon: '✏️' },
+    { key: 'rewrite_description', label: 'Expandir descripción', icon: '📝' },
+    { key: 'suggest_assumptions', label: 'Sugerir supuestos', icon: '🧪' },
+    { key: 'suggest_experiments', label: 'Sugerir experimentos', icon: '🔬' },
+  ],
+}
 
 export function ImproveModal({
   isOpen,
+  nodeType,
   opportunityId,
   projectId,
   solutionId,
@@ -34,7 +52,8 @@ export function ImproveModal({
   onClose,
   onApply,
 }: ImproveModalProps) {
-  const [target, setTarget] = useState<ImproveTarget>('rewrite_description')
+  const targets = TARGETS_BY_TYPE[nodeType]
+  const [target, setTarget] = useState<ImproveTarget>(targets[1].key)
   const [instruction, setInstruction] = useState('')
   const [loading, setLoading] = useState(false)
   const [suggestion, setSuggestion] = useState<string | null>(null)
@@ -43,13 +62,13 @@ export function ImproveModal({
 
   useEffect(() => {
     if (isOpen) {
-      setTarget('rewrite_description')
+      setTarget(targets[1].key)
       setInstruction('')
       setSuggestion(null)
       setError(null)
       setApplied(false)
     }
-  }, [isOpen])
+  }, [isOpen, targets])
 
   if (!isOpen) return null
 
@@ -127,7 +146,7 @@ export function ImproveModal({
             ¿Qué querés mejorar?
           </label>
           <div className="grid grid-cols-2 gap-2 mb-4">
-            {TARGETS.map(t => (
+            {targets.map(t => (
               <button
                 key={t.key}
                 onClick={() => { setTarget(t.key); setSuggestion(null); setError(null) }}
