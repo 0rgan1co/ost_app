@@ -65,21 +65,16 @@ export function useTopExperiments(projectId: string | undefined) {
       .select('id, solution_id, description')
       .in('solution_id', solIds)
 
-    if (!assumptions?.length) {
-      setExperiments([])
-      setLoading(false)
-      return
-    }
+    const assIds = assumptions?.map(a => a.id) ?? []
+    const assMap = new Map((assumptions ?? []).map(a => [a.id, a]))
 
-    const assIds = assumptions.map(a => a.id)
-    const assMap = new Map(assumptions.map(a => [a.id, a]))
-
-    // Get all non-finished experiments
-    const { data: exps } = await supabase
-      .from('experiments')
-      .select('*')
-      .in('assumption_id', assIds)
-      .neq('status', 'terminada')
+    // Get all non-finished experiments (by assumption or directly by solution)
+    const filters: string[] = []
+    if (assIds.length > 0) filters.push(`assumption_id.in.(${assIds.join(',')})`)
+    if (solIds.length > 0) filters.push(`solution_id.in.(${solIds.join(',')})`)
+    const { data: exps } = filters.length
+      ? await supabase.from('experiments').select('*').or(filters.join(',')).neq('status', 'terminada')
+      : { data: [] as any[] }
 
     if (!exps?.length) {
       setExperiments([])
@@ -90,8 +85,10 @@ export function useTopExperiments(projectId: string | undefined) {
     // Score and sort
     const scored: SidebarExperiment[] = exps
       .map(e => {
-        const assumption = assMap.get(e.assumption_id)
-        const solution = assumption ? solMap.get(assumption.solution_id) : null
+        const assumption = e.assumption_id ? assMap.get(e.assumption_id) : null
+        const solution = e.solution_id
+          ? solMap.get(e.solution_id)
+          : (assumption ? solMap.get(assumption.solution_id) : null)
         const oppName = solution ? (oppMap.get(solution.opportunity_id) ?? '') : ''
         return {
           id: e.id,

@@ -268,19 +268,23 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
         .in('solution_id', solutionIds)
         .order('created_at', { ascending: true })
 
-      // Fetch all experiments for these assumptions
+      // Fetch experiments attached to these assumptions OR directly to these solutions
       const assumptionIds = (rawAssumptions ?? []).map(a => a.id)
-      let rawExperiments: RawExperiment[] = []
-      if (assumptionIds.length > 0) {
+      let rawExperiments: (RawExperiment & { solution_id?: string | null })[] = []
+      const expFilters: string[] = []
+      if (assumptionIds.length > 0) expFilters.push(`assumption_id.in.(${assumptionIds.join(',')})`)
+      if (solutionIds.length > 0) expFilters.push(`solution_id.in.(${solutionIds.join(',')})`)
+      if (expFilters.length > 0) {
         const { data } = await supabase
           .from('experiments')
           .select('*')
-          .in('assumption_id', assumptionIds)
+          .or(expFilters.join(','))
           .order('created_at', { ascending: true })
-        rawExperiments = (data ?? []) as RawExperiment[]
+        rawExperiments = (data ?? []) as any[]
       }
 
       // Build nested structure: Solution[] > Assumption[] > Experiment[]
+      // Solution-level experiments get surfaced inside a virtual "Sin supuesto" assumption.
       const mappedSolutions = (rawSolutions as RawSolution[]).map(s => {
         const solutionAssumptions = (rawAssumptions ?? [])
           .filter(a => a.solution_id === s.id)
@@ -290,6 +294,21 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
               .map(e => mapExperiment(e))
             return mapAssumption(a as RawAssumption, exps)
           })
+        const directExps = rawExperiments
+          .filter(e => e.solution_id === s.id && !e.assumption_id)
+          .map(e => mapExperiment(e))
+        if (directExps.length > 0) {
+          solutionAssumptions.push({
+            id: `virtual:${s.id}`,
+            solutionId: s.id,
+            description: '(Sin supuesto)',
+            category: 'deseabilidad' as AssumptionCategory,
+            status: 'por validar' as AssumptionStatus,
+            result: null,
+            experiments: directExps,
+            createdAt: s.created_at,
+          })
+        }
         return mapSolution(s, solutionAssumptions)
       })
 
