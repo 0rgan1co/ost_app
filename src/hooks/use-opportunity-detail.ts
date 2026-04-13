@@ -303,7 +303,7 @@ export function useOpportunityDetail(opportunityId: string): UseOpportunityDetai
             solutionId: s.id,
             description: '(Sin supuesto)',
             category: 'deseabilidad' as AssumptionCategory,
-            status: 'por validar' as AssumptionStatus,
+            status: 'pendiente' as AssumptionStatus,
             result: null,
             experiments: directExps,
             createdAt: s.created_at,
