@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OST App — Specs EARS · Avance & Brechas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-size: 32px; font-weight: 800; color: #f8fafc; margin-bottom: 6px; letter-spacing: -0.5px; }
+  .subtitle { color: #94a3b8; font-size: 13px; font-family: 'IBM Plex Mono', monospace; margin-bottom: 36px; }
+
+  /* TLDR */
+  .tldr { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 16px; padding: 28px; margin-bottom: 40px; }
+  .tldr-label { font-size: 11px; color: #ef4444; font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px; font-weight: 700; margin-bottom: 12px; }
+  .tldr-headline { font-size: 20px; color: #f8fafc; font-weight: 700; margin-bottom: 20px; line-height: 1.4; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .summary-card { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; text-align: center; }
+  .summary-card .num { font-size: 36px; font-weight: 800; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
+  .summary-card .label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; font-weight: 700; }
+  .num.green { color: #4ade80; }
+  .num.yellow { color: #fbbf24; }
+  .num.purple { color: #c084fc; }
+  .num.blue { color: #60a5fa; }
+
+  .progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .progress-bar { flex: 1; background: #334155; border-radius: 6px; height: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #4ade80, #22c55e); }
+  .progress-pct { font-family: 'IBM Plex Mono', monospace; color: #4ade80; font-weight: 700; font-size: 14px; }
+
+  .gaps-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gap-card { background: #0f172a; border: 1px solid #334155; border-left: 3px solid #fbbf24; border-radius: 8px; padding: 14px 16px; }
+  .gap-card.purple { border-left-color: #c084fc; }
+  .gap-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fbbf24; font-weight: 700; letter-spacing: 1px; }
+  .gap-card.purple .gap-num { color: #c084fc; }
+  .gap-text { color: #cbd5e1; font-size: 13px; margin-top: 4px; }
+  .gap-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #64748b; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Sections */
+  h2 { font-size: 18px; font-weight: 700; color: #f8fafc; margin: 40px 0 8px; padding-bottom: 10px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; }
+  h2 .section-id { font-family: 'IBM Plex Mono', monospace; color: #ef4444; font-size: 14px; }
+  h2 .section-status { margin-left: auto; font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: #94a3b8; font-weight: 500; }
+  .section-intro { color: #94a3b8; font-size: 13px; margin-bottom: 16px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #1e293b; color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace; border-bottom: 1px solid #334155; }
+  td { padding: 12px; border-bottom: 1px solid #1e293b; vertical-align: top; }
+  tr:hover td { background: #1e293b40; }
+  td.id-cell { font-family: 'IBM Plex Mono', monospace; color: #cbd5e1; font-size: 12px; white-space: nowrap; font-weight: 600; }
+  td.statement { color: #e2e8f0; line-height: 1.5; }
+  td.statement code { background: #1e293b; color: #fbbf24; padding: 1px 6px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  td.statement strong { color: #f8fafc; font-weight: 700; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.5px; white-space: nowrap; }
+  .badge.impl { background: #065f4630; color: #4ade80; border: 1px solid #4ade8030; }
+  .badge.partial { background: #92400e30; color: #fbbf24; border: 1px solid #fbbf2430; }
+  .badge.deferred { background: #581c8730; color: #c084fc; border: 1px solid #c084fc30; }
+
+  .type-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.5px; }
+  .type-ubi { background: #1e40af30; color: #93c5fd; }
+  .type-evt { background: #5b21b630; color: #c4b5fd; }
+  .type-state { background: #0f766e30; color: #5eead4; }
+  .type-unw { background: #b91c1c30; color: #fca5a5; }
+
+  .footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid #334155; text-align: center; color: #475569; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
+  .footer a { color: #94a3b8; text-decoration: none; }
+
+  @media (max-width: 720px) {
+    .gaps-mini { grid-template-columns: 1fr; }
+    h2 { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>OST App — Requerimientos EARS</h1>
+<p class="subtitle">TECHNICAL_SPEC v3.0 · Snapshot 2026-04-18</p>
+
+<!-- ============ TLDR ============ -->
+<div class="tldr">
+  <div class="tldr-label">TL;DR</div>
+  <div class="tldr-headline">
+    35 de 38 requerimientos cumplidos · 92% de cobertura. Quedan 1 brecha técnica menor y 1 decisión de producto pendiente.
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="num green">35</div><div class="label">Cumplidos</div></div>
+    <div class="summary-card"><div class="num yellow">1</div><div class="label">Parcial</div></div>
+    <div class="summary-card"><div class="num purple">2</div><div class="label">Diferidos</div></div>
+    <div class="summary-card"><div class="num blue">38</div><div class="label">Total EARS</div></div>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar"><div class="progress-fill" style="width:92%"></div></div>
+    <div class="progress-pct">92%</div>
+  </div>
+
+  <div class="gaps-mini">
+    <div class="gap-card">
+      <div class="gap-num">BRECHA · REQ-OST-003</div>
+      <div class="gap-text">Falta guard centralizado de rol viewer en la UI. Hoy se deshabilitan controles vía callbacks opcionales, pero sin HOC/policy unificado.</div>
+      <div class="gap-meta">Esfuerzo: bajo · Riesgo: bajo (RLS ya bloquea en DB)</div>
+    </div>
+    <div class="gap-card purple">
+      <div class="gap-num">DIFERIDO · REQ-OST-030 a 038</div>
+      <div class="gap-text">Backend de IA completo (prompt, Claude, conversación, aplicar sugerencia). UI muestra "Próximamente" — decisión de producto sobre cuándo activar.</div>
+      <div class="gap-meta">Esfuerzo: 0 (flag de feature) · Decisión de producto</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ A. Proyectos y Roles ============ -->
+<h2><span class="section-id">A.</span> Gestión de Proyectos y Roles <span class="section-status">5/6 OK · 1 parcial</span></h2>
+<p class="section-intro">Un proyecto agrupa oportunidades. Cada miembro tiene un rol acotado a admin / usuario / viewer.</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-001</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> asociar cada Oportunidad a exactamente un Proyecto, impidiendo la creación sin <code>project_id</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-002</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> asignar a cada miembro exactamente uno de los roles <code>admin</code>, <code>usuario</code> o <code>viewer</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-003</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> el rol sea <code>viewer</code>, <strong>DEBERÁ</strong> deshabilitar todos los controles de escritura y renderizarlos en modo solo lectura.</td>
+    <td><span class="badge partial">PARCIAL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-004</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> el rol sea <code>admin</code>, <strong>DEBERÁ</strong> habilitar la gestión de miembros (invitar, cambiar rol, remover).</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-005</td>
+    <td><span class="type-badge type-unw">UNWANTED</span></td>
+    <td class="statement"><strong>SI</strong> un viewer intenta una operación de escritura, <strong>ENTONCES</strong> el sistema <strong>DEBERÁ</strong> rechazarla con 403 sin modificar datos.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-006</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> un admin invite a un nuevo miembro, <strong>DEBERÁ</strong> insertar registro en <code>project_members</code> y notificarlo.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<!-- ============ B. Persistencia ============ -->
+<h2><span class="section-id">B.</span> Persistencia e Inicialización (Supabase) <span class="section-status">5/5 OK</span></h2>
+<p class="section-intro">Cliente autenticado, manejo de errores de conexión, debounce de updates y sincronización Realtime.</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-007</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el sistema se inicialice, <strong>DEBERÁ</strong> establecer cliente Supabase autenticado con <code>NEXT_PUBLIC_SUPABASE_URL</code> y <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-008</td>
+    <td><span class="type-badge type-unw">UNWANTED</span></td>
+    <td class="statement"><strong>SI</strong> Supabase no puede conectar (timeout > 5s o error de red), <strong>ENTONCES</strong> <strong>DEBERÁ</strong> mostrar bloqueo con mensaje de error y botón de reintento.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-009</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> inicialice correctamente, <strong>DEBERÁ</strong> cargar Proyectos del usuario con su árbol completo (Oportunidades, Evidencias, Soluciones, Supuestos, Experimentos).</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-010</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario modifique un campo, <strong>DEBERÁ</strong> ejecutar <code>UPDATE</code> dentro de los 500 ms posteriores al fin de la edición (debounce).</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-011</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> Realtime esté activo, <strong>DEBERÁ</strong> suscribirse a <code>postgres_changes</code> en las 5 tablas de dominio para reflejar cambios de otras sesiones.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<!-- ============ C. Evidencia ============ -->
+<h2><span class="section-id">C.</span> Evidencia de Oportunidad <span class="section-status">3/3 OK</span></h2>
+<p class="section-intro">Citas, hechos y observaciones que sustentan cada oportunidad. Las citas requieren fuente.</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-012</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> permitir múltiples evidencias por Oportunidad, con <code>type</code> entre <code>cita</code>, <code>hecho</code> u <code>observacion</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-013</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario agregue evidencia tipo <code>cita</code>, <strong>DEBERÁ</strong> requerir <code>source</code> como campo obligatorio antes de guardar.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-014</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario elimine una evidencia, <strong>DEBERÁ</strong> eliminar solo ese registro sin afectar la Oportunidad ni sus hipótesis.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<!-- ============ D. Soluciones y Supuestos ============ -->
+<h2><span class="section-id">D.</span> Soluciones y Supuestos <span class="section-status">5/5 OK</span></h2>
+<p class="section-intro">Cada solución se descompone en supuestos falseables (deseabilidad/viabilidad/factibilidad/usabilidad).</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-015</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> permitir múltiples Soluciones por Oportunidad, con <code>name</code> obligatorio y <code>description</code> opcional.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-015b</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> permitir múltiples Supuestos por Solución, con <code>description</code> obligatoria y <code>category</code> entre las 4 dimensiones de Torres.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-016</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> inicializar todo Supuesto con <code>status="pendiente"</code> y permitir transiciones solo a <code>validado</code> o <code>invalidado</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-017</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> el supuesto esté <code>validado</code> o <code>invalidado</code>, <strong>DEBERÁ</strong> habilitar y mostrar el campo <code>result</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-018</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> el supuesto esté <code>pendiente</code>, <strong>DEBERÁ</strong> ocultar y vaciar el campo <code>result</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<!-- ============ E. Experimentos ============ -->
+<h2><span class="section-id">E.</span> Experimentos <span class="section-status">7/7 OK</span></h2>
+<p class="section-intro">Cada experimento valida un supuesto. Campos obligatorios, transiciones acotadas y borrado en cascada.</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-019</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> requerir <code>description</code>, <code>type</code>, <code>success_criterion</code>, <code>effort</code> e <code>impact</code> al crear un Experimento.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-020</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> inicializar todo Experimento con <code>status="to do"</code>, <code>effort="medio"</code> e <code>impact="medio"</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-021</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> permitir transiciones de <code>status</code> solo entre <code>to do</code>, <code>en curso</code> y <code>terminada</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-022</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> asociar cada Experimento a exactamente un Supuesto vía <code>assumption_id</code>, impidiendo huérfanos.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-023</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> el experimento esté <code>terminada</code>, <strong>DEBERÁ</strong> mostrar <code>result</code> junto a <code>success_criterion</code> para comparación visual.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-024</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> el experimento NO esté <code>terminada</code>, <strong>DEBERÁ</strong> ocultar y vaciar <code>result</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-025</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario elimine una Solución, <strong>DEBERÁ</strong> eliminar en cascada Supuestos + Experimentos. Lo mismo al eliminar un Supuesto.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<!-- ============ F. Priorización ============ -->
+<h2><span class="section-id">F.</span> Priorización de Experimentos <span class="section-status">4/4 OK</span></h2>
+<p class="section-intro">Top 3 por matriz impacto/esfuerzo, recalculado en tiempo real.</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-026</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> renderizar "Top Experimentos" en cada Oportunidad con los 3 de <code>effort=bajo</code> + <code>impact=alto</code> en estado <code>to do</code> o <code>en curso</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-027</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> calcular score: <code>impact (alto=3, medio=2, bajo=1) ÷ effort (alto=3, medio=2, bajo=1)</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-028</td>
+    <td><span class="type-badge type-state">STATE</span></td>
+    <td class="statement"><strong>MIENTRAS</strong> no haya experimentos bajo/alto, <strong>DEBERÁ</strong> mostrar los 3 de mayor score disponibles en la Oportunidad.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-029</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario actualice <code>effort</code> o <code>impact</code>, <strong>DEBERÁ</strong> recalcular y refrescar el ranking en tiempo real.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<!-- ============ G. IA ============ -->
+<h2><span class="section-id">G.</span> Evaluación IA y Conversación (Claude Sonnet) <span class="section-status">Backend OK · UI diferida</span></h2>
+<p class="section-intro">Claude evalúa la Oportunidad con todo el contexto del negocio. Backend completo; la UI muestra "Próximamente" hasta decisión de producto.</p>
+<table>
+  <tr><th>ID</th><th>Tipo</th><th>Sentencia EARS</th><th>Estado</th></tr>
+  <tr>
+    <td class="id-cell">REQ-OST-030</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> renderizar los botones "Evaluar" y "Archivar" en el panel de detalle de cada Oportunidad.</td>
+    <td><span class="badge deferred">DIFERIDO</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-031</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario haga clic en "Evaluar", <strong>DEBERÁ</strong> ensamblar prompt con: <code>business_context</code> + descripción + evidencias + soluciones con supuestos + experimentos con criterios.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-032</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el prompt esté listo, <strong>DEBERÁ</strong> invocar Anthropic con modelo <code>claude-sonnet-4-6</code> y la instrucción base como mensaje <code>system</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-033</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> Claude responda exitosamente, <strong>DEBERÁ</strong> insertar en <code>ai_evaluations</code> con <code>prompt_snapshot</code> y renderizar la evaluación.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-034</td>
+    <td><span class="type-badge type-unw">UNWANTED</span></td>
+    <td class="statement"><strong>SI</strong> Claude falla por cuota o red, <strong>ENTONCES</strong> <strong>DEBERÁ</strong> mostrar alerta sin modificar datos ni insertar en <code>ai_evaluations</code>.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-035</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario haga clic en "Seguir conversación", <strong>DEBERÁ</strong> abrir chat con la evaluación como primer mensaje del asistente.</td>
+    <td><span class="badge deferred">DIFERIDO</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-036</td>
+    <td><span class="type-badge type-evt">EVENT</span></td>
+    <td class="statement"><strong>CUANDO</strong> el usuario envíe un mensaje, <strong>DEBERÁ</strong> invocar Claude con el historial completo de <code>ai_conversation_messages</code> y persistir ambos mensajes.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-037</td>
+    <td><span class="type-badge type-unw">UNWANTED</span></td>
+    <td class="statement"><strong>SI</strong> Claude falla en el chat, <strong>ENTONCES</strong> <strong>DEBERÁ</strong> mostrar el error inline sin borrar el historial previo.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+  <tr>
+    <td class="id-cell">REQ-OST-038</td>
+    <td><span class="type-badge type-ubi">UBIQUITOUS</span></td>
+    <td class="statement">El sistema <strong>DEBERÁ</strong> renderizar "Aplicar sugerencia al OST" para que el usuario seleccione qué cambio propuesto por Claude aplicar a Oportunidad / Solución / Supuesto / Experimento.</td>
+    <td><span class="badge impl">IMPL</span></td>
+  </tr>
+</table>
+
+<div class="footer">
+  OST App · Spec EARS v3.0 · Snapshot 2026-04-18<br>
+  Fuente: <a href="TECHNICAL_SPEC_OST_APP_v3.0.md">TECHNICAL_SPEC_OST_APP_v3.0.md</a> · Auditoría: <a href="audit-report.html">audit-report.html</a>
+</div>
+
+</div>
+</body>
+</html>
