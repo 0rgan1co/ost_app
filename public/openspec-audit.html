@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenSpec Audit · OST App · 2026-04-18</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --slate-950: #020617;
+    --slate-900: #0f172a;
+    --slate-850: #152033;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --slate-300: #cbd5e1;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --red-600: #dc2626;
+    --red-500: #ef4444;
+    --red-400: #f87171;
+    --red-300: #fca5a5;
+    --rose-500: #f43f5e;
+    --rose-400: #fb7185;
+    --green-500: #22c55e;
+    --green-400: #4ade80;
+    --amber-500: #f59e0b;
+    --amber-400: #fbbf24;
+    --indigo-400: #818cf8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--slate-950);
+    color: var(--slate-200);
+    font-family: 'Nunito Sans', system-ui, sans-serif;
+    line-height: 1.6;
+    font-size: 15px;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1180px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--slate-800);
+    padding-bottom: 28px;
+    margin-bottom: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .title-block h1 {
+    font-weight: 900;
+    font-size: 34px;
+    color: var(--slate-100);
+    margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
+  }
+  .title-block .subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--slate-500);
+    letter-spacing: 0.02em;
+  }
+  .title-block .accent { color: var(--red-500); }
+  .date-block {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--slate-400);
+    text-align: right;
+  }
+  .date-block .label { color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.1em; font-size: 10px; }
+  .date-block .value { color: var(--slate-200); font-weight: 500; font-size: 13px; }
+
+  /* Typography */
+  h2 {
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--slate-100);
+    margin: 56px 0 18px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--slate-800);
+    letter-spacing: -0.01em;
+  }
+  h2 .num { color: var(--red-500); font-family: 'IBM Plex Mono', monospace; font-weight: 700; margin-right: 12px; font-size: 18px; }
+  h3 {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--slate-100);
+    margin: 26px 0 12px 0;
+  }
+  h4 {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--slate-300);
+    margin: 20px 0 8px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  p { margin: 0 0 12px 0; color: var(--slate-300); }
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    background: var(--slate-850);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--rose-400);
+    border: 1px solid var(--slate-800);
+  }
+  strong { color: var(--slate-100); font-weight: 700; }
+  em { color: var(--slate-200); font-style: italic; }
+  a { color: var(--red-400); text-decoration: none; border-bottom: 1px dotted var(--red-500); }
+  a:hover { color: var(--red-300); }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 8px 0 40px;
+  }
+  .stat {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 14px;
+    padding: 18px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 32px; height: 3px;
+    background: var(--red-500);
+    border-radius: 0 0 3px 0;
+  }
+  .stat.ok::before { background: var(--green-500); }
+  .stat.warn::before { background: var(--amber-500); }
+  .stat.crit::before { background: var(--red-600); }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--slate-100);
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  .stat.ok .stat-value { color: var(--green-400); }
+  .stat.warn .stat-value { color: var(--amber-400); }
+  .stat.crit .stat-value { color: var(--red-400); }
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--slate-400);
+    margin-top: 6px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 24px 0;
+    font-size: 14px;
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  th {
+    text-align: left;
+    padding: 11px 14px;
+    background: var(--slate-850);
+    color: var(--slate-400);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--slate-800);
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--slate-800);
+    color: var(--slate-300);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(239,68,68,0.04); }
+  td.num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--slate-200); }
+  td.req { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--slate-400); white-space: nowrap; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .badge-ok    { background: rgba(34,197,94,0.12); color: var(--green-400); border: 1px solid rgba(34,197,94,0.35); }
+  .badge-gap   { background: rgba(239,68,68,0.12); color: var(--red-400); border: 1px solid rgba(239,68,68,0.35); }
+  .badge-warn  { background: rgba(245,158,11,0.12); color: var(--amber-400); border: 1px solid rgba(245,158,11,0.35); }
+  .badge-new   { background: rgba(244,63,94,0.12); color: var(--rose-400); border: 1px solid rgba(244,63,94,0.35); }
+  .badge-crit  { background: rgba(220,38,38,0.2); color: var(--red-300); border: 1px solid var(--red-500); }
+  .badge-ears  { background: rgba(129,140,248,0.1); color: var(--indigo-400); border: 1px solid rgba(129,140,248,0.3); }
+  .badge-doc   { background: var(--slate-800); color: var(--slate-400); border: 1px solid var(--slate-700); }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .card {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 12px;
+    padding: 18px 22px;
+    position: relative;
+  }
+  .card.crit { border-color: rgba(239,68,68,0.4); }
+  .card.crit::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--red-500) 0%, var(--rose-500) 100%);
+    border-radius: 12px 12px 0 0;
+  }
+  .card h3 { margin-top: 0; font-size: 15px; }
+  .card h3 code { font-size: 13px; color: var(--slate-100); background: var(--slate-850); }
+  .card p:last-child { margin-bottom: 0; }
+  .card .card-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--slate-500); margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* Lists */
+  ul, ol { margin: 6px 0 16px 0; padding-left: 22px; color: var(--slate-300); }
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--red-500); }
+  li code { font-size: 12px; }
+
+  /* ASCII */
+  .ascii-box {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--slate-300);
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.55;
+  }
+  .ascii-box .hl { color: var(--red-400); }
+  .ascii-box .ok { color: var(--green-400); }
+  .ascii-box .warn { color: var(--amber-400); }
+  .ascii-box .dim { color: var(--slate-500); }
+
+  /* Callouts */
+  .callout {
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin: 16px 0;
+    border-left: 3px solid;
+    background: var(--slate-900);
+    font-size: 14px;
+  }
+  .callout.crit   { border-color: var(--red-500);    background: rgba(239,68,68,0.05); }
+  .callout.warn   { border-color: var(--amber-500);  background: rgba(245,158,11,0.05); }
+  .callout.info   { border-color: var(--indigo-400); background: rgba(129,140,248,0.05); }
+  .callout.ok     { border-color: var(--green-500);  background: rgba(34,197,94,0.05); }
+  .callout strong { font-family: 'IBM Plex Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px; }
+  .callout.crit strong { color: var(--red-400); }
+  .callout.warn strong { color: var(--amber-400); }
+  .callout.info strong { color: var(--indigo-400); }
+  .callout.ok strong { color: var(--green-400); }
+
+  /* Summary header */
+  .summary-header {
+    background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-850) 100%);
+    border: 1px solid var(--slate-800);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 12px 0 28px;
+  }
+  .summary-header p { margin: 0; color: var(--slate-300); font-size: 15px; }
+  .summary-header p + p { margin-top: 10px; }
+
+  /* Priority matrix */
+  .priority-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 12px 0 20px;
+  }
+  .priority-cell {
+    background: var(--slate-900);
+    border: 1px solid var(--slate-800);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  .priority-cell .pri-name { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: var(--slate-100); }
+  .priority-cell .pri-why { color: var(--slate-400); margin: 6px 0 10px; font-size: 12px; }
+
+  /* Footer */
+  .footer {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--slate-800);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--slate-500);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .priority-grid { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 26px; }
+    .container { padding: 32px 16px 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="title-block">
+    <h1>OpenSpec <span class="accent">Audit</span></h1>
+    <div class="subtitle">OST App · baseline + brechas + plan de ataque</div>
+  </div>
+  <div class="date-block">
+    <div class="label">Fecha</div>
+    <div class="value">2026-04-18</div>
+    <div class="label" style="margin-top:8px;">Branch</div>
+    <div class="value">main</div>
+  </div>
+</header>
+
+<div class="summary-header">
+  <p>Migración del <strong>TECHNICAL_SPEC_OST_APP_v3.0</strong> (39 requirements EARS) al framework <strong>OpenSpec</strong>, con baseline honesto que refleja la realidad del código y un plan de ataque para las brechas detectadas.</p>
+  <p><strong>Resultado:</strong> 14 capabilities vigentes con 70 requirements &middot; 4 changes activos (brechas críticas) &middot; 4 changes archivados (captura retroactiva) &middot; todo validado por el CLI OpenSpec.</p>
+</div>
+
+<div class="stats">
+  <div class="stat ok">
+    <div class="stat-value">14</div>
+    <div class="stat-label">Capabilities vigentes</div>
+    <div class="stat-sub">70 requirements documentados</div>
+  </div>
+  <div class="stat crit">
+    <div class="stat-value">4</div>
+    <div class="stat-label">Changes pendientes</div>
+    <div class="stat-sub">56 tasks por ejecutar</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">39</div>
+    <div class="stat-label">EARS migrados</div>
+    <div class="stat-sub">REQ-OST-001 a 038 + 015b</div>
+  </div>
+  <div class="stat warn">
+    <div class="stat-value">2</div>
+    <div class="stat-label">Riesgos críticos</div>
+    <div class="stat-sub">API key expuesta + schema desalineado</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">01</span>Baseline vigente (<code>openspec/specs/</code>)</h2>
+
+<p>Cada capability describe <em>lo que el sistema hace hoy</em>. Donde el código supera a los EARS originales (features huérfanas), el baseline lo captura. Donde los EARS piden algo que el código aún no cumple, el requirement se movió a un <em>change</em> de Fase 2.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Capability</th>
+      <th>Reqs</th>
+      <th>Origen</th>
+      <th>EARS mapeados</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>projects-and-roles</code></td>
+      <td class="num">6</td>
+      <td>EARS grupo A</td>
+      <td class="req">REQ-OST-001..006</td>
+      <td><span class="badge badge-ok">Baseline</span></td>
+    </tr>
+    <tr>
+      <td><code>persistence-and-realtime</code></td>
+      <td class="num">4</td>
+      <td>EARS grupo B</td>
+      <td class="req">REQ-OST-007, 009, 010*, 011</td>
+      <td><span class="badge badge-warn">Parcial</span></td>
+    </tr>
+    <tr>
+      <td><code>opportunity-evidence</code></td>
+      <td class="num">4</td>
+      <td>EARS grupo C + extensión</td>
+      <td class="req">REQ-OST-012..014</td>
+      <td><span class="badge badge-ok">Baseline</span></td>
+    </tr>
+    <tr>
+      <td><code>solutions-and-assumptions</code></td>
+      <td class="num">6</td>
+      <td>EARS grupo D + <code>assigned_to</code></td>
+      <td class="req">REQ-OST-015, 015b, 016..018</td>
+      <td><span class="badge badge-ok">Baseline</span></td>
+    </tr>
+    <tr>
+      <td><code>experiments</code></td>
+      <td class="num">8</td>
+      <td>EARS grupo E + modelo evolucionado</td>
+      <td class="req">REQ-OST-019..025</td>
+      <td><span class="badge badge-ok">Baseline</span></td>
+    </tr>
+    <tr>
+      <td><code>experiment-prioritization</code></td>
+      <td class="num">6</td>
+      <td>EARS grupo F + Prioritization panel</td>
+      <td class="req">REQ-OST-026..029</td>
+      <td><span class="badge badge-ok">Baseline</span></td>
+    </tr>
+    <tr>
+      <td><code>ai-evaluation-and-chat</code></td>
+      <td class="num">8</td>
+      <td>EARS grupo G + apply-suggestion</td>
+      <td class="req">REQ-OST-030..038</td>
+      <td><span class="badge badge-ok">Baseline</span></td>
+    </tr>
+    <tr>
+      <td><code>project-visibility</code></td>
+      <td class="num">3</td>
+      <td>Huérfana consolidada</td>
+      <td class="req">—</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+    <tr>
+      <td><code>business-context</code></td>
+      <td class="num">4</td>
+      <td>Huérfana consolidada</td>
+      <td class="req">referenciada por REQ-031</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+    <tr>
+      <td><code>opportunity-tree-view</code></td>
+      <td class="num">5</td>
+      <td>Huérfana consolidada</td>
+      <td class="req">—</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+    <tr>
+      <td><code>ost-wizard</code></td>
+      <td class="num">4</td>
+      <td>Archivada 2026-04-19</td>
+      <td class="req">—</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+    <tr>
+      <td><code>ai-improve</code></td>
+      <td class="num">4</td>
+      <td>Archivada 2026-04-19</td>
+      <td class="req">—</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+    <tr>
+      <td><code>experiment-seed</code></td>
+      <td class="num">4</td>
+      <td>Archivada 2026-04-19</td>
+      <td class="req">—</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+    <tr>
+      <td><code>outcome-reviews</code></td>
+      <td class="num">4</td>
+      <td>Archivada 2026-04-19</td>
+      <td class="req">—</td>
+      <td><span class="badge badge-new">Nueva</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:12px; color: var(--slate-500);"><code>*</code> REQ-OST-010 (debounce 500 ms) reflejado parcialmente — el baseline exige UPDATE con optimistic UI pero <em>sin debounce</em>; el debounce se traslada a <code>add-update-debounce</code>.</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">02</span>Mapeo EARS → capability</h2>
+
+<p>Los 39 requirements del <code>TECHNICAL_SPEC_OST_APP_v3.0</code> distribuidos en capabilities. Los que se implementaron como está van a <span class="badge badge-ok">Cumplido</span>. Los que tienen brecha van a <span class="badge badge-gap">Brecha</span> y originan un change.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>REQ</th>
+      <th>Tipo EARS</th>
+      <th>Capability</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="req">REQ-OST-001</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>projects-and-roles</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-002</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>projects-and-roles</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-003</td><td><span class="badge badge-ears">State-driven</span></td><td><code>projects-and-roles</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-004</td><td><span class="badge badge-ears">State-driven</span></td><td><code>projects-and-roles</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-005</td><td><span class="badge badge-ears">Unwanted</span></td><td><code>projects-and-roles</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-006</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>projects-and-roles</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-007</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>persistence-and-realtime</code></td><td><span class="badge badge-warn">Adaptado Vite</span></td></tr>
+    <tr><td class="req">REQ-OST-008</td><td><span class="badge badge-ears">Unwanted</span></td><td>→ <code>add-supabase-retry-screen</code></td><td><span class="badge badge-gap">Brecha</span></td></tr>
+    <tr><td class="req">REQ-OST-009</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>persistence-and-realtime</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-010</td><td><span class="badge badge-ears">Event-driven</span></td><td>→ <code>add-update-debounce</code></td><td><span class="badge badge-gap">Brecha</span></td></tr>
+    <tr><td class="req">REQ-OST-011</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>persistence-and-realtime</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-012</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>opportunity-evidence</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-013</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>opportunity-evidence</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-014</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>opportunity-evidence</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-015</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>solutions-and-assumptions</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-015b</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>solutions-and-assumptions</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-016</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>solutions-and-assumptions</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-017</td><td><span class="badge badge-ears">State-driven</span></td><td><code>solutions-and-assumptions</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-018</td><td><span class="badge badge-ears">State-driven</span></td><td><code>solutions-and-assumptions</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-019</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>experiments</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-020</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>experiments</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-021</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>experiments</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-022</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>experiments</code></td><td><span class="badge badge-warn">Evolucionó</span></td></tr>
+    <tr><td class="req">REQ-OST-023</td><td><span class="badge badge-ears">State-driven</span></td><td><code>experiments</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-024</td><td><span class="badge badge-ears">State-driven</span></td><td><code>experiments</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-025</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>experiments</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-026</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>experiment-prioritization</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-027</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>experiment-prioritization</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-028</td><td><span class="badge badge-ears">State-driven</span></td><td><code>experiment-prioritization</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-029</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>experiment-prioritization</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-030</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-031</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-gap">Desalineado</span></td></tr>
+    <tr><td class="req">REQ-OST-032</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-warn">Coexisten 2 paths</span></td></tr>
+    <tr><td class="req">REQ-OST-033</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-034</td><td><span class="badge badge-ears">Unwanted</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-035</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-036</td><td><span class="badge badge-ears">Event-driven</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-037</td><td><span class="badge badge-ears">Unwanted</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+    <tr><td class="req">REQ-OST-038</td><td><span class="badge badge-ears">Ubiquitous</span></td><td><code>ai-evaluation-and-chat</code></td><td><span class="badge badge-ok">Cumplido</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">03</span>Análisis de brechas</h2>
+
+<h3>Visualización spec vs código</h3>
+<div class="ascii-box">                     SPEC (TECHNICAL_SPEC_v3)           CÓDIGO (main @ 2026-04-18)
+                           │                                    │
+   Proyectos y Roles  ━━━━━│────────────────────────────────────│━━━━ <span class="ok">OK</span> (+ is_public, tags, allowlist)
+   Persistencia       ━━━━━│────╳ NEXT_PUBLIC_* ──╳ sin retry ──│━━━━ <span class="warn">VITE_* · sin retry ni debounce</span>
+   Evidencia          ━━━━━│────────────────────────────────────│━━━━ <span class="ok">OK</span> (+ scoping multinivel)
+   Soluciones         ━━━━━│────────────────────────────────────│━━━━ <span class="ok">OK</span> (+ assigned_to)
+   Supuestos          ━━━━━│────────────────────────────────────│━━━━ <span class="ok">OK</span>
+   Experimentos       ━━━━━│────────────────────────────────────│━━━━ <span class="ok">OK</span> (+ solution_id directo, + seed)
+   Priorización       ━━━━━│────────────────────────────────────│━━━━ <span class="ok">OK</span> (+ panel completo)
+   AI eval + chat     ━━━━━│─ v3 domain ─╳ ai-proxy habla v2 ───│━━━━ <span class="hl">Front OK · edge legacy</span>
+                           │                                    │
+                           │    ← features sin spec original →  <span class="dim">Wizard · Reviews · Mejorar IA · Seed</span></div>
+
+<h3>Brechas críticas</h3>
+
+<div class="card-grid">
+  <div class="card crit">
+    <h3><code>fix-ai-proxy-schema-v3</code></h3>
+    <p>La edge function <code>ai-proxy</code> usa <code>hypothesis_id</code> / <code>DBHypothesis</code> del schema v2. El front-end hace tiempo migró a <code>assumption_id</code> + <code>solutions</code>. <strong>Claude recibe un prompt que no refleja el árbol real.</strong></p>
+    <div class="card-meta"><span class="badge badge-crit">Crítica</span><span>14 tasks</span><span>Sin dependencia</span></div>
+  </div>
+  <div class="card crit">
+    <h3><code>consolidate-anthropic-access</code></h3>
+    <p>Coexisten (1) cliente directo con <code>dangerouslyAllowBrowser: true</code> y <code>VITE_ANTHROPIC_API_KEY</code> expuesta al bundle, y (2) edge function <code>ai-proxy</code>. <strong>Riesgo de seguridad: la API key viaja al browser.</strong></p>
+    <div class="card-meta"><span class="badge badge-crit">Crítica</span><span>16 tasks</span><span>Depende: fix-ai-proxy</span></div>
+  </div>
+  <div class="card">
+    <h3><code>add-supabase-retry-screen</code></h3>
+    <p>REQ-OST-008 pedía pantalla bloqueante con retry al fallar Supabase en bootstrap. Nunca llegó al código: hoy con red inestable la app queda en spinner indefinido.</p>
+    <div class="card-meta"><span class="badge badge-warn">Alta</span><span>11 tasks</span><span>Sin dependencia</span></div>
+  </div>
+  <div class="card">
+    <h3><code>add-update-debounce</code></h3>
+    <p>REQ-OST-010 pedía debounce de 500 ms en UPDATEs. Hoy cada keystroke dispara un round-trip — genera flicker vía eventos Realtime que llegan con valores a-medio-tipear.</p>
+    <div class="card-meta"><span class="badge badge-warn">Media</span><span>15 tasks</span><span>Sin dependencia</span></div>
+  </div>
+</div>
+
+<h3>Features en baseline sin EARS original</h3>
+<p>Capturadas para que el contrato refleje la realidad (no quedan invisibles en la evolución futura).</p>
+
+<table>
+  <thead>
+    <tr><th>Feature</th><th>Dónde vive</th><th>Capability que la cubre</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>is_public</code> en proyectos</td><td><code>projects.is_public</code></td><td><code>project-visibility</code></td></tr>
+    <tr><td><code>tags</code> en proyectos</td><td><code>projects.tags</code></td><td><code>project-visibility</code></td></tr>
+    <tr><td>Email allowlist</td><td><code>allowed_users</code></td><td><code>project-visibility</code></td></tr>
+    <tr><td><code>assigned_to</code> en soluciones / experimentos</td><td>columnas en DB</td><td><code>solutions-and-assumptions</code> / <code>experiments</code></td></tr>
+    <tr><td>Experimento solution-level</td><td><code>experiments.solution_id</code></td><td><code>experiments</code></td></tr>
+    <tr><td>Evidencia multinivel</td><td>opp / sol / assumption</td><td><code>opportunity-evidence</code></td></tr>
+    <tr><td>Panel completo de priorización</td><td><code>PrioritizationPanel.tsx</code></td><td><code>experiment-prioritization</code></td></tr>
+    <tr><td>Apply-suggestion parser</td><td><code>parse-suggestion.ts</code></td><td><code>ai-evaluation-and-chat</code></td></tr>
+    <tr><td>4º campo <code>strategicChallenge</code></td><td><code>business_context.content</code></td><td><code>business-context</code></td></tr>
+    <tr><td>Lista + árbol de oportunidades</td><td><code>OSTTreeSection</code></td><td><code>opportunity-tree-view</code></td></tr>
+    <tr><td>Wizard guiado (7 fases)</td><td><code>use-ost-wizard</code></td><td><code>ost-wizard</code></td></tr>
+    <tr><td>"Mejorar con IA" contextual</td><td><code>ImproveModal.tsx</code></td><td><code>ai-improve</code></td></tr>
+    <tr><td>Experimento semilla (7 campos extra)</td><td><code>ExperimentSeedModal.tsx</code></td><td><code>experiment-seed</code></td></tr>
+    <tr><td>Retrospectivas LOAP por ciclo</td><td><code>use-reviews</code></td><td><code>outcome-reviews</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">04</span>Changes pendientes (<code>openspec/changes/</code>)</h2>
+
+<div class="priority-grid">
+  <div class="priority-cell">
+    <div class="pri-name">fix-ai-proxy-schema-v3</div>
+    <div class="pri-why">Claude recibe dominio desalineado — las evaluaciones salen sobre un árbol que no existe.</div>
+    <span class="badge badge-crit">P0</span>
+  </div>
+  <div class="priority-cell">
+    <div class="pri-name">consolidate-anthropic-access</div>
+    <div class="pri-why">API key filtrada al bundle público. Depende del fix anterior.</div>
+    <span class="badge badge-crit">P0</span>
+  </div>
+  <div class="priority-cell">
+    <div class="pri-name">add-supabase-retry-screen</div>
+    <div class="pri-why">UX roto con red inestable. Independiente — paralelizable.</div>
+    <span class="badge badge-warn">P1</span>
+  </div>
+  <div class="priority-cell">
+    <div class="pri-name">add-update-debounce</div>
+    <div class="pri-why">Ruido de writes + flicker. Mejora cualitativa, no bloquea.</div>
+    <span class="badge badge-warn">P2</span>
+  </div>
+</div>
+
+<div class="callout crit">
+  <strong>Ruta crítica sugerida</strong>
+  1. <code>fix-ai-proxy-schema-v3</code> &rarr; 2. <code>consolidate-anthropic-access</code> &rarr; en paralelo <code>add-supabase-retry-screen</code> + <code>add-update-debounce</code>. Ejecutable con <code>/opsx:apply &lt;change&gt;</code>.
+</div>
+
+<h3>Detalle por change</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Change</th>
+      <th>Artefactos</th>
+      <th>Tasks</th>
+      <th>Impacto</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>fix-ai-proxy-schema-v3</code></td>
+      <td>proposal + design + tasks + specs delta (<code>ai-evaluation-and-chat</code> MODIFIED)</td>
+      <td class="num">14</td>
+      <td>Reescribe <code>supabase/functions/ai-proxy/index.ts</code> para leer v3. No cambia contrato HTTP.</td>
+    </tr>
+    <tr>
+      <td><code>consolidate-anthropic-access</code></td>
+      <td>proposal + design + tasks + specs delta (<code>ai-evaluation-and-chat</code> MODIFIED)</td>
+      <td class="num">16</td>
+      <td>Elimina <code>@anthropic-ai/sdk</code> del bundle cliente. Deja sólo edge function.</td>
+    </tr>
+    <tr>
+      <td><code>add-supabase-retry-screen</code></td>
+      <td>proposal + tasks + specs delta (<code>persistence-and-realtime</code> ADDED)</td>
+      <td class="num">11</td>
+      <td>Nuevo <code>SupabaseConnectionGate</code> con probe de 5s y retry sin full reload.</td>
+    </tr>
+    <tr>
+      <td><code>add-update-debounce</code></td>
+      <td>proposal + tasks + specs delta (<code>persistence-and-realtime</code> MODIFIED)</td>
+      <td class="num">15</td>
+      <td>Hook <code>useDebouncedUpdate</code> + flush on navigation. Sólo campos de texto libre.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">05</span>Changes archivados</h2>
+
+<p>Capturan retroactivamente features que ya están en producción pero no tenían contrato. Al archivarse, materializan sus capabilities en <code>openspec/specs/</code>. Los <code>tasks.md</code> quedaron como verificación retroactiva pendiente.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Change archivado</th>
+      <th>Capability materializada</th>
+      <th>Deuda técnica asociada</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>2026-04-19-document-ost-wizard</code></td>
+      <td><code>ost-wizard</code> (4 reqs)</td>
+      <td>Usa Anthropic client-side — migrará con <code>consolidate-anthropic-access</code>.</td>
+    </tr>
+    <tr>
+      <td><code>2026-04-19-document-ai-improve</code></td>
+      <td><code>ai-improve</code> (4 reqs)</td>
+      <td>Edge function <code>ai-improve</code> ya usa el patrón correcto. OK.</td>
+    </tr>
+    <tr>
+      <td><code>2026-04-19-document-experiment-seed</code></td>
+      <td><code>experiment-seed</code> (4 reqs)</td>
+      <td>"Break the blank" usa Anthropic client-side — migrará con <code>consolidate-anthropic-access</code>.</td>
+    </tr>
+    <tr>
+      <td><code>2026-04-19-document-outcome-reviews</code></td>
+      <td><code>outcome-reviews</code> (4 reqs)</td>
+      <td>Sin deuda técnica. Posibles mejoras: export markdown, timeline comparativo.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">06</span>Decisiones de migración</h2>
+
+<div class="card-grid">
+  <div class="card">
+    <h4>Opción elegida: C (mixta)</h4>
+    <p>1) Baseline honesto en <code>specs/</code> reflejando código real &middot; 2) changes por brechas críticas &middot; 3) changes por features huérfanas consolidadas.</p>
+  </div>
+  <div class="card">
+    <h4>Estilo de Requirements</h4>
+    <p><strong>A1</strong> · Tipo EARS implícito en el phrasing (SHALL / While / If then / When), no marcado explícitamente.</p>
+  </div>
+  <div class="card">
+    <h4>Trazabilidad al spec original</h4>
+    <p><strong>B1</strong> · El ID REQ-OST-XXX aparece sólo en el bloque <code>## Purpose</code> de cada capability como referencia, no por requirement.</p>
+  </div>
+  <div class="card">
+    <h4>Features huérfanas</h4>
+    <p><strong>C1</strong> · Si están consolidadas en código, entran al baseline. Si son menos estables, pasan por <code>changes/document-*</code> y se archivan.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<h2><span class="num">07</span>Próximos pasos</h2>
+
+<div class="callout info">
+  <strong>Ejecutar fuera de explore mode</strong>
+  Explore mode captura intención. Para escribir código, entrar con <code>/opsx:apply &lt;change-name&gt;</code>.
+</div>
+
+<ol>
+  <li><strong>Ejecutar <code>fix-ai-proxy-schema-v3</code></strong> — desbloquea las evaluaciones IA. Verificar primero si <code>hypotheses</code> todavía existe en DB.</li>
+  <li><strong>Ejecutar <code>consolidate-anthropic-access</code></strong> — elimina la API key del bundle cliente. Migra los flujos pendientes (wizard, seed modal).</li>
+  <li><strong>En paralelo: <code>add-supabase-retry-screen</code> + <code>add-update-debounce</code></strong> — independientes, pequeños, mejoran UX.</li>
+  <li><strong>Cuando los P0/P1 estén en verde</strong>, correr las tasks retroactivas de los 4 archivados para validar que las capabilities documentadas matchean el código real.</li>
+  <li><strong>Próxima iteración</strong> — formalizar cuando surjan: notificaciones de invites pendientes, export markdown de reviews, extensión de <code>ai-improve</code> a Assumptions y Experiments.</li>
+</ol>
+
+<div class="footer">
+  <div>OpenSpec v1 · schema: spec-driven · CLI validado</div>
+  <div>14 specs / 4 changes / 4 archived · generado 2026-04-18</div>
+</div>
+
+</div>
+</body>
+</html>
